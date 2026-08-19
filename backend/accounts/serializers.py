@@ -76,3 +76,29 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+class SendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not CustomUser.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("User with this email does not exist.")
+        return value
+
+class VerifyChangePasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate(self, data):
+        email = data.get('email')
+        user = CustomUser.objects.filter(email__iexact=email).first()
+        if not user:
+            raise serializers.ValidationError({"email": "User with this email does not exist."})
+        
+        if not user.check_password(data.get('current_password')):
+            raise serializers.ValidationError({"current_password": "Wrong current password."})
+
+        data['user'] = user
+        return data

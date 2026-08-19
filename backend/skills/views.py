@@ -57,7 +57,7 @@ class EmployeeSkillDetailView(APIView):
     def put(self, request, pk):
         try:
             user_skill = UserSkill.objects.get(pk=pk, user=request.user)
-        except UserSkill.DoesNotExist:
+        except (UserSkill.DoesNotExist, ValueError):
             return Response({"error": "Skill not found"}, status=status.HTTP_404_NOT_FOUND)
 
         data = request.data
@@ -79,5 +79,5 @@ class EmployeeSkillDetailView(APIView):
             user_skill = UserSkill.objects.get(pk=pk, user=request.user)
             user_skill.delete()
             return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-        except UserSkill.DoesNotExist:
+        except (UserSkill.DoesNotExist, ValueError):
             return Response({"error": "Skill not found"}, status=status.HTTP_404_NOT_FOUND)
