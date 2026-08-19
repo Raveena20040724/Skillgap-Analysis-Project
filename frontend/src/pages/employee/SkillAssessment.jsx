@@ -22,373 +22,530 @@ import Card from '../../components/common/Card';
 import PageHeader from '../../components/common/PageHeader';
 import { ROUTES } from '../../constants/routes';
 import { assessmentService } from '../../services/assessmentService';
+import { getUserData, setUserData, addActiveUserNotification } from '../../utils/userStorage';
 
-// Domain-Specific Questions Bank based on employee competency gaps
-const DOMAIN_ASSESSMENTS = [
+// Comprehensive Question Bank mapping skills to Basic and Advanced tiers
+const SKILL_QUESTION_DATABASE = {
+  'React.js': {
+    basic: {
+      title: 'React.js - Core Fundamentals & Component Basics',
+      category: 'Frontend Engineering',
+      description: 'Foundational assessment evaluating core JSX syntax, functional components, state vs props, and basic event handling.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the primary purpose of the 'useState' hook in React?",
+          options: [
+            "To declare and manage state variables within functional components.",
+            "To directly query database tables in SQL.",
+            "To convert React components into native mobile code.",
+            "To reload the entire browser page on button clicks."
+          ],
+          correctAnswer: 0,
+          explanation: "useState is the core React hook used to track and update reactive component state."
+        },
+        {
+          id: 2,
+          question: "How are props passed from a parent to a child component in JSX?",
+          options: [
+            "As attributes on the component element, e.g. <Child title='Hello' />",
+            "By writing to a global window._props object.",
+            "By importing props inside the child file using require().",
+            "Through CSS class selectors."
+          ],
+          correctAnswer: 0,
+          explanation: "Props are passed as attributes on JSX elements and received as arguments in the child component."
+        },
+        {
+          id: 3,
+          question: "What must every item in a dynamically rendered list have in React?",
+          options: [
+            "A unique 'key' prop to help React identify which items have changed.",
+            "An inline CSS background color.",
+            "A mandatory onClick handler.",
+            "A timestamp property."
+          ],
+          correctAnswer: 0,
+          explanation: "Unique keys allow React's reconciler to track element identity efficiently across re-renders."
+        },
+        {
+          id: 4,
+          question: "When does the callback inside useEffect(() => {}, []) execute?",
+          options: [
+            "Once after the initial component mount.",
+            "On every single millisecond.",
+            "Only when the user closes the browser.",
+            "Before any HTML is parsed."
+          ],
+          correctAnswer: 0,
+          explanation: "An empty dependency array `[]` ensures the effect runs only once after the component mounts."
+        },
+        {
+          id: 5,
+          question: "What is JSX in React development?",
+          options: [
+            "A syntax extension for JavaScript that looks similar to HTML.",
+            "A replacement database language for PostgreSQL.",
+            "A CSS preprocessor similar to SASS.",
+            "A server-side routing protocol."
+          ],
+          correctAnswer: 0,
+          explanation: "JSX is a syntax extension allowing developers to write HTML-like markup inside JavaScript files."
+        }
+      ]
+    },
+    advanced: {
+      title: 'React.js - Advanced Architecture & System Mastery',
+      category: 'Frontend Engineering',
+      description: 'Advanced benchmark evaluating fiber architecture, concurrent rendering, memory leak prevention, and custom hook optimization.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the primary benefit of React's Concurrent Mode & useTransition hook?",
+          options: [
+            "It allows marking non-urgent state updates as transitions, keeping the main thread responsive for user input.",
+            "It completely replaces WebSockets for real-time networking.",
+            "It compiles JSX directly to C++ binaries.",
+            "It disables React reconciliation."
+          ],
+          correctAnswer: 0,
+          explanation: "useTransition allows developers to prioritize immediate input responses over heavy background re-renders."
+        },
+        {
+          id: 2,
+          question: "How does React's Reconciliation heuristic algorithm handle diffing of different component types?",
+          options: [
+            "When component types change, React tears down the entire subtree and mounts a fresh component tree.",
+            "It mutates existing DOM attributes without unmounting.",
+            "It ignores component type changes.",
+            "It throws an unhandled fatal syntax error."
+          ],
+          correctAnswer: 0,
+          explanation: "React assumes two elements of different types will produce different trees, tearing down the old tree completely."
+        },
+        {
+          id: 3,
+          question: "Which pattern is optimal for avoiding unnecessary recalculations when passing callbacks to memoized children?",
+          options: [
+            "Wrapping the handler in useCallback with precise dependencies.",
+            "Re-instantiating the function inline inside JSX.",
+            "Attaching the function directly to document.body.",
+            "Converting the functional component into an async function."
+          ],
+          correctAnswer: 0,
+          explanation: "useCallback caches function instances between renders so child memo components do not unnecessarily re-render."
+        },
+        {
+          id: 4,
+          question: "What is the primary function of React 19's Server Actions?",
+          options: [
+            "Asynchronous functions executed on the server, invokable directly from client forms without manual API wiring.",
+            "Client-side CSS animations.",
+            "Database table migration scripts.",
+            "Static asset compression."
+          ],
+          correctAnswer: 0,
+          explanation: "Server Actions allow defining server-side logic directly executable from client form submissions with automatic validation."
+        },
+        {
+          id: 5,
+          question: "Why should mutable references (useRef) be used instead of state for timer intervals?",
+          options: [
+            "Mutating a ref does not trigger a component re-render, avoiding unwanted render loops.",
+            "Refs automatically pause execution when the user scrolls.",
+            "Refs cannot be garbage collected.",
+            "Refs encrypt the timer ID."
+          ],
+          correctAnswer: 0,
+          explanation: "useRef persists values across renders without causing the component to re-execute."
+        }
+      ]
+    }
+  },
+  'TypeScript': {
+    basic: {
+      title: 'TypeScript - Core Types & Type Safety Fundamentals',
+      category: 'Programming',
+      description: 'Basics assessment covering primitive types, interface definitions, function signatures, and union types.',
+      questions: [
+        {
+          id: 1,
+          question: "Which keyword is used to define an object contract with properties in TypeScript?",
+          options: ["interface or type", "struct", "contract", "recordset"],
+          correctAnswer: 0,
+          explanation: "'interface' and 'type' are standard TypeScript declarations for specifying object shapes."
+        },
+        {
+          id: 2,
+          question: "What is the return type of a TypeScript function that does not return any value?",
+          options: ["void", "null", "undefined", "never"],
+          correctAnswer: 0,
+          explanation: "'void' signifies that a function completes execution without returning a value."
+        },
+        {
+          id: 3,
+          question: "What does the union type 'string | number' signify?",
+          options: ["A variable that can hold either a string or a number.", "A variable that must be both at once.", "A list of strings and numbers.", "A floating point integer."],
+          correctAnswer: 0,
+          explanation: "Union types represent values that can be one of several permitted types."
+        },
+        {
+          id: 4,
+          question: "How do you mark a property as optional inside an interface?",
+          options: ["By adding a question mark '?' after the property name (e.g. age?: number).", "By prefixing with 'optional'.", "By assigning value null.", "By wrapping in square brackets."],
+          correctAnswer: 0,
+          explanation: "The '?' operator marks interface properties as optional."
+        },
+        {
+          id: 5,
+          question: "What tool compiles TypeScript (.ts) files into standard JavaScript (.js)?",
+          options: ["tsc (TypeScript Compiler)", "npm install", "Webpack dev server only", "Docker runtime"],
+          correctAnswer: 0,
+          explanation: "tsc is the official TypeScript compiler that type-checks and strips types into standard JavaScript."
+        }
+      ]
+    },
+    advanced: {
+      title: 'TypeScript - Advanced Generics & Type Narrowing Architecture',
+      category: 'Programming',
+      description: 'Advanced benchmark covering conditional types, mapped types, distributive unions, and template literal types.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the primary difference between 'any' and 'unknown' in TypeScript?",
+          options: [
+            "'unknown' forces type checking/narrowing before any property access, while 'any' disables all type checking.",
+            "'any' is type safe while 'unknown' is unsafe.",
+            "'unknown' can only hold boolean values.",
+            "There is no difference in compiler behavior."
+          ],
+          correctAnswer: 0,
+          explanation: "'unknown' is the type-safe top type that requires explicit narrowing before usage."
+        },
+        {
+          id: 2,
+          question: "What does the 'keyof' operator do in TypeScript?",
+          options: [
+            "Produces a string or numeric union of all keys of a given object type.",
+            "Encrypts object values with a secret key.",
+            "Generates a unique database primary key.",
+            "Deletes private keys from classes."
+          ],
+          correctAnswer: 0,
+          explanation: "keyof T produces a union of literal string or numeric keys of type T."
+        },
+        {
+          id: 3,
+          question: "What is a 'discriminated union' in TypeScript?",
+          options: [
+            "A union of object types that share a common literal discriminant property used for exact type narrowing.",
+            "A prohibited type syntax that throws compiler errors.",
+            "A method to convert objects into CSV strings.",
+            "An array with duplicate types removed."
+          ],
+          correctAnswer: 0,
+          explanation: "Discriminated unions use a common literal tag (e.g. { type: 'success' } | { type: 'error' }) to enable exhaustive pattern matching."
+        },
+        {
+          id: 4,
+          question: "How does the 'infer' keyword function inside conditional types?",
+          options: [
+            "It introduces a type variable to be deduced within the true branch of a conditional type.",
+            "It converts asynchronous code to synchronous.",
+            "It prints debug logs to the terminal during compilation.",
+            "It disables strict null checks."
+          ],
+          correctAnswer: 0,
+          explanation: "infer allows extracting and deducing internal types (e.g. ReturnType<T> or Promise inner types) dynamically."
+        },
+        {
+          id: 5,
+          question: "What does the Utility Type 'Record<K, T>' construct?",
+          options: [
+            "An object type whose property keys are K and whose property values are T.",
+            "An immutable tuple of length K.",
+            "A database SQL row cursor.",
+            "An audio recording stream."
+          ],
+          correctAnswer: 0,
+          explanation: "Record<K, T> maps a set of keys K to values of type T."
+        }
+      ]
+    }
+  },
+  'Docker': {
+    basic: {
+      title: 'Docker - Containerization Fundamentals & CLI Basics',
+      category: 'DevOps & Cloud',
+      description: 'Foundational assessment evaluating container lifecycle, images, Dockerfiles, and port forwarding.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the primary difference between a Docker Image and a Docker Container?",
+          options: [
+            "An image is a static read-only template, while a container is a running instance of an image.",
+            "An image runs on Windows, a container runs on Linux.",
+            "Images cannot contain code, while containers only contain code.",
+            "There is no difference."
+          ],
+          correctAnswer: 0,
+          explanation: "Docker images are immutable snapshots from which running container instances are spawned."
+        },
+        {
+          id: 2,
+          question: "Which command runs a Docker container in detached background mode?",
+          options: ["docker run -d <image_name>", "docker start --silent", "docker detach <image>", "docker bg <image>"],
+          correctAnswer: 0,
+          explanation: "The `-d` flag runs containers in the background as detached daemon processes."
+        },
+        {
+          id: 3,
+          question: "What does the 'EXPOSE' instruction in a Dockerfile do?",
+          options: [
+            "Documents the network port on which the container listens at runtime.",
+            "Deletes firewall rules on the host computer.",
+            "Publishes container secrets to the public internet.",
+            "Forces CPU overheating shutdown."
+          ],
+          correctAnswer: 0,
+          explanation: "EXPOSE acts as documentation and hints which network ports the container service utilizes."
+        },
+        {
+          id: 4,
+          question: "Which file is used to define multi-container applications and networks declaratively?",
+          options: ["docker-compose.yml", "Dockerfile.all", "package.json", "requirements.txt"],
+          correctAnswer: 0,
+          explanation: "docker-compose.yml defines multi-container environments, volumes, and service links."
+        },
+        {
+          id: 5,
+          question: "What is a Docker Volume primarily used for?",
+          options: [
+            "Persisting data generated by and used by Docker containers across restarts.",
+            "Increasing computer audio volume during builds.",
+            "Compressing video files.",
+            "Increasing RAM capacity."
+          ],
+          correctAnswer: 0,
+          explanation: "Docker Volumes store persistent data outside the writable container layer."
+        }
+      ]
+    },
+    advanced: {
+      title: 'Docker - Advanced Container Hardening & Multi-Stage Builds',
+      category: 'DevOps & Cloud',
+      description: 'Advanced benchmark evaluating multi-stage optimization, cgroups resource limits, non-root security, and distroless runtime.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the main benefit of Multi-Stage Docker builds in enterprise pipelines?",
+          options: [
+            "Separates build tools from runtime assets, drastically reducing image size and attack surface.",
+            "Allows running multiple operating systems simultaneously in one container.",
+            "Disables all container authentication checks.",
+            "Overclocks container CPU cycles."
+          ],
+          correctAnswer: 0,
+          explanation: "Multi-stage builds leave build compilers behind and copy only necessary artifacts into slim production images."
+        },
+        {
+          id: 2,
+          question: "What is the crucial difference between CMD and ENTRYPOINT instructions in a Dockerfile?",
+          options: [
+            "ENTRYPOINT defines the fixed executable, while CMD provides default parameters easily overridden at runtime.",
+            "CMD executes on the host OS while ENTRYPOINT runs in the container.",
+            "ENTRYPOINT cannot accept arguments.",
+            "They are strictly identical."
+          ],
+          correctAnswer: 0,
+          explanation: "ENTRYPOINT configures the primary command, and CMD sets default arguments that can be replaced in `docker run`."
+        },
+        {
+          id: 3,
+          question: "Why should containers avoid running as the default root user in production?",
+          options: [
+            "To prevent container escape attacks from acquiring root privileges on the host kernel.",
+            "Root users make Docker images 50% larger.",
+            "Root users disable network connections.",
+            "Docker cannot start root containers on Linux."
+          ],
+          correctAnswer: 0,
+          explanation: "Least-privilege execution restricts the blast radius if an attacker compromises a running container process."
+        },
+        {
+          id: 4,
+          question: "What is a 'Distroless' container image?",
+          options: [
+            "An image containing only the application and runtime dependencies, omitting package managers, shells, and system utilities.",
+            "An image without an IP address.",
+            "An image with zero lines of code.",
+            "A container stored on an external USB."
+          ],
+          correctAnswer: 0,
+          explanation: "Distroless images strip everything except application binaries, maximizing security and minimizing vulnerabilities."
+        },
+        {
+          id: 5,
+          question: "How do Linux cgroups assist Docker container management?",
+          options: [
+            "They enforce hardware resource quotas (CPU, memory, I/O limits) for container processes.",
+            "They encrypt files on disk.",
+            "They translate English to French in log outputs.",
+            "They manage git version control branches."
+          ],
+          correctAnswer: 0,
+          explanation: "Control Groups (cgroups) constrain and isolate physical resource consumption for containers."
+        }
+      ]
+    }
+  },
+  'Python': {
+    basic: {
+      title: 'Python - Core Syntax & Object-Oriented Fundamentals',
+      category: 'Programming',
+      description: 'Foundational assessment evaluating Python data types, list comprehensions, dictionary operations, and exception handling.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the difference between a List and a Tuple in Python?",
+          options: [
+            "Lists are mutable (can be changed), whereas Tuples are immutable.",
+            "Tuples can only store numbers, lists only store strings.",
+            "Lists cannot be iterated over in a for loop.",
+            "Tuples are automatically saved to disk."
+          ],
+          correctAnswer: 0,
+          explanation: "Lists are dynamic and mutable, whereas tuples cannot be modified once created."
+        },
+        {
+          id: 2,
+          question: "Which keyword is used to handle exceptions gracefully in Python?",
+          options: ["try / except", "catch / throw", "guard / recover", "rescue / ensure"],
+          correctAnswer: 0,
+          explanation: "Python uses `try` blocks paired with `except` clauses to catch runtime exceptions."
+        },
+        {
+          id: 3,
+          question: "What is the output of `[x * 2 for x in [1, 2, 3]]` in Python?",
+          options: ["[2, 4, 6]", "[1, 2, 3, 1, 2, 3]", "[2, 2, 2]", "SyntaxError"],
+          correctAnswer: 0,
+          explanation: "List comprehension evaluates `x * 2` for each element in the input list."
+        },
+        {
+          id: 4,
+          question: "What is the purpose of `__init__` in a Python class?",
+          options: [
+            "It is the constructor method called automatically when creating a new class instance.",
+            "It deletes old class instances from memory.",
+            "It imports external third-party libraries.",
+            "It formats output strings as uppercase."
+          ],
+          correctAnswer: 0,
+          explanation: "__init__ initializes instance attributes upon object instantiation."
+        },
+        {
+          id: 5,
+          question: "Which built-in Python module is standard for serialization into JSON strings?",
+          options: ["json", "serialize", "pickle_only", "xml"],
+          correctAnswer: 0,
+          explanation: "The built-in `json` module provides `json.dumps()` and `json.loads()`."
+        }
+      ]
+    },
+    advanced: {
+      title: 'Python - Advanced Concurrency & Metaprogramming Architecture',
+      category: 'Programming',
+      description: 'Advanced benchmark covering GIL mechanics, asyncio event loops, generators, decorators, and memory profiling.',
+      questions: [
+        {
+          id: 1,
+          question: "What is the Global Interpreter Lock (GIL) in CPython and its primary consequence?",
+          options: [
+            "A mutex that allows only one native thread to execute Python bytecode at a time, impacting CPU-bound multithreading.",
+            "A security lock preventing unauthorized logins.",
+            "A mechanism that forbids asynchronous web servers.",
+            "A tool that encrypts bytecode files."
+          ],
+          correctAnswer: 0,
+          explanation: "The GIL prevents multi-core parallelism for CPU-heavy Python threads in CPython (resolved via multiprocessing or async I/O)."
+        },
+        {
+          id: 2,
+          question: "What is the key difference between `asyncio` cooperative multitasking and threading?",
+          options: [
+            "Asyncio uses a single-threaded event loop where tasks yield control voluntarily using `await`, avoiding thread context switching overhead.",
+            "Asyncio requires 10x more RAM per connection.",
+            "Threading does not require an operating system.",
+            "Asyncio is only compatible with Python 2.7."
+          ],
+          correctAnswer: 0,
+          explanation: "Asyncio schedules coroutines non-preemptively on an event loop, ideal for high-concurrency I/O operations."
+        },
+        {
+          id: 3,
+          question: "What is a Python Generator function and why is it memory efficient?",
+          options: [
+            "A function containing `yield` that produces values lazily on demand without keeping entire sequences in memory.",
+            "A script that writes Python code automatically.",
+            "A function that runs only during computer boot.",
+            "A compiler optimization flag."
+          ],
+          correctAnswer: 0,
+          explanation: "Generators compute values on-the-fly, allowing processing of massive or infinite data streams with O(1) memory."
+        },
+        {
+          id: 4,
+          question: "How do Python Decorators function under the hood?",
+          options: [
+            "They are higher-order functions that take a function as an argument and return a wrapped or modified function.",
+            "They are CSS styling rules for terminal output.",
+            "They convert Python code to HTML.",
+            "They delete function docstrings."
+          ],
+          correctAnswer: 0,
+          explanation: "Decorators wrap callable objects to extend or modify behavior transparently."
+        },
+        {
+          id: 5,
+          question: "What do `*args` and `**kwargs` represent in Python function signatures?",
+          options: [
+            "`*args` accepts arbitrary positional arguments as a tuple, and `**kwargs` accepts arbitrary keyword arguments as a dict.",
+            "Pointers to C memory addresses.",
+            "Required database schema columns.",
+            "Mathematical multiplication and exponentiation operators only."
+          ],
+          correctAnswer: 0,
+          explanation: "`*args` and `**kwargs` allow functions to accept variable numbers of positional and keyword arguments."
+        }
+      ]
+    }
+  }
+};
+
+const DEFAULT_FALLBACK_ASSESSMENTS = [
   {
-    id: 'ml_ai',
-    title: 'Machine Learning & GenAI Fundamentals',
-    category: 'AI & Data Science',
-    targetSkill: 'Machine Learning Fundamentals',
-    currentLevel: 45,
-    requiredLevel: 75,
-    gap: 30,
-    severity: 'Critical Deficit',
-    description: 'Diagnosed high skill deficit. Focuses on deep learning loss functions, attention mechanisms, tokenization, embeddings, and prompt architecture.',
-    questions: [
-      {
-        id: 1,
-        question: "In Transformer architecture, what is the core purpose of the Multi-Head Self-Attention mechanism?",
-        options: [
-          "It allows the model to jointly attend to information from different representation subspaces at different positions.",
-          "It permanently compresses text inputs into static binary integers for disk storage.",
-          "It completely removes the need for backpropagation during model training.",
-          "It enforces deterministic single-word lookups in the training database."
-        ],
-        correctAnswer: 0,
-        explanation: "Multi-Head Attention gives the attention layer multiple representation subspaces, enabling the model to focus on different positions simultaneously."
-      },
-      {
-        id: 2,
-        question: "Why is Temperature used during LLM text generation sampling?",
-        options: [
-          "It controls randomness in probability distribution: lower values make output more deterministic, higher values increase creativity.",
-          "It measures the physical CPU heat generated during inference.",
-          "It determines the token limit allowed per REST API call.",
-          "It forces the GPU memory cache to purge all previous conversation history."
-        ],
-        correctAnswer: 0,
-        explanation: "Temperature scales the logits before softmax: low temperature (e.g. 0.2) concentrates probabilities on top tokens, while high temperature (e.g. 0.8) flattens distribution."
-      },
-      {
-        id: 3,
-        question: "What is the primary difference between Fine-Tuning and Retrieval-Augmented Generation (RAG)?",
-        options: [
-          "Fine-Tuning updates model weights with specialized data, while RAG dynamically injects external knowledge into the context window at runtime.",
-          "Fine-Tuning is only used for image models, while RAG is strictly for text classification.",
-          "RAG trains new weights from scratch, while Fine-Tuning never updates weights.",
-          "There is no difference; they are interchangeable industry synonyms."
-        ],
-        correctAnswer: 0,
-        explanation: "RAG retrieves external vector documents and appends them to prompt context without altering base model weights. Fine-tuning adjusts model parameters."
-      },
-      {
-        id: 4,
-        question: "Which loss function is standard for training multi-class classification neural networks?",
-        options: [
-          "Categorical Cross-Entropy Loss",
-          "Mean Squared Error (MSE)",
-          "Binary Hinge Loss",
-          "Cosine Similarity Linear Loss"
-        ],
-        correctAnswer: 0,
-        explanation: "Categorical Cross-Entropy measures performance of a classification model whose output is a probability value between 0 and 1."
-      },
-      {
-        id: 5,
-        question: "What is 'Vector Embeddings' in modern AI and NLP pipelines?",
-        options: [
-          "High-dimensional numerical array representations capturing semantic meaning and relationships of words or documents.",
-          "HTML SVG icons rendered inside the user interface.",
-          "A method of compressing JPEG images into lossless vectors.",
-          "A security encryption key used for JWT user authentication."
-        ],
-        correctAnswer: 0,
-        explanation: "Embeddings map semantic concepts into dense numerical vectors where semantically similar texts are situated close together in vector space."
-      }
-    ]
+    id: 'fullstack_diag',
+    title: 'Full-Stack Web Engineering Diagnostic',
+    category: 'Diagnostic Assessment',
+    targetSkill: 'Web Engineering',
+    currentLevel: 0,
+    requiredLevel: 80,
+    gap: 80,
+    severity: 'Diagnostic Assessment',
+    description: 'General diagnostic assessment evaluating fundamental frontend, backend, state management, and modern API communication.',
+    questions: SKILL_QUESTION_DATABASE['React.js'].basic.questions
   },
   {
-    id: 'docker_devops',
-    title: 'Docker Containerization & CI/CD Pipelines',
-    category: 'DevOps & Infrastructure',
-    targetSkill: 'Docker & CI/CD Pipelines',
-    currentLevel: 62,
-    requiredLevel: 85,
-    gap: 23,
-    severity: 'High Deficit',
-    description: 'Diagnosed moderate competency deficit. Focuses on multi-stage Docker builds, image layering, container security isolation, and GitHub Actions pipelines.',
-    questions: [
-      {
-        id: 1,
-        question: "What is the primary advantage of utilizing Multi-Stage Docker builds in production deployments?",
-        options: [
-          "Separating the build environment from runtime, resulting in vastly smaller and more secure production images.",
-          "Allowing Docker containers to run without an underlying Linux kernel.",
-          "Automatically increasing server CPU clock speeds during compilation.",
-          "Bypassing all container networking security rules."
-        ],
-        correctAnswer: 0,
-        explanation: "Multi-stage builds leave compiler tools and intermediary build artifacts behind, shipping only the final binary or distribution assets."
-      },
-      {
-        id: 2,
-        question: "In Docker, what is the key difference between the CMD and ENTRYPOINT instructions in a Dockerfile?",
-        options: [
-          "ENTRYPOINT sets the default executable, while CMD provides default arguments that can be easily overridden at runtime.",
-          "CMD runs on the host OS, while ENTRYPOINT runs inside the container.",
-          "ENTRYPOINT cannot accept arguments, whereas CMD requires at least three flags.",
-          "They are strictly identical in all Docker runtime versions."
-        ],
-        correctAnswer: 0,
-        explanation: "ENTRYPOINT defines the container entrypoint executable, while CMD defines default parameters that can be overridden via `docker run` args."
-      },
-      {
-        id: 3,
-        question: "Which practice is essential for hardening container security in production environments?",
-        options: [
-          "Running the container as a non-root dedicated user with least-privilege permissions.",
-          "Granting privileged `--privileged=true` access to every microservice container.",
-          "Disabling container TLS certificates to reduce CPU encryption overhead.",
-          "Storing database passwords inside plaintext Dockerfile ENV commands."
-        ],
-        correctAnswer: 0,
-        explanation: "Running as non-root (e.g. `USER appuser`) prevents container escape vulnerabilities from gaining root privileges on the host kernel."
-      },
-      {
-        id: 4,
-        question: "In CI/CD automation pipelines, what is 'Build Artifact Caching' used for?",
-        options: [
-          "Reusing unchanged dependencies (e.g., node_modules, pip wheels) across pipeline runs to drastically speed up execution.",
-          "Saving runtime log files to disk indefinitely without quota limits.",
-          "Replacing unit tests with static code comments.",
-          "Overriding production database migrations automatically."
-        ],
-        correctAnswer: 0,
-        explanation: "Caching dependencies against lockfile checksums prevents re-downloading packages on every build, reducing CI run times significantly."
-      },
-      {
-        id: 5,
-        question: "What is the purpose of Docker Container Healthchecks (`HEALTHCHECK`)?",
-        options: [
-          "To allow orchestrators like Kubernetes or Docker Compose to detect deadlocks or unhealthy states and restart containers automatically.",
-          "To test the host motherboard battery level.",
-          "To scan external hard drives for hardware bad sectors.",
-          "To auto-generate unit tests from JavaScript source code."
-        ],
-        correctAnswer: 0,
-        explanation: "HEALTHCHECK periodically verifies container endpoints, enabling orchestration engines to route traffic away from or restart unresponsive instances."
-      }
-    ]
-  },
-  {
-    id: 'aws_cloud',
-    title: 'AWS Cloud Architecture & Microservices',
-    category: 'Cloud Architecture',
-    targetSkill: 'AWS Cloud Infrastructure',
-    currentLevel: 68,
-    requiredLevel: 85,
-    gap: 17,
-    severity: 'Moderate Deficit',
-    description: 'Diagnosed moderate competency gap. Focuses on VPC networking, IAM least-privilege security, S3 storage lifecycles, and serverless Lambda scaling.',
-    questions: [
-      {
-        id: 1,
-        question: "In AWS VPC architecture, how do EC2 instances in a Private Subnet securely communicate with the public Internet for software updates?",
-        options: [
-          "Through a NAT Gateway located in a Public Subnet with an Internet Gateway route.",
-          "By attaching an Elastic IP directly to every private instance.",
-          "By disabling the VPC Network Access Control List (NACL).",
-          "By routing traffic through the IAM metadata server."
-        ],
-        correctAnswer: 0,
-        explanation: "Instances in private subnets use a NAT (Network Address Translation) Gateway in a public subnet for outbound-only Internet access while preventing inbound connections."
-      },
-      {
-        id: 2,
-        question: "What is the AWS security best practice for granting microservice applications access to AWS resources (like S3 or DynamoDB)?",
-        options: [
-          "Attaching an IAM Role with least-privilege policies directly to the service or ECS task.",
-          "Hardcoding root AWS Access Keys in environment variables.",
-          "Setting all S3 buckets to public read/write permissions.",
-          "Sharing one administrative API key across all backend services."
-        ],
-        correctAnswer: 0,
-        explanation: "IAM Roles provide temporary, automatically rotated security credentials with strict least-privilege policies."
-      },
-      {
-        id: 3,
-        question: "What causes a 'Cold Start' in serverless AWS Lambda functions, and how can it be mitigated?",
-        options: [
-          "The latency of provisioning a new execution environment container; mitigated using Provisioned Concurrency.",
-          "Server overheating in the AWS data center; mitigated with liquid cooling.",
-          "A syntax error in python code; mitigated by deleting unit tests.",
-          "Lack of disk space on the client browser; mitigated by clearing cookies."
-        ],
-        correctAnswer: 0,
-        explanation: "Cold starts happen when a new container is instantiated to handle a request. Provisioned Concurrency keeps pre-warmed execution environments ready."
-      },
-      {
-        id: 4,
-        question: "Which AWS storage class is best suited for archiving compliance data that is accessed less than once a year and requires low-cost storage?",
-        options: [
-          "S3 Glacier Flexible Retrieval or S3 Glacier Deep Archive",
-          "S3 Standard Multi-AZ",
-          "EFS Provisioned Throughput",
-          "EBS io2 Block Storage"
-        ],
-        correctAnswer: 0,
-        explanation: "S3 Glacier Deep Archive is AWS's lowest-cost storage class, designed for long-term data archiving with retrieval times within hours."
-      },
-      {
-        id: 5,
-        question: "How does an Application Load Balancer (ALB) handle path-based routing in microservice architectures?",
-        options: [
-          "It routes requests to different target groups (e.g. /api/users, /api/orders) based on URL paths in HTTP headers.",
-          "It requires DNS records to be updated for every single HTTP request.",
-          "It randomly distributes requests without examining HTTP payload or headers.",
-          "It only works with static HTML files stored in S3 buckets."
-        ],
-        correctAnswer: 0,
-        explanation: "ALB operates at Layer 7 (Application Layer) and inspects HTTP paths, host headers, and query parameters to route requests to specific service target groups."
-      }
-    ]
-  },
-  {
-    id: 'sql_database',
-    title: 'PostgreSQL & Database Query Optimization',
-    category: 'Database & Storage',
-    targetSkill: 'PostgreSQL & SQL',
-    currentLevel: 75,
-    requiredLevel: 90,
-    gap: 15,
-    severity: 'Refresher Required',
-    description: 'Diagnosed gap in query optimization. Focuses on B-Tree vs GIN indexing, EXPLAIN ANALYZE query planning, ACID transactions, and N+1 query resolution.',
-    questions: [
-      {
-        id: 1,
-        question: "When should a GIN (Generalized Inverted Index) be used in PostgreSQL instead of a standard B-Tree index?",
-        options: [
-          "When indexing composite values like JSONB documents, full-text search vectors, or array data types.",
-          "When indexing standard single integer primary keys with sequential increments.",
-          "When storing short VARCHAR usernames with exact equality checks.",
-          "GIN indexes should never be used because they disable database queries."
-        ],
-        correctAnswer: 0,
-        explanation: "GIN indexes are designed for handling composite items where multiple elements occur within a single column value (e.g. JSONB keys or arrays)."
-      },
-      {
-        id: 2,
-        question: "What is the 'N+1 Query Problem' in ORM database access and how is it resolved in Django/SQLAlchemy?",
-        options: [
-          "Executing 1 query for a parent list and N subsequent queries for related children; resolved using `select_related` or `prefetch_related` (Eager Loading).",
-          "A mathematical rounding error in floating-point SQL calculations.",
-          "A bug where PostgreSQL cannot insert more than N rows per table.",
-          "A network timeout that occurs when exactly N+1 users log in at the same time."
-        ],
-        correctAnswer: 0,
-        explanation: "The N+1 problem occurs when an ORM issues individual queries inside a loop. Eager loading combines queries using SQL JOINs or batched IN clauses."
-      },
-      {
-        id: 3,
-        question: "In PostgreSQL, what is the crucial difference between `EXPLAIN` and `EXPLAIN ANALYZE`?",
-        options: [
-          "`EXPLAIN` shows the query planner's estimated cost without running it, while `EXPLAIN ANALYZE` actually executes the query and returns real execution times.",
-          "`EXPLAIN ANALYZE` modifies table schemas automatically.",
-          "`EXPLAIN` deletes the index before running.",
-          "There is no difference; both are aliases for table descriptions."
-        ],
-        correctAnswer: 0,
-        explanation: "`EXPLAIN ANALYZE` executes the statement and displays real planning and execution times alongside the cost estimates."
-      },
-      {
-        id: 4,
-        question: "What does the 'I' (Isolation) in ACID transaction properties ensure in relational databases?",
-        options: [
-          "Concurrent transactions execute without interfering with one another or reading intermediate uncommitted states.",
-          "The database must run on isolated physical hardware disconnected from the Internet.",
-          "All SQL columns must have independent unique constraints.",
-          "Only one user can connect to the database per hour."
-        ],
-        correctAnswer: 0,
-        explanation: "Isolation ensures that concurrent transactions operate as if they executed sequentially, avoiding dirty reads and race conditions."
-      },
-      {
-        id: 5,
-        question: "Why should database connection pooling (e.g. PgBouncer) be used in high-concurrency web applications?",
-        options: [
-          "To reuse active database connection processes and avoid the heavy overhead of creating/destroying PostgreSQL backend processes per HTTP request.",
-          "To bypass password authentication for faster logins.",
-          "To automatically truncate tables that exceed 100 rows.",
-          "To convert SQL queries into client-side CSS."
-        ],
-        correctAnswer: 0,
-        explanation: "PostgreSQL forks a backend process per connection. Connection poolers keep open pools of reusable connections, handling thousands of concurrent requests."
-      }
-    ]
-  },
-  {
-    id: 'react_arch',
-    title: 'Advanced React.js & Modern Frontend Architecture',
-    category: 'Frontend Engineering',
-    targetSkill: 'React.js & Frontend',
-    currentLevel: 88,
-    requiredLevel: 95,
-    gap: 7,
-    severity: 'Senior Benchmark',
-    description: 'Senior competency benchmark. Focuses on virtual DOM diffing heuristics, cache invalidation, React 19 async primitives, and Suspense concurrency.',
-    questions: [
-      {
-        id: 1,
-        question: "What is the primary benefit of TypeScript's 'unknown' type over 'any'?",
-        options: [
-          "It forces type narrowing/checking before performing any operations or method calls.",
-          "It automatically converts string variables to numbers at runtime.",
-          "It completely disables type checking for performance gains.",
-          "It can only store primitive numerical values."
-        ],
-        correctAnswer: 0,
-        explanation: "'unknown' is the type-safe counterpart of 'any'. Anything is assignable to 'unknown', but 'unknown' is not assignable to anything without a type assertion or type guard."
-      },
-      {
-        id: 2,
-        question: "In modern React, what is the primary purpose of the 'use' hook?",
-        options: [
-          "To read asynchronous resources like Promises or Context dynamically inside render functions.",
-          "To completely replace useEffect for browser DOM updates.",
-          "To initialize Redux toolkit slices inside class components.",
-          "To style components dynamically using CSS-in-JS primitives."
-        ],
-        correctAnswer: 0,
-        explanation: "The 'use' hook allows reading values from Promises or Context directly during component render without blocking."
-      },
-      {
-        id: 3,
-        question: "Which React hook should be used to cache expensive calculations between re-renders?",
-        options: [
-          "useMemo",
-          "useCallback",
-          "useRef",
-          "useImperativeHandle"
-        ],
-        correctAnswer: 0,
-        explanation: "useMemo caches the result of a calculation between renders unless dependencies change."
-      },
-      {
-        id: 4,
-        question: "How does React's Virtual DOM diffing algorithm optimize DOM updates?",
-        options: [
-          "By comparing fiber trees and batching minimal DOM mutations.",
-          "By saving HTML snapshots directly into browser localStorage.",
-          "By running WebAssembly scripts on the server.",
-          "By bypassing layout calculations completely."
-        ],
-        correctAnswer: 0,
-        explanation: "React compares Virtual DOM nodes using heuristic diffing algorithms and applies only the required patches to the real DOM."
-      },
-      {
-        id: 5,
-        question: "What happens when a component throws a Promise inside a <Suspense> boundary?",
-        options: [
-          "React suspends rendering and displays the fallback UI until the Promise resolves.",
-          "The browser throws an unhandled error and halts JavaScript execution.",
-          "The page reloads immediately.",
-          "All state variables are reset to null."
-        ],
-        correctAnswer: 0,
-        explanation: "Suspense catches thrown promises, pauses rendering of that subtree, and displays fallback UI until the promise resolves."
-      }
-    ]
+    id: 'python_diag',
+    title: 'Python & Backend Programming Diagnostic',
+    category: 'Diagnostic Assessment',
+    targetSkill: 'Python Programming',
+    currentLevel: 0,
+    requiredLevel: 80,
+    gap: 80,
+    severity: 'Diagnostic Assessment',
+    description: 'Introductory diagnostic evaluating Python syntax, data structures, error handling, and server logic.',
+    questions: SKILL_QUESTION_DATABASE['Python'].basic.questions
   }
 ];
 
@@ -396,27 +553,169 @@ const SkillAssessment = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Selected deficit assessment
-  const [selectedDomain, setSelectedDomain] = useState(DOMAIN_ASSESSMENTS[0]);
+  // Dynamically derive assessments based on user's actual skills
+  const [assessmentsList, setAssessmentsList] = useState(DEFAULT_FALLBACK_ASSESSMENTS);
+  const [selectedDomain, setSelectedDomain] = useState(DEFAULT_FALLBACK_ASSESSMENTS[0]);
   const [isStarted, setIsStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes = 900 seconds
+  const [timeLeft, setTimeLeft] = useState(900);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [scoreResult, setScoreResult] = useState(null);
 
-  // Active question set
-  const questions = selectedDomain.questions || [];
+  // Active questions for selected domain
+  const questions = selectedDomain?.questions || [];
 
-  // Check if routed with a pre-selected domain
+  // Generate dynamic assessments from active user's skills
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const domainParam = params.get('domain');
-    if (domainParam) {
-      const found = DOMAIN_ASSESSMENTS.find(d => d.id === domainParam);
-      if (found) setSelectedDomain(found);
+    try {
+      const savedSkills = getUserData('skills', null);
+      const resumeSkills = getUserData('resume_skills', null);
+      let skills = savedSkills || resumeSkills || [];
+
+      if (skills && skills.length > 0) {
+        const dynamicList = [];
+
+        skills.forEach((skill, index) => {
+          const sName = skill.name || 'Skill';
+          const prof = skill.proficiencyPercentage || 70;
+          const isWeak = prof < 70;
+
+          // Check if we have specialized questions for this skill
+          const matchedKey = Object.keys(SKILL_QUESTION_DATABASE).find(k => sName.toLowerCase().includes(k.toLowerCase()));
+          const bank = matchedKey ? SKILL_QUESTION_DATABASE[matchedKey] : null;
+
+          let qSet = [];
+          let aTitle = '';
+          let aDesc = '';
+
+          if (bank) {
+            const tierData = isWeak ? bank.basic : bank.advanced;
+            qSet = tierData.questions;
+            aTitle = tierData.title;
+            aDesc = tierData.description;
+          } else {
+            // General tailored questions for any custom skill
+            aTitle = isWeak 
+              ? `${sName} - Foundational & Core Concepts Assessment`
+              : `${sName} - Advanced Mastery & Architecture Benchmark`;
+            aDesc = isWeak
+              ? `Diagnosed foundational gap in ${sName}. Focuses on syntax, principles, core usage, and basic workflow implementation.`
+              : `High-proficiency benchmark in ${sName}. Focuses on optimization, scalability, system architecture, and deep patterns.`;
+
+            qSet = [
+              {
+                id: 1,
+                question: isWeak 
+                  ? `What is the primary industry use case of ${sName}?` 
+                  : `How do you optimize system performance and latency when utilizing ${sName} in production?`,
+                options: isWeak ? [
+                  `Building reliable, scalable components and enterprise solutions with ${sName}.`,
+                  `Replacing all database storage with plaintext files.`,
+                  `Running hardware firmware updates.`,
+                  `Disabling user authentication.`
+                ] : [
+                  `Implementing intelligent caching, profiling bottlenecks, and optimizing resource pipelines in ${sName}.`,
+                  `Disabling all error logging.`,
+                  `Increasing server CPU without code changes.`,
+                  `Bypassing data validation layers.`
+                ],
+                correctAnswer: 0,
+                explanation: `Understanding key concepts and architecture of ${sName} is critical for engineering excellence.`
+              },
+              {
+                id: 2,
+                question: isWeak
+                  ? `Which core practice is essential when writing code or configurations for ${sName}?`
+                  : `What is the most common architectural vulnerability or bottleneck associated with ${sName}?`,
+                options: isWeak ? [
+                  `Maintaining clean modular structure, clear documentation, and unit tests.`,
+                  `Storing unencrypted passwords in source code.`,
+                  `Writing all logic inside a single monolithic file.`,
+                  `Ignoring compiler or linter warnings.`
+                ] : [
+                  `Resource contention, unindexed lookups, or unhandled concurrency race conditions.`,
+                  `Having too many unit tests.`,
+                  `Using modern semantic variable naming.`,
+                  `Utilizing Git version control.`
+                ],
+                correctAnswer: 0,
+                explanation: `Adhering to standard best practices in ${sName} ensures stability and prevents production regressions.`
+              },
+              {
+                id: 3,
+                question: isWeak
+                  ? `How are errors and exceptions properly handled in ${sName}?`
+                  : `How do you ensure zero-downtime scalability when deploying ${sName} microservices?`,
+                options: isWeak ? [
+                  `Using structured try/catch or result types with meaningful diagnostic logging.`,
+                  `Suppressing all error messages completely.`,
+                  `Re-booting the computer automatically.`,
+                  `Deleting the log directory.`
+                ] : [
+                  `Implementing health checks, horizontal autoscaling, and graceful connection draining.`,
+                  `Stopping all traffic during updates.`,
+                  `Deploying code without staging verification.`,
+                  `Hardcoding database IP addresses.`
+                ],
+                correctAnswer: 0,
+                explanation: `Proper architecture and error boundaries ensure resilient deployments.`
+              },
+              {
+                id: 4,
+                question: `What is a recommended security best practice when deploying ${sName}?`,
+                options: [
+                  `Enforcing least-privilege permissions, secret management, and input sanitization.`,
+                  `Sharing administrative root credentials publicly.`,
+                  `Disabling HTTPS encryption.`,
+                  `Accepting unvalidated user input directly.`
+                ],
+                correctAnswer: 0,
+                explanation: `Security hardening is fundamental across all software components.`
+              },
+              {
+                id: 5,
+                question: `What is the most effective approach for testing ${sName} implementations?`,
+                options: [
+                  `Automated CI/CD test suites combining unit, integration, and end-to-end assertions.`,
+                  `Testing only in production after release.`,
+                  `Skipping automated tests to write code faster.`,
+                  `Relying solely on manual clicking.`
+                ],
+                correctAnswer: 0,
+                explanation: `Automated test coverage validates behavior and prevents regressions in enterprise applications.`
+              }
+            ];
+          }
+
+          const gapAmount = isWeak ? Math.max(20, 85 - prof) : Math.max(5, 95 - prof);
+          dynamicList.push({
+            id: `dyn_${index}_${sName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            title: aTitle,
+            category: skill.category || 'Engineering',
+            targetSkill: sName,
+            currentLevel: prof,
+            requiredLevel: isWeak ? 85 : 95,
+            gap: gapAmount,
+            severity: isWeak ? 'Foundational Deficit' : 'Advanced Benchmark',
+            description: aDesc,
+            questions: qSet
+          });
+        });
+
+        // Sort weak assessments first
+        dynamicList.sort((a, b) => b.gap - a.gap);
+        setAssessmentsList(dynamicList);
+        setSelectedDomain(dynamicList[0]);
+      } else {
+        // Default benchmarks available for new users
+        setAssessmentsList(DEFAULT_FALLBACK_ASSESSMENTS);
+        setSelectedDomain(DEFAULT_FALLBACK_ASSESSMENTS[0]);
+      }
+    } catch (e) {
+      console.log('Error initializing dynamic assessments:', e);
     }
-  }, [location.search]);
+  }, []);
 
   // Timer Countdown Effect
   useEffect(() => {
@@ -460,37 +759,80 @@ const SkillAssessment = () => {
       }
     });
 
-    const percentage = Math.round((correctCount / questions.length) * 100);
+    const totalQ = Math.max(1, questions.length);
+    const percentage = Math.round((correctCount / totalQ) * 100);
     const passed = percentage >= 80;
 
     // Calculate updated skill rating
-    const updatedProficiency = passed ? Math.max(selectedDomain.currentLevel + 25, percentage) : selectedDomain.currentLevel + 5;
+    const currentBase = selectedDomain.currentLevel || 50;
+    const updatedProficiency = passed ? Math.max(currentBase + 25, percentage) : currentBase + 5;
 
-    // Update skill in custom_user_skills localStorage
+    // Update skill in user's isolated storage
     try {
-      const savedStr = localStorage.getItem('custom_user_skills');
-      if (savedStr) {
-        const skillsList = JSON.parse(savedStr);
-        const updatedSkills = skillsList.map(sk => {
-          if (sk.name.toLowerCase().includes(selectedDomain.targetSkill.toLowerCase()) || 
-              selectedDomain.targetSkill.toLowerCase().includes(sk.name.toLowerCase())) {
-            return {
-              ...sk,
-              proficiencyPercentage: updatedProficiency,
-              level: updatedProficiency >= 80 ? 'Advanced' : 'Intermediate',
-              verified: true,
-            };
-          }
-          return sk;
+      const skillsList = getUserData('skills', []) || [];
+      let found = false;
+      const updatedSkills = skillsList.map(sk => {
+        if (sk.name.toLowerCase().includes(selectedDomain.targetSkill.toLowerCase()) || 
+            selectedDomain.targetSkill.toLowerCase().includes(sk.name.toLowerCase())) {
+          found = true;
+          return {
+            ...sk,
+            proficiencyPercentage: updatedProficiency,
+            level: updatedProficiency >= 80 ? 'Advanced' : 'Intermediate',
+            verified: true,
+          };
+        }
+        return sk;
+      });
+
+      if (!found) {
+        updatedSkills.push({
+          id: `sk_${Date.now()}`,
+          name: selectedDomain.targetSkill,
+          category: selectedDomain.category || 'Engineering',
+          proficiencyPercentage: updatedProficiency,
+          level: updatedProficiency >= 80 ? 'Advanced' : 'Intermediate',
+          verified: true
         });
-        localStorage.setItem('custom_user_skills', JSON.stringify(updatedSkills));
-        window.dispatchEvent(new Event('skillsUpdated'));
       }
+
+      setUserData('skills', updatedSkills);
+      window.dispatchEvent(new Event('skillsUpdated'));
     } catch (e) {
       console.error('Error updating skill score:', e);
     }
 
-    // Try backend assessment submission
+    // Save to user's isolated assessment results history
+    try {
+      const existingResults = getUserData('assessment_results', []) || [];
+      const newRecord = {
+        id: `eval_${Date.now()}`,
+        domain: selectedDomain.id,
+        title: selectedDomain.title,
+        targetSkill: selectedDomain.targetSkill,
+        score: percentage,
+        passed,
+        date: new Date().toISOString().split('T')[0]
+      };
+      const updatedResults = [newRecord, ...existingResults];
+      setUserData('assessment_results', updatedResults);
+      window.dispatchEvent(new Event('assessmentsUpdated'));
+
+      // Real-time notification for user
+      addActiveUserNotification({
+        title: passed ? `🎉 Skill Assessment Passed (${percentage}%)` : `📚 Assessment Completed (${percentage}%)`,
+        message: `You completed the "${selectedDomain.targetSkill}" assessment with a score of ${percentage}%. Your proficiency level is now ${updatedProficiency}%.`,
+        category: 'Skill Assessment',
+        type: 'assessment',
+        severity: passed ? 'success' : 'info',
+        actionLabel: 'View Results',
+        link: ROUTES.SKILL_ASSESSMENT
+      });
+    } catch (err) {
+      console.log('Local assessment scoring history save note:', err);
+    }
+
+    // Try backend assessment submission if available
     try {
       await assessmentService.submitAssessment({
         domain: selectedDomain.id,
@@ -499,7 +841,7 @@ const SkillAssessment = () => {
         score: percentage,
       });
     } catch (err) {
-      console.log('Local assessment scoring fallback:', err);
+      console.log('Backend assessment sync fallback:', err);
     }
 
     setScoreResult({
@@ -508,7 +850,7 @@ const SkillAssessment = () => {
       total: questions.length,
       passed,
       targetSkill: selectedDomain.targetSkill,
-      oldScore: selectedDomain.currentLevel,
+      oldScore: currentBase,
       newScore: updatedProficiency,
     });
     setIsSubmitted(true);
@@ -529,10 +871,10 @@ const SkillAssessment = () => {
     return (
       <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-fade-in">
         <div className="text-center p-8 bg-white dark:bg-[#1a2336] text-slate-900 dark:text-white border border-slate-200 dark:border-[#2b3854] rounded-3xl shadow-xl space-y-6">
-          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center bg-gradient-to-tr from-blue-500 to-teal-400 p-1 shadow-lg shadow-teal-500/20">
+          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center bg-gradient-to-tr from-purple-600 to-violet-500 p-1 shadow-lg shadow-purple-500/20">
             <div className="w-full h-full rounded-full bg-slate-100 dark:bg-[#0f1524] flex items-center justify-center">
               {scoreResult.passed ? (
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 dark:text-emerald-400" />
+                <CheckCircle2 className="w-10 h-10 text-purple-500 dark:text-purple-400" />
               ) : (
                 <AlertCircle className="w-10 h-10 text-amber-500 dark:text-amber-400" />
               )}
@@ -543,14 +885,14 @@ const SkillAssessment = () => {
             <span
               className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                 scoreResult.passed
-                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                  ? 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30'
                   : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30'
               }`}
             >
-              {scoreResult.passed ? 'TARGETED DEFICIT RESOLVED (PASSED)' : 'FURTHER STUDY REQUIRED'}
+              {scoreResult.passed ? 'TARGETED DEFICIT RESOLVED (PASSED)' : 'FURTHER STUDY RECOMMENDED'}
             </span>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white mt-3">
-              Assessment Score: <span className="text-blue-600 dark:text-teal-400">{scoreResult.score}%</span>
+              Assessment Score: <span className="text-purple-600 dark:text-purple-400">{scoreResult.score}%</span>
             </h2>
             <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">
               Correct: {scoreResult.correctCount} / {scoreResult.total} Questions in <strong className="text-slate-900 dark:text-white">{selectedDomain.title}</strong>
@@ -565,7 +907,7 @@ const SkillAssessment = () => {
                 <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">{scoreResult.targetSkill}</h4>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                   {scoreResult.oldScore}% → <span className="text-base font-black">{scoreResult.newScore}%</span>
                 </span>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Proficiency Updated</p>
@@ -574,7 +916,7 @@ const SkillAssessment = () => {
 
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-500 to-blue-600 rounded-full transition-all duration-700"
+                className="h-full bg-gradient-to-r from-purple-600 to-violet-500 rounded-full transition-all duration-700"
                 style={{ width: `${scoreResult.newScore}%` }}
               />
             </div>
@@ -588,13 +930,13 @@ const SkillAssessment = () => {
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase">Skill Gap Reduction</p>
-              <p className="text-base font-black text-emerald-600 dark:text-emerald-400">
+              <p className="text-base font-black text-purple-600 dark:text-purple-400">
                 {scoreResult.passed ? `-${selectedDomain.gap}% Gap` : '-5% Partial'}
               </p>
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase">New Competency Tier</p>
-              <p className="text-base font-black text-blue-600 dark:text-teal-400">
+              <p className="text-base font-black text-purple-600 dark:text-purple-400">
                 {scoreResult.newScore >= 80 ? 'Advanced' : 'Intermediate'}
               </p>
             </div>
@@ -609,7 +951,7 @@ const SkillAssessment = () => {
             <Button
               variant="primary"
               onClick={() => navigate(ROUTES.SKILL_GAP_RESULTS)}
-              className="gap-2 bg-gradient-to-r from-blue-600 to-teal-500 shadow-md shadow-teal-500/20"
+              className="gap-2 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20"
             >
               <Sparkles className="w-4 h-4" />
               View Updated Skill Gaps
@@ -630,8 +972,8 @@ const SkillAssessment = () => {
         {/* Top Assessment Navigation & Timer Bar */}
         <div className="flex items-center justify-between p-4 bg-white dark:bg-[#1a2336] text-slate-900 dark:text-white border border-slate-200 dark:border-[#2b3854] rounded-2xl shadow-sm">
           <div>
-            <span className="text-[10px] font-black tracking-wider uppercase text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-              <Target className="w-3 h-3 text-rose-500" />
+            <span className="text-[10px] font-black tracking-wider uppercase text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+              <Target className="w-3 h-3 text-purple-500" />
               {selectedDomain.category} • {selectedDomain.title}
             </span>
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
@@ -650,7 +992,7 @@ const SkillAssessment = () => {
         {/* Progress Bar */}
         <div className="w-full bg-slate-200 dark:bg-[#0f1524] rounded-full h-2 overflow-hidden border border-slate-200 dark:border-[#2b3854]">
           <div
-            className="bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-400 h-full rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-purple-600 to-violet-400 h-full rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
           ></div>
         </div>
@@ -658,7 +1000,7 @@ const SkillAssessment = () => {
         {/* Question Box */}
         <div className="p-6 md:p-8 bg-white dark:bg-[#1a2336] text-slate-900 dark:text-white border border-slate-200 dark:border-[#2b3854] rounded-3xl shadow-xl space-y-6">
           <div className="flex items-start gap-3">
-            <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-black text-xs shrink-0">
+            <span className="p-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-black text-xs shrink-0">
               Q{currentIndex + 1}
             </span>
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white leading-snug">
@@ -675,14 +1017,14 @@ const SkillAssessment = () => {
                   onClick={() => handleSelectOption(currentQ.id, idx)}
                   className={`flex items-start gap-3.5 p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-600/20 ring-2 ring-blue-500/40 dark:ring-blue-500/50'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-600/20 ring-2 ring-purple-500/40 dark:ring-purple-500/50'
                       : 'border-slate-200 dark:border-[#2b3854] bg-slate-50/50 dark:bg-[#0f1524]/60 hover:bg-slate-100 dark:hover:bg-[#0f1524]'
                   }`}
                 >
                   <div
                     className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-600 text-white'
+                        ? 'border-purple-500 bg-purple-600 text-white'
                         : 'border-slate-300 dark:border-slate-500'
                     }`}
                   >
@@ -710,7 +1052,7 @@ const SkillAssessment = () => {
               <Button
                 variant="primary"
                 onClick={handleFinalSubmit}
-                className="bg-gradient-to-r from-blue-600 to-teal-500 shadow-md shadow-teal-500/20"
+                className="bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20"
               >
                 Submit Assessment
               </Button>
@@ -718,7 +1060,7 @@ const SkillAssessment = () => {
               <Button
                 variant="primary"
                 onClick={() => setCurrentIndex((prev) => prev + 1)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 Next Question
               </Button>
@@ -737,26 +1079,26 @@ const SkillAssessment = () => {
         <PageHeader
           title={
             <span className="flex items-center gap-2.5 text-slate-900 dark:text-white font-black text-2xl">
-              <CheckSquare className="w-7 h-7 text-blue-600 dark:text-blue-400 stroke-[2.2]" />
+              <CheckSquare className="w-7 h-7 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
               AI Adaptive Skill Assessments
             </span>
           }
-          subtitle="Targeted benchmark assessments automatically generated based on your diagnosed skill gaps and weak competency areas."
+          subtitle="Targeted benchmark assessments automatically generated based on your diagnosed skill gaps and resume competency areas."
         />
       </div>
 
       {/* Mandatory Assessment Policy Alert */}
-      <Card className="p-5 border-l-4 border-amber-500 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 shadow-sm">
+      <Card className="p-5 border-l-4 border-purple-500 bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 shadow-sm">
         <div className="flex items-start gap-3.5">
-          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-            <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
+          <div className="p-2 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5">
+            <Zap className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div className="space-y-1">
-            <h4 className="font-extrabold text-sm text-amber-900 dark:text-amber-200">
-              Mandatory Assessment Policy: Target Assigned Weak Areas
+            <h4 className="font-extrabold text-sm text-purple-950 dark:text-purple-200">
+              AI Dynamic Adaptive Benchmark
             </h4>
-            <p className="text-xs text-amber-800 dark:text-amber-300/90 leading-relaxed">
-              To improve your organization readiness score, please complete assessments <strong>specifically targeting your identified competency gaps</strong> rather than selecting arbitrary topics. Select an assigned deficit assessment below to begin.
+            <p className="text-xs text-purple-900 dark:text-purple-300/90 leading-relaxed">
+              Assessments are dynamically adapted to your skill inventory: <strong>Basics / Foundational tests</strong> are generated for emerging skills (&lt;70%), and <strong>Advanced Architecture tests</strong> are generated for high-proficiency skills (≥70%).
             </p>
           </div>
         </div>
@@ -766,25 +1108,24 @@ const SkillAssessment = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-rose-500" />
-            Assigned Competency Gap Assessments ({DOMAIN_ASSESSMENTS.length})
+            <Target className="w-5 h-5 text-purple-500" />
+            {assessmentsList[0]?.category === 'Diagnostic Assessment' ? 'Diagnostic Technical Assessments' : 'Resume Competency Assessments'} ({assessmentsList.length})
           </h3>
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Sorted by Skill Gap Priority
+            {assessmentsList[0]?.category === 'Diagnostic Assessment' ? 'Introductory Diagnostic Benchmarks' : 'Sorted by Skill Gap Priority'}
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {DOMAIN_ASSESSMENTS.map((domain) => {
+          {assessmentsList.map((domain) => {
             const severityColor = 
-              domain.gap >= 25 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' :
-              domain.gap >= 15 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
-              'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+              domain.gap >= 20 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
+              'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
 
             return (
               <Card
                 key={domain.id}
-                className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] hover:border-blue-500/60 dark:hover:border-blue-500/60 transition-all flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
+                className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] hover:border-purple-500/60 dark:hover:border-purple-500/60 transition-all flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -792,13 +1133,13 @@ const SkillAssessment = () => {
                       <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {domain.category}
                       </span>
-                      <h4 className="font-extrabold text-base text-slate-900 dark:text-white mt-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <h4 className="font-extrabold text-base text-slate-900 dark:text-white mt-1.5 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                         {domain.title}
                       </h4>
                     </div>
 
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border uppercase tracking-wider shrink-0 ${severityColor}`}>
-                      {domain.severity} (-{domain.gap}%)
+                      {domain.severity}
                     </span>
                   </div>
 
@@ -810,15 +1151,15 @@ const SkillAssessment = () => {
                   <div className="space-y-1.5 pt-2">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span className="text-slate-500 dark:text-slate-400">
-                        Current: <strong className="text-rose-600 dark:text-rose-400">{domain.currentLevel}%</strong>
+                        Current: <strong className="text-purple-600 dark:text-purple-400">{domain.currentLevel}%</strong>
                       </span>
-                      <span className="text-emerald-600 dark:text-emerald-400">
+                      <span className="text-purple-600 dark:text-purple-400">
                         Target: <strong className="text-slate-900 dark:text-white">{domain.requiredLevel}%</strong>
                       </span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
                       <div
-                        className="h-full bg-gradient-to-r from-rose-500 via-amber-500 to-teal-500 rounded-full"
+                        className="h-full bg-gradient-to-r from-purple-600 to-violet-400 rounded-full"
                         style={{ width: `${domain.currentLevel}%` }}
                       />
                     </div>
@@ -829,7 +1170,7 @@ const SkillAssessment = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80">
                   <div className="flex items-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" /> 15 Mins
+                      <Clock className="w-3.5 h-3.5 text-purple-500" /> 15 Mins
                     </span>
                     <span>•</span>
                     <span>5 Questions</span>
@@ -837,7 +1178,7 @@ const SkillAssessment = () => {
 
                   <button
                     onClick={() => handleStartAssessment(domain)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer group-hover:scale-105"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-500/20 transition-all cursor-pointer group-hover:scale-105"
                   >
                     <span>Take Assessment</span>
                     <ArrowRight className="w-3.5 h-3.5" />

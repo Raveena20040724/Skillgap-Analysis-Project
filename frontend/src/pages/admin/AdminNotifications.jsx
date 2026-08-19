@@ -21,8 +21,11 @@ import {
 import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const INITIAL_ADMIN_NOTIFICATIONS = [
   {
@@ -142,65 +145,76 @@ const AdminNotifications = () => {
   const [notifications, setNotifications] = useState(() => {
     try {
       const saved = localStorage.getItem('admin_alerts_list');
-      return saved ? JSON.parse(saved) : INITIAL_ADMIN_NOTIFICATIONS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {
-      return INITIAL_ADMIN_NOTIFICATIONS;
+      // fallback
     }
+    return INITIAL_ADMIN_NOTIFICATIONS;
   });
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedNotification, setSelectedNotification] = useState(null);
-  const [bannerMsg, setBannerMsg] = useState('');
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
 
   // Automatically mark all unread notifications as read when opening the System Alerts page
   useEffect(() => {
     setNotifications((prev) => {
-      const allRead = prev.map((n) => ({ ...n, read: true }));
+      const current = Array.isArray(prev) && prev.length > 0 ? prev : INITIAL_ADMIN_NOTIFICATIONS;
+      const allRead = current.map((n) => ({ ...n, read: true }));
       localStorage.setItem('admin_alerts_list', JSON.stringify(allRead));
       window.dispatchEvent(new Event('notificationsUpdated'));
       return allRead;
     });
   }, []);
 
-  const showBanner = (msg) => {
-    setBannerMsg(msg);
-    setTimeout(() => setBannerMsg(''), 3000);
-  };
+  const safeNotifications = Array.isArray(notifications) ? notifications : INITIAL_ADMIN_NOTIFICATIONS;
 
   const handleMarkAllRead = () => {
-    const updated = notifications.map((n) => ({ ...n, read: true }));
+    const updated = safeNotifications.map((n) => ({ ...n, read: true }));
     setNotifications(updated);
     localStorage.setItem('admin_alerts_list', JSON.stringify(updated));
     window.dispatchEvent(new Event('notificationsUpdated'));
-    showBanner('All administrator notifications marked as read.');
+    showGlobalToast('All administrator notifications marked as read.', 'success');
   };
 
   const handleClearAll = () => {
+    setIsClearAllConfirmOpen(true);
+  };
+
+  const handleConfirmClearAll = () => {
     setNotifications([]);
     localStorage.setItem('admin_alerts_list', JSON.stringify([]));
     window.dispatchEvent(new Event('notificationsUpdated'));
-    showBanner('Admin notification inbox cleared.');
+    showGlobalToast('Admin notification inbox cleared.', 'delete');
+    setIsClearAllConfirmOpen(false);
   };
 
-  const handleToggleRead = (id, e) => {
+  const handleDeleteClick = (id, e) => {
     e.stopPropagation();
-    const updated = notifications.map((n) => (n.id === id ? { ...n, read: !n.read } : n));
+    const item = safeNotifications.find(n => n?.id === id);
+    setItemToDelete(item || { id, title: 'Notification' });
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+    const updated = safeNotifications.filter((n) => n?.id !== itemToDelete.id);
     setNotifications(updated);
     localStorage.setItem('admin_alerts_list', JSON.stringify(updated));
     window.dispatchEvent(new Event('notificationsUpdated'));
-  };
-
-  const handleDelete = (id, e) => {
-    e.stopPropagation();
-    const updated = notifications.filter((n) => n.id !== id);
-    setNotifications(updated);
-    localStorage.setItem('admin_alerts_list', JSON.stringify(updated));
-    window.dispatchEvent(new Event('notificationsUpdated'));
-    if (selectedNotification?.id === id) setSelectedNotification(null);
-    showBanner('Notification item removed.');
+    if (selectedNotification?.id === itemToDelete.id) setSelectedNotification(null);
+    showGlobalToast(`Notification "${itemToDelete.title || 'Selected Alert'}" removed.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    setItemToDelete(null);
   };
 
   const handleNotificationClick = (item) => {
-    const updated = notifications.map((n) => (n.id === item.id ? { ...n, read: true } : n));
+    if (!item) return;
+    const updated = safeNotifications.map((n) => (n?.id === item.id ? { ...n, read: true } : n));
     setNotifications(updated);
     localStorage.setItem('admin_alerts_list', JSON.stringify(updated));
     window.dispatchEvent(new Event('notificationsUpdated'));
@@ -208,13 +222,14 @@ const AdminNotifications = () => {
   };
 
   // Filtered notifications
-  const filteredNotifications = notifications.filter((item) => {
+  const filteredNotifications = safeNotifications.filter((item) => {
+    if (!item) return false;
     if (activeCategory === 'All') return true;
     if (activeCategory === 'Unread') return !item.read;
     return item.category === activeCategory;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = safeNotifications.filter((n) => n && !n.read).length;
 
   const getIcon = (type) => {
     switch (type) {
@@ -233,87 +248,44 @@ const AdminNotifications = () => {
   };
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 rounded-2xl border border-indigo-500/20 text-white shadow-xl">
+    <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
+      {/* Header Banner (Fully Adaptive for Light & Dark Mode) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <PageHeader
-            title={
-              <span className="flex items-center gap-2.5 text-white font-extrabold text-2xl">
-                <Bell className="w-7 h-7 text-indigo-400 stroke-[2.2]" />
-                System Administration Alerts
-              </span>
-            }
-            subtitle="Central audit log, database synchronizations, security incidents, user creation events, and system telemetry."
-          />
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+            <Bell className="w-8 h-8 text-blue-600 dark:text-teal-400 stroke-[2.2]" />
+            System Administration Alerts
+          </h1>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+            Central audit log, database synchronizations, security incidents, user creation events, and system telemetry.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-indigo-200 border border-indigo-400/30 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer backdrop-blur-md"
+              className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-white/10 dark:hover:bg-white/20 text-blue-700 dark:text-indigo-200 border border-blue-200 dark:border-indigo-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <CheckCheck className="w-4 h-4" />
-              Mark All Read
+              <CheckCheck className="w-4 h-4 text-blue-600 dark:text-indigo-300" />
+              <span>Mark All Read</span>
             </button>
           )}
 
-          {notifications.length > 0 && (
+          {safeNotifications.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="px-4 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <Trash2 className="w-4 h-4" />
-              Clear All
+              <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+              <span>Clear All</span>
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Banner Feedback */}
-      {bannerMsg && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-sm font-semibold shadow-sm animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          {bannerMsg}
-        </div>
-      )}
-
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700/70 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
-            <Bell className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Unread Alerts</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{unreadCount}</p>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700/70 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
-            <Database className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Database Status</p>
-            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">Online (PostgreSQL)</p>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700/70 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
-            <Activity className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">System Health</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">99.99% Uptime</p>
-          </div>
         </div>
       </div>
 
       {/* Filter Tabs Toolbar */}
-      <Card className="p-4 border border-slate-200 dark:border-slate-800">
+      <div className="p-3 bg-white dark:bg-[#161f33] rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-md">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none]">
           {CATEGORIES.map((cat) => {
             const count =
@@ -327,9 +299,9 @@ const AdminNotifications = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${
                   activeCategory === cat
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -337,7 +309,7 @@ const AdminNotifications = () => {
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] ${
                     activeCategory === cat
-                      ? 'bg-indigo-700 text-indigo-100'
+                      ? 'bg-blue-700 text-blue-100'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -347,30 +319,30 @@ const AdminNotifications = () => {
             );
           })}
         </div>
-      </Card>
+      </div>
 
       {/* Notifications List */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <Card className="p-12 text-center border-dashed border-2 border-slate-200 dark:border-slate-800">
-            <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
+          <div className="p-12 text-center bg-white dark:bg-[#161f33] rounded-3xl border-dashed border-2 border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-4">
               <Bell className="w-8 h-8 opacity-60" />
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">No administrative notifications</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               System is operating optimally. No logs matching category "{activeCategory}".
             </p>
-          </Card>
+          </div>
         ) : (
           filteredNotifications.map((item) => (
             <div
               key={item.id}
               onClick={() => handleNotificationClick(item)}
-              className={`p-4 md:p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+              className={`p-4 md:p-5 rounded-3xl border transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                 !item.read
-                  ? 'bg-white dark:bg-slate-800/95 border-indigo-500/40 dark:border-indigo-500/30 shadow-md shadow-indigo-500/5'
-                  : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/60 opacity-85 hover:opacity-100'
-              } hover:border-indigo-500/60 hover:shadow-lg`}
+                  ? 'bg-white dark:bg-[#161f33] border-blue-500/40 dark:border-indigo-500/30 shadow-md shadow-blue-500/5'
+                  : 'bg-slate-50/80 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800 opacity-90 hover:opacity-100'
+              } hover:border-blue-500/60 hover:shadow-lg`}
             >
               <div className="flex items-start gap-4">
                 <div
@@ -423,19 +395,7 @@ const AdminNotifications = () => {
                 )}
 
                 <button
-                  onClick={(e) => handleToggleRead(item.id, e)}
-                  className={`p-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                    item.read
-                      ? 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700'
-                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700'
-                  }`}
-                  title={item.read ? 'Mark as Unread' : 'Mark as Read'}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={(e) => handleDelete(item.id, e)}
+                  onClick={(e) => handleDeleteClick(item.id, e)}
                   className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                   title="Delete Notification"
                 >
@@ -522,6 +482,29 @@ const AdminNotifications = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Notification"
+        message={`Are you sure you want to delete this notification "${itemToDelete?.title || 'Selected Alert'}"?`}
+        confirmText="Yes, Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setItemToDelete(null);
+        }}
+      />
+
+      {/* Clear All Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isClearAllConfirmOpen}
+        title="Clear All Notifications"
+        message="Are you sure you want to remove all notifications from your system alerts inbox?"
+        confirmText="Clear All"
+        onConfirm={handleConfirmClearAll}
+        onCancel={() => setIsClearAllConfirmOpen(false)}
+      />
     </div>
   );
 };
