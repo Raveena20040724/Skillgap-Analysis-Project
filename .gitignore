@@ -1,0 +1,32 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Backend environment
+backend/.env
+
+# Uploaded files
+backend/media/
+
+# Python generated files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Database
+*.sqlite3
+*.db
+
+# Node
+node_modules/
+**/node_modules/
+dist/
+**/dist/
