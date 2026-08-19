@@ -3,19 +3,10 @@ import Card from '../../components/common/Card';
 import InputField from '../../components/common/InputField';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { experienceService } from '../../services/experienceService';
 import PageHeader from '../../components/common/PageHeader';
-
-const DUMMY_EXPERIENCE = [
-  {
-    id: 1,
-    companyName: 'ABC Tech Pvt Ltd',
-    role: 'Junior Developer',
-    startDate: '2023-06-01',
-    endDate: '2024-05-01',
-    description: 'Worked on frontend features using React.',
-  },
-];
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const ExperienceManagement = () => {
   const [experiences, setExperiences] = useState([]);
@@ -30,16 +21,16 @@ const ExperienceManagement = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetchExperience();
+    fetchExperiences();
   }, []);
 
-  const fetchExperience = async () => {
+  const fetchExperiences = async () => {
     try {
-      const response = await experienceService.getExperience();
+      const response = await experienceService.getExperiences();
       setExperiences(response.data);
     } catch (error) {
-      console.error('Failed to fetch experience:', error);
-      setExperiences(DUMMY_EXPERIENCE);
+      console.error('Failed to fetch experiences:', error);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -52,7 +43,7 @@ const ExperienceManagement = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!formData.companyName.trim() || !formData.role.trim()) {
-      setMessage('Company name and role are required');
+      showGlobalToast('Company name and role are required', 'warning');
       return;
     }
 
@@ -64,17 +55,31 @@ const ExperienceManagement = () => {
       setExperiences([...experiences, { id: Date.now(), ...formData }]);
     }
 
+    showGlobalToast(`Added experience: ${formData.role} at ${formData.companyName}`, 'success');
     setFormData({ companyName: '', role: '', startDate: '', endDate: '', description: '' });
     setMessage('');
   };
 
-  const handleDelete = async (id) => {
+  const [expToDelete, setExpToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  const handleDeleteClick = (exp) => {
+    setExpToDelete(exp);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!expToDelete) return;
+    const id = expToDelete.id;
     try {
       await experienceService.deleteExperience(id);
     } catch (error) {
       console.error('Failed to delete on server (removing locally):', error);
     }
     setExperiences(experiences.filter((exp) => exp.id !== id));
+    showGlobalToast(`Experience "${expToDelete.role} @ ${expToDelete.companyName}" removed.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    setExpToDelete(null);
   };
 
   if (loading) return <Loader />;
@@ -159,7 +164,7 @@ const ExperienceManagement = () => {
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">{exp.description}</p>
                     )}
                   </div>
-                  <Button variant="danger" onClick={() => handleDelete(exp.id)}>
+                  <Button variant="danger" onClick={() => handleDeleteClick(exp)}>
                     Delete
                   </Button>
                 </div>
@@ -168,6 +173,19 @@ const ExperienceManagement = () => {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Work Experience"
+        message={`Are you sure you want to delete your experience record for "${expToDelete?.role} at ${expToDelete?.companyName}"?`}
+        confirmText="Yes, Delete Experience"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setExpToDelete(null);
+        }}
+      />
     </div>
   );
 };

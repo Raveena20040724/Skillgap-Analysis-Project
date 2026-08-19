@@ -13,10 +13,13 @@ import {
   Briefcase, 
   Mail, 
   Award,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { adminService } from '../../services/adminService';
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const INITIAL_HRS = [
   {
@@ -79,25 +82,23 @@ const CATEGORIES = [
 
 const UserManagement = () => {
   const [hrs, setHrs] = useState(() => {
-    const saved = localStorage.getItem('all_hr_users_list');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('all_hr_users_list');
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error(e);
       }
-    }
-    const legacy = localStorage.getItem('custom_hr_users');
-    if (legacy) {
-      try {
+      const legacy = localStorage.getItem('custom_hr_users');
+      if (legacy) {
         const parsed = JSON.parse(legacy);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const merged = [...parsed, ...INITIAL_HRS];
           localStorage.setItem('all_hr_users_list', JSON.stringify(merged));
           return merged;
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.error(e);
     }
     localStorage.setItem('all_hr_users_list', JSON.stringify(INITIAL_HRS));
     return INITIAL_HRS;
@@ -108,6 +109,8 @@ const UserManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedHr, setSelectedHr] = useState(null);
   const [reportModalHr, setReportModalHr] = useState(null);
+  const [hrToDelete, setHrToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -117,21 +120,37 @@ const UserManagement = () => {
     try {
       const res = await adminService.getAllUsers();
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setHrs(res.data.map((u) => ({
-          id: u.id,
-          name: u.username || u.email,
-          role: u.role === 'hr' ? 'HR Operations Manager' : u.role === 'admin' ? 'System Administrator' : 'Employee',
-          department: u.department || 'Engineering',
-          company: 'TechCorp Systems',
-          managedStaff: '50 Employees',
-          companySize: '200+ Staff',
-          status: u.is_active ? 'Active' : 'Suspended',
-          avatar: u.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-          email: u.email
-        })));
+        const backendHrs = res.data.filter(u => u.role === 'hr');
+        if (backendHrs.length > 0) {
+          setHrs(prev => {
+            const currentList = Array.isArray(prev) ? prev : INITIAL_HRS;
+            const merged = [...currentList];
+            backendHrs.forEach(bu => {
+              const existingIdx = merged.findIndex(h => h.email?.toLowerCase() === bu.email?.toLowerCase());
+              if (existingIdx >= 0) {
+                merged[existingIdx] = { ...merged[existingIdx], status: bu.is_active ? 'Active' : 'Suspended' };
+              } else {
+                merged.push({
+                  id: bu.id,
+                  name: bu.username || bu.email,
+                  role: 'HR Operations Manager',
+                  department: bu.department || 'Engineering',
+                  company: 'TechCorp Systems',
+                  managedStaff: '50 Employees',
+                  companySize: '200+ Staff',
+                  status: bu.is_active ? 'Active' : 'Suspended',
+                  avatar: bu.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
+                  email: bu.email
+                });
+              }
+            });
+            localStorage.setItem('all_hr_users_list', JSON.stringify(merged));
+            return merged;
+          });
+        }
       }
     } catch (err) {
-      console.log('Using default HR list.', err);
+      console.log('Using local persistent HR list.', err);
     }
   };
 
@@ -151,7 +170,8 @@ const UserManagement = () => {
     const matchesSearch = 
       hr.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       hr.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      hr.role.toLowerCase().includes(searchQuery.toLowerCase());
+      hr.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (hr.email && hr.email.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -186,15 +206,60 @@ const UserManagement = () => {
       companySize: '200+ Staff'
     });
     setIsAddModalOpen(false);
+    showGlobalToast(`Successfully created account for ${created.name}`, 'success');
   };
 
-  const handleUpdateCompanyDetails = (e) => {
+  const handleUpdateCompanyDetails = async (e) => {
     e.preventDefault();
     if (!selectedHr) return;
+    
     const updated = hrs.map((h) => h.id === selectedHr.id ? selectedHr : h);
     setHrs(updated);
     localStorage.setItem('all_hr_users_list', JSON.stringify(updated));
+    
+    // Also try updating on backend API if available
+    try {
+      if (typeof selectedHr.id === 'number' && selectedHr.id < 1000000000000) {
+        await adminService.updateUserStatus(selectedHr.id, {
+          is_active: selectedHr.status === 'Active',
+          department: selectedHr.department
+        });
+      }
+    } catch (err) {
+      console.warn('Backend update note:', err);
+    }
+    
+    showGlobalToast(`Profile for ${selectedHr.name} updated successfully.`, 'success');
     setSelectedHr(null);
+  };
+
+  const handleDeleteClick = (hr, e) => {
+    if (e) e.stopPropagation();
+    setHrToDelete(hr);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!hrToDelete) return;
+    
+    const updated = hrs.filter((h) => h.id !== hrToDelete.id);
+    setHrs(updated);
+    localStorage.setItem('all_hr_users_list', JSON.stringify(updated));
+    
+    try {
+      if (typeof hrToDelete.id === 'number' && hrToDelete.id < 1000000000000) {
+        await adminService.deleteUser(hrToDelete.id);
+      }
+    } catch (err) {
+      console.warn('Backend delete note:', err);
+    }
+    
+    showGlobalToast(`User account "${hrToDelete.name}" deleted.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    if (selectedHr?.id === hrToDelete.id) {
+      setSelectedHr(null);
+    }
+    setHrToDelete(null);
   };
 
   return (
@@ -474,7 +539,7 @@ const UserManagement = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-500" />
-                Update HR & Company Profile
+                Update HR & Workforce Profile
               </h3>
               <button onClick={() => setSelectedHr(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <XCircle className="w-5 h-5" />
@@ -482,27 +547,71 @@ const UserManagement = () => {
             </div>
 
             <form onSubmit={handleUpdateCompanyDetails} className="space-y-4 text-xs font-semibold">
-              <div className="space-y-1">
-                <label className="text-slate-700 dark:text-slate-300">Company Name</label>
-                <input
-                  type="text"
-                  value={selectedHr.company}
-                  onChange={(e) => setSelectedHr({ ...selectedHr, company: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-slate-300">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedHr.name}
+                    onChange={(e) => setSelectedHr({ ...selectedHr, name: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-slate-700 dark:text-slate-300">HR Role / Designation</label>
-                <input
-                  type="text"
-                  value={selectedHr.role}
-                  onChange={(e) => setSelectedHr({ ...selectedHr, role: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-                />
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-slate-300">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={selectedHr.email || ''}
+                    onChange={(e) => setSelectedHr({ ...selectedHr, email: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-slate-300">HR Role / Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedHr.role}
+                    onChange={(e) => setSelectedHr({ ...selectedHr, role: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-slate-300">Company Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedHr.company}
+                    onChange={(e) => setSelectedHr({ ...selectedHr, company: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-slate-300">Department</label>
+                  <select
+                    value={selectedHr.department || 'Engineering'}
+                    onChange={(e) => setSelectedHr({ ...selectedHr, department: e.target.value })}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    <option value="Engineering">Engineering</option>
+                    <option value="Data Science & AI">Data Science & AI</option>
+                    <option value="UI/UX Design">UI/UX Design</option>
+                    <option value="Product Management">Product Management</option>
+                    <option value="Human Resources">Human Resources</option>
+                    <option value="Operations">Operations</option>
+                  </select>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-slate-700 dark:text-slate-300">Managed Staff</label>
                   <input
@@ -526,13 +635,24 @@ const UserManagement = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
-                <Button variant="outline" onClick={() => setSelectedHr(null)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Update Profile
-                </Button>
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClick(selectedHr)}
+                  className="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 hover:bg-rose-100 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-rose-200 dark:border-rose-800 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete User</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setSelectedHr(null)}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" type="submit" className="bg-blue-600 hover:bg-blue-700">
+                    Update Profile
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
@@ -580,6 +700,19 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete User Account"
+        message={`Are you sure you want to delete the account for "${hrToDelete?.name}" (${hrToDelete?.email})? This action cannot be undone.`}
+        confirmText="Yes, Delete User"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setHrToDelete(null);
+        }}
+      />
     </div>
   );
 };

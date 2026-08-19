@@ -27,19 +27,19 @@ import { hrService } from '../../services/hrService';
 // Data for Department Skill Readiness Bar Chart
 const DEFAULT_DEPARTMENT_READINESS = [
   { department: 'Engineering', readiness: 88 },
-  { department: 'Product', readiness: 84 },
-  { department: 'Design', readiness: 78 },
-  { department: 'DevOps', readiness: 92 },
-  { department: 'Data Science', readiness: 81 },
+  { department: 'Data Science & AI', readiness: 85 },
+  { department: 'UI/UX Design', readiness: 82 },
+  { department: 'Product Management', readiness: 86 },
+  { department: 'Operations', readiness: 90 },
 ];
 
 // Data for Organization Skill Taxonomy Distribution Pie Chart
 const DEFAULT_TAXONOMY_DISTRIBUTION = [
   { name: 'Frontend', value: 35, color: '#3b82f6' },
-  { name: 'Backend', value: 25, color: '#10b981' },
-  { name: 'Cloud/DevOps', value: 20, color: '#6366f1' },
-  { name: 'AI/ML', value: 12, color: '#f59e0b' },
-  { name: 'UI/UX', value: 8, color: '#06b6d4' },
+  { name: 'Backend & DevOps', value: 25, color: '#10b981' },
+  { name: 'Data Science & AI', value: 20, color: '#f59e0b' },
+  { name: 'UI/UX Design', value: 12, color: '#06b6d4' },
+  { name: 'Product Management', value: 8, color: '#8b5cf6' },
 ];
 
 // Custom Bar Tooltip
@@ -48,7 +48,7 @@ const CustomBarTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold">
         <p className="text-slate-400 font-semibold">{label}</p>
-        <p className="text-indigo-400 font-extrabold text-sm mt-1">
+        <p className="text-teal-400 font-extrabold text-sm mt-1">
           Readiness: {payload[0].value}%
         </p>
       </div>
@@ -72,40 +72,145 @@ const CustomPieTooltip = ({ active, payload }) => {
 };
 
 const HrDashboard = () => {
-  const [stats, setStats] = useState({
-    totalWorkforce: 342,
-    avgReadiness: 83.4,
-    departmentsCount: 5,
-    completionRate: 91,
-    deptReadiness: DEFAULT_DEPARTMENT_READINESS,
-    taxonomyDistribution: DEFAULT_TAXONOMY_DISTRIBUTION,
+  const [targetBenchmark, setTargetBenchmark] = useState(() => {
+    return localStorage.getItem('hr_benchmark_threshold') || '75';
+  });
+
+  const [stats, setStats] = useState(() => {
+    try {
+      const savedEmps = JSON.parse(localStorage.getItem('custom_employee_directory') || '[]');
+      const savedDepts = JSON.parse(localStorage.getItem('custom_departments_list') || '[]');
+      if (savedEmps && savedEmps.length > 0) {
+        return computeStatsFromData(savedEmps, savedDepts);
+      }
+    } catch (e) {}
+    return {
+      totalWorkforce: 4,
+      avgReadiness: 85.3,
+      departmentsCount: 4,
+      completionRate: 91,
+      deptReadiness: DEFAULT_DEPARTMENT_READINESS,
+      taxonomyDistribution: DEFAULT_TAXONOMY_DISTRIBUTION,
+    };
   });
 
   useEffect(() => {
     fetchStats();
   }, []);
 
+  function computeStatsFromData(employeesList, deptsList) {
+    const employees = Array.isArray(employeesList) && employeesList.length > 0
+      ? employeesList
+      : [
+          { name: 'Alex Morgan', department: 'Engineering', skillReadinessScore: 84, designation: 'Senior Frontend Developer' },
+          { name: 'Sophia Patel', department: 'Data Science & AI', skillReadinessScore: 91, designation: 'Senior ML Engineer' },
+          { name: 'David Chen', department: 'Engineering', skillReadinessScore: 78, designation: 'Backend DevOps Engineer' },
+          { name: 'Emily Watson', department: 'UI/UX Design', skillReadinessScore: 88, designation: 'Lead Product Designer' }
+        ];
+
+    const totalWorkforce = employees.length;
+    const totalScore = employees.reduce((acc, curr) => acc + (Number(curr.skillReadinessScore) || 75), 0);
+    const avgReadiness = parseFloat((totalScore / totalWorkforce).toFixed(1));
+
+    const deptMap = {};
+    employees.forEach(emp => {
+      const dept = emp.department || 'Engineering';
+      if (!deptMap[dept]) {
+        deptMap[dept] = { total: 0, count: 0 };
+      }
+      deptMap[dept].total += Number(emp.skillReadinessScore) || 75;
+      deptMap[dept].count += 1;
+    });
+
+    const deptReadiness = Object.keys(deptMap).map(dept => ({
+      department: dept,
+      readiness: Math.round(deptMap[dept].total / deptMap[dept].count)
+    }));
+
+    const departmentsCount = Math.max(
+      Object.keys(deptMap).length, 
+      Array.isArray(deptsList) && deptsList.length > 0 ? deptsList.length : 4
+    );
+
+    const taxonomyCounts = {
+      'Frontend': 0,
+      'Backend & DevOps': 0,
+      'Data Science & AI': 0,
+      'UI/UX Design': 0,
+      'Product Management': 0
+    };
+
+    employees.forEach(emp => {
+      const text = `${emp.designation || ''} ${emp.department || ''}`.toLowerCase();
+      if (text.includes('front') || text.includes('react') || text.includes('web')) {
+        taxonomyCounts['Frontend'] += 1;
+      } else if (text.includes('back') || text.includes('devops') || text.includes('cloud') || text.includes('infra')) {
+        taxonomyCounts['Backend & DevOps'] += 1;
+      } else if (text.includes('ai') || text.includes('data') || text.includes('ml')) {
+        taxonomyCounts['Data Science & AI'] += 1;
+      } else if (text.includes('design') || text.includes('ui') || text.includes('ux')) {
+        taxonomyCounts['UI/UX Design'] += 1;
+      } else {
+        taxonomyCounts['Product Management'] += 1;
+      }
+    });
+
+    const taxonomyColors = {
+      'Frontend': '#3b82f6',
+      'Backend & DevOps': '#10b981',
+      'Data Science & AI': '#f59e0b',
+      'UI/UX Design': '#06b6d4',
+      'Product Management': '#8b5cf6'
+    };
+
+    const taxonomyDistribution = Object.keys(taxonomyCounts)
+      .filter(k => taxonomyCounts[k] > 0)
+      .map(k => ({
+        name: k,
+        value: Math.round((taxonomyCounts[k] / totalWorkforce) * 100),
+        count: taxonomyCounts[k],
+        color: taxonomyColors[k]
+      }));
+
+    return {
+      totalWorkforce,
+      avgReadiness,
+      departmentsCount,
+      completionRate: 91,
+      deptReadiness: deptReadiness.length > 0 ? deptReadiness : DEFAULT_DEPARTMENT_READINESS,
+      taxonomyDistribution: taxonomyDistribution.length > 0 ? taxonomyDistribution : DEFAULT_TAXONOMY_DISTRIBUTION
+    };
+  }
+
   const fetchStats = async () => {
     try {
       const res = await hrService.getOverviewStats();
-      if (res.data) {
+      const savedEmps = JSON.parse(localStorage.getItem('custom_employee_directory') || '[]');
+      const savedDepts = JSON.parse(localStorage.getItem('custom_departments_list') || '[]');
+
+      if (savedEmps && savedEmps.length > 0) {
+        setStats(computeStatsFromData(savedEmps, savedDepts));
+      } else if (res.data) {
         setStats({
-          totalWorkforce: res.data.total_workforce || 342,
-          avgReadiness: res.data.avg_readiness || 83.4,
-          departmentsCount: (res.data.department_readiness && res.data.department_readiness.length) || 5,
+          totalWorkforce: res.data.total_workforce || 4,
+          avgReadiness: res.data.avg_readiness || 85.3,
+          departmentsCount: (res.data.department_readiness && res.data.department_readiness.length) || 4,
           completionRate: 91,
           deptReadiness: res.data.department_readiness || DEFAULT_DEPARTMENT_READINESS,
           taxonomyDistribution: res.data.taxonomy_distribution || DEFAULT_TAXONOMY_DISTRIBUTION,
         });
       }
     } catch (err) {
-      console.log('Using default HR overview telemetry.', err);
+      console.log('Using persistent HR overview telemetry.', err);
+      const savedEmps = JSON.parse(localStorage.getItem('custom_employee_directory') || '[]');
+      const savedDepts = JSON.parse(localStorage.getItem('custom_departments_list') || '[]');
+      setStats(computeStatsFromData(savedEmps, savedDepts));
     }
   };
   return (
     <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
-      {/* Top Hero Gradient Banner (Matching Photo) */}
-      <div className="p-8 md:p-10 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 text-white rounded-3xl shadow-2xl space-y-3 relative overflow-hidden">
+      {/* Top Hero Gradient Banner (Teal / Emerald Theme) */}
+      <div className="p-8 md:p-10 bg-gradient-to-r from-teal-800 via-teal-600 to-emerald-600 text-white rounded-3xl shadow-2xl space-y-3 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 transform pointer-events-none"></div>
 
         <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white/20 text-white backdrop-blur-md border border-white/30 inline-block">
@@ -116,12 +221,12 @@ const HrDashboard = () => {
           Organization Skill Readiness Portal
         </h1>
 
-        <p className="text-xs md:text-sm font-medium text-indigo-100 max-w-3xl leading-relaxed">
-          Real-time talent telemetry across {stats.departmentsCount} departments and {stats.totalWorkforce} active employees. Average skill readiness index is <strong className="text-emerald-300 font-black">{stats.avgReadiness}%</strong>.
+        <p className="text-xs md:text-sm font-medium text-teal-100 max-w-3xl leading-relaxed">
+          Real-time talent telemetry across {stats.departmentsCount} departments and {stats.totalWorkforce} active employees. Average skill readiness index is <strong className="text-emerald-200 font-black">{stats.avgReadiness}%</strong> (Benchmark target: {targetBenchmark}%).
         </p>
       </div>
 
-      {/* 4 Stat Summary Cards (Matching Photo) */}
+      {/* 4 Stat Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {/* Card 1: Total Workforce */}
         <div className="p-6 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex items-start justify-between gap-4 transition-colors">
@@ -133,13 +238,13 @@ const HrDashboard = () => {
               {stats.totalWorkforce}
             </p>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <span className="text-emerald-500 font-black">+12 this month</span>
-              <span>• Active Employees</span>
+              <span className="text-teal-600 dark:text-teal-400 font-black">+12 this month</span>
+              <span>• Active Personnel</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 text-blue-500" />
+          <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
           </div>
         </div>
 
@@ -153,12 +258,12 @@ const HrDashboard = () => {
               {stats.departmentsCount}
             </p>
             <p className="text-xs font-semibold text-slate-400">
-              Monitored teams
+              Monitored Teams
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Building2 className="w-6 h-6 text-purple-500" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Building2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
         </div>
 
@@ -172,13 +277,13 @@ const HrDashboard = () => {
               {stats.avgReadiness}%
             </p>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <span className="text-emerald-500 font-black">+4.2% YoY</span>
-              <span>• Target skill match</span>
+              <span className="text-teal-600 dark:text-teal-400 font-black">+4.2% YoY</span>
+              <span>• Skill Benchmark</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-6 h-6 text-teal-600 dark:text-teal-400" />
           </div>
         </div>
 
@@ -192,23 +297,23 @@ const HrDashboard = () => {
               {stats.completionRate}%
             </p>
             <p className="text-xs font-semibold text-slate-400">
-              Monthly quota
+              Monthly Target Quota
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <CheckSquare className="w-6 h-6 text-purple-500" />
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
           </div>
         </div>
       </div>
 
-      {/* Two Large Chart Panels (Matching Photo) */}
+      {/* Two Large Chart Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Chart Card: Department Skill Readiness Score (Bar Chart) */}
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-indigo-500" />
+              <BarChart2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               Department Skill Readiness Score (Bar Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -222,7 +327,7 @@ const HrDashboard = () => {
                 data={stats.deptReadiness} 
                 margin={{ top: 15, right: 20, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} vertical={false} />
                 <XAxis 
                   dataKey="department" 
                   stroke="#94a3b8" 
@@ -241,7 +346,7 @@ const HrDashboard = () => {
                   axisLine={{ stroke: '#475569' }} 
                 />
                 <Tooltip content={<CustomBarTooltip />} />
-                <Bar dataKey="readiness" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="readiness" fill="#0d9488" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -251,7 +356,7 @@ const HrDashboard = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-emerald-500" />
+              <PieChartIcon className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               Organization Skill Taxonomy Distribution (Pie Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">

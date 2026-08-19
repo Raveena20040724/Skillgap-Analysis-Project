@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Search, 
@@ -8,9 +8,18 @@ import {
   ExternalLink, 
   XCircle,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Play,
+  Award,
+  Layers,
+  ChevronRight,
+  ShieldCheck,
+  Check
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+
+import { showGlobalToast } from '../../components/common/ToastContainer';
+import { getUserData, setUserData, addActiveUserNotification } from '../../utils/userStorage';
 
 const CATEGORIES = [
   'All', 
@@ -108,7 +117,27 @@ const CourseRecommendations = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState(() => {
+    try {
+      const saved = getUserData('enrolled_courses', null);
+      return saved !== null ? saved : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const syncEnrolled = () => {
+      const saved = getUserData('enrolled_courses', []);
+      setEnrolledCourses(saved || []);
+    };
+    window.addEventListener('coursesUpdated', syncEnrolled);
+    window.addEventListener('userDataChanged', syncEnrolled);
+    return () => {
+      window.removeEventListener('coursesUpdated', syncEnrolled);
+      window.removeEventListener('userDataChanged', syncEnrolled);
+    };
+  }, []);
 
   const filteredCourses = COURSES_CATALOG.filter((course) => {
     const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
@@ -119,9 +148,28 @@ const CourseRecommendations = () => {
   });
 
   const handleEnroll = (courseId) => {
-    if (!enrolledCourses.includes(courseId)) {
-      setEnrolledCourses([...enrolledCourses, courseId]);
+    const courseObj = COURSES_CATALOG.find(c => c.id === courseId);
+    if (enrolledCourses.includes(courseId)) {
+      showGlobalToast(`You are already enrolled in "${courseObj?.title || 'this course'}". Modules are active.`, 'info');
+      return;
     }
+    const updated = [...enrolledCourses, courseId];
+    setEnrolledCourses(updated);
+    setUserData('enrolled_courses', updated);
+
+    // Dispatch notification
+    addActiveUserNotification({
+      title: '🎓 Enrolled in New Course',
+      message: `Enrolled in "${courseObj?.title || 'Course'}". Complete modules to build competencies in ${courseObj?.skills?.slice(0, 2).join(', ')}.`,
+      category: 'Courses & Path',
+      type: 'course',
+      severity: 'info',
+      actionLabel: 'View Course',
+      link: '/employee/courses'
+    });
+
+    showGlobalToast(`Successfully enrolled in "${courseObj?.title || 'course'}"! Course modules unlocked.`, 'success');
+    window.dispatchEvent(new Event('coursesUpdated'));
   };
 
   return (
@@ -129,7 +177,7 @@ const CourseRecommendations = () => {
       {/* Header Banner */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-          <BookOpen className="w-8 h-8 text-blue-600 dark:text-teal-400 stroke-[2.2]" />
+          <BookOpen className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
           Training & Course Catalog
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -147,7 +195,7 @@ const CourseRecommendations = () => {
             placeholder="Search courses..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
           />
         </div>
 
@@ -165,7 +213,7 @@ const CourseRecommendations = () => {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -200,7 +248,7 @@ const CourseRecommendations = () => {
                     {course.provider}
                   </span>
 
-                  <span className="absolute top-3.5 right-3.5 px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-black rounded-xl shadow-md">
+                  <span className="absolute top-3.5 right-3.5 px-3 py-1 bg-purple-600 text-white text-[11px] font-black rounded-xl shadow-md">
                     {course.level}
                   </span>
                 </div>
@@ -209,7 +257,7 @@ const CourseRecommendations = () => {
                 <div className="p-6 space-y-4">
                   {/* Category Tag & Rating */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black tracking-widest uppercase text-blue-600 dark:text-blue-400">
+                    <span className="text-[11px] font-black tracking-widest uppercase text-purple-600 dark:text-purple-400">
                       {course.categoryTag}
                     </span>
                     <div className="flex items-center gap-1 text-amber-500 font-extrabold text-xs">
@@ -219,13 +267,13 @@ const CourseRecommendations = () => {
                   </div>
 
                   {/* Course Title */}
-                  <h3 className="font-black text-base md:text-lg text-slate-900 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors">
+                  <h3 className="font-black text-base md:text-lg text-slate-900 dark:text-white leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     {course.title}
                   </h3>
 
                   {/* Duration */}
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
-                    <Clock className="w-3.5 h-3.5 text-blue-500" />
+                    <Clock className="w-3.5 h-3.5 text-purple-500" />
                     <span>Duration: {course.duration}</span>
                   </div>
 
@@ -257,8 +305,8 @@ const CourseRecommendations = () => {
                   }}
                   className={`w-full py-3 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                     isEnrolled
-                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/30'
+                      ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/40'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/30'
                   }`}
                 >
                   {isEnrolled ? (
@@ -285,7 +333,7 @@ const CourseRecommendations = () => {
           <div className="w-full max-w-lg rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 animate-scale-up">
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <span className="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase rounded-full">
+                <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase rounded-full">
                   {selectedCourse.provider} • {selectedCourse.level}
                 </span>
                 <h3 className="font-extrabold text-xl text-slate-900 dark:text-white mt-2">
@@ -325,9 +373,9 @@ const CourseRecommendations = () => {
                   handleEnroll(selectedCourse.id);
                   setSelectedCourse(null);
                 }}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/30"
               >
-                Enroll Now
+                {enrolledCourses.includes(selectedCourse.id) ? 'Enrolled & Active' : 'Enroll Now'}
               </Button>
             </div>
           </div>

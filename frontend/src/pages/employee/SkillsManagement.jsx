@@ -20,7 +20,10 @@ import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { skillsService } from '../../services/skillsService';
+import { showGlobalToast } from '../../components/common/ToastContainer';
+import { getUserData, setUserData, addActiveUserNotification } from '../../utils/userStorage';
 
 const DEFAULT_CATEGORIES = [
   'Programming',
@@ -148,45 +151,53 @@ const SkillsManagement = () => {
 
   const fetchSkills = async () => {
     try {
-      const savedLocal = localStorage.getItem('custom_user_skills');
-      let baseSkills = savedLocal ? JSON.parse(savedLocal) : null;
+      // 1. Check if user has uploaded resume skills in isolated storage
+      const resumeSkills = getUserData('resume_skills', []) || [];
+      let baseSkills = getUserData('skills', null);
 
-      if (!baseSkills || baseSkills.length === 0) {
-        const response = await skillsService.getSkills();
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-          baseSkills = response.data.map((sk, index) => ({
-            id: sk.id || `server-${index}`,
-            name: sk.name || sk.skill_name || 'Unnamed Skill',
-            category: sk.category || 'Programming',
-            level: sk.level || sk.proficiency || 'Intermediate',
-            yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
-            proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
-            verified: sk.verified ?? true,
-          }));
+      if (resumeSkills && resumeSkills.length > 0) {
+        if (!baseSkills || baseSkills.length === 0) {
+          baseSkills = resumeSkills;
         } else {
-          baseSkills = INITIAL_SKILLS;
+          // Keep active skills, ensuring no duplicates
+          const seenNames = new Set();
+          const cleanSkills = [];
+          baseSkills.forEach(s => {
+            if (s && s.name && !seenNames.has(s.name.toLowerCase().trim())) {
+              seenNames.add(s.name.toLowerCase().trim());
+              cleanSkills.push(s);
+            }
+          });
+          baseSkills = cleanSkills;
+        }
+      } else if (baseSkills === null) {
+        // If not initialized, try backend API
+        try {
+          const response = await skillsService.getSkills();
+          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+            baseSkills = response.data.map((sk, index) => ({
+              id: sk.id || `server-${index}`,
+              name: sk.name || sk.skill_name || 'Unnamed Skill',
+              category: sk.category || 'Programming',
+              level: sk.level || sk.proficiency || 'Intermediate',
+              yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
+              proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
+              verified: sk.verified ?? true,
+            }));
+          } else {
+            baseSkills = [];
+          }
+        } catch {
+          baseSkills = [];
         }
       }
 
-      // Check if there are resume extracted skills to merge
-      const resumeSkillsStr = localStorage.getItem('employee_resume_skills');
-      if (resumeSkillsStr) {
-        const resumeSkills = JSON.parse(resumeSkillsStr);
-        const existingNames = new Set(baseSkills.map(s => s.name.toLowerCase().trim()));
-        resumeSkills.forEach(rsk => {
-          if (!existingNames.has(rsk.name.toLowerCase().trim())) {
-            baseSkills.unshift(rsk);
-            existingNames.add(rsk.name.toLowerCase().trim());
-          }
-        });
-      }
-
-      setSkills(baseSkills);
-      localStorage.setItem('custom_user_skills', JSON.stringify(baseSkills));
+      setSkills(baseSkills || []);
+      setUserData('skills', baseSkills || []);
     } catch (error) {
-      console.log('Backend standard API fallback: loading default skill inventory.', error);
-      const savedLocal = localStorage.getItem('custom_user_skills');
-      setSkills(savedLocal ? JSON.parse(savedLocal) : INITIAL_SKILLS);
+      console.log('Skills load note:', error);
+      const savedLocal = getUserData('skills', []);
+      setSkills(savedLocal || []);
     } finally {
       setLoading(false);
     }
@@ -230,10 +241,16 @@ const SkillsManagement = () => {
     setIsModalOpen(true);
   };
 
+  const [skillToDelete, setSkillToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
   const handleOpenEdit = (skill) => {
     setEditingSkill(skill);
-    setIsCustomCategory(false);
-    setCustomCategoryInput('');
+    const isCustom = !DEFAULT_CATEGORIES.includes(skill.category);
+    setIsCustomCategory(isCustom);
+    if (isCustom) {
+      setCustomCategoryInput(skill.category || '');
+    }
     setFormData({
       name: skill.name,
       category: skill.category || 'Programming',
@@ -245,17 +262,37 @@ const SkillsManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteClick = (skill) => {
+    setSkillToDelete(skill);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!skillToDelete) return;
+    const id = skillToDelete.id;
+    const skillName = skillToDelete.name?.toLowerCase().trim();
     try {
       await skillsService.deleteSkill(id);
     } catch (err) {
       // Handled locally
     }
-    const updated = skills.filter((sk) => sk.id !== id);
+    const updated = skills.filter((sk) => sk.id !== id && sk.name?.toLowerCase().trim() !== skillName);
     setSkills(updated);
-    localStorage.setItem('custom_user_skills', JSON.stringify(updated));
+    setUserData('skills', updated);
+
+    // Also remove from user's resume cache
+    try {
+      const resumeSkills = getUserData('resume_skills', []) || [];
+      const updatedResumeSkills = resumeSkills.filter(sk => sk.id !== id && sk.name?.toLowerCase().trim() !== skillName);
+      setUserData('resume_skills', updatedResumeSkills);
+    } catch (e) {
+      console.warn('Resume cache clear error:', e);
+    }
+
     window.dispatchEvent(new Event('skillsUpdated'));
-    showNotification('Skill successfully removed');
+    showGlobalToast(`Skill "${skillToDelete.name}" removed successfully.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    setSkillToDelete(null);
   };
 
   const handleSubmit = async (e) => {
@@ -280,7 +317,7 @@ const SkillsManagement = () => {
       }
       nextSkills = skills.map((sk) => (sk.id === editingSkill.id ? { ...sk, ...updatedFormData } : sk));
       setSkills(nextSkills);
-      showNotification(`Updated "${formData.name}" skill competency`);
+      showGlobalToast(`Updated "${formData.name}" skill competency.`, 'success');
     } else {
       const newSkillObj = {
         id: String(Date.now()),
@@ -294,10 +331,22 @@ const SkillsManagement = () => {
       }
       nextSkills = [newSkillObj, ...skills];
       setSkills(nextSkills);
-      showNotification(`Added "${formData.name}" under category "${finalCategory}"`);
+
+      // Add real-time notification
+      addActiveUserNotification({
+        title: '✨ New Competency Added',
+        message: `Added "${formData.name}" (${finalCategory}) at ${formData.proficiencyPercentage || 70}% proficiency to your profile.`,
+        category: 'Skill Growth',
+        type: 'skill',
+        severity: 'success',
+        actionLabel: 'View Skills',
+        link: '/employee/skills'
+      });
+
+      showGlobalToast(`Added "${formData.name}" under category "${finalCategory}".`, 'success');
     }
 
-    localStorage.setItem('custom_user_skills', JSON.stringify(nextSkills));
+    setUserData('skills', nextSkills);
     window.dispatchEvent(new Event('skillsUpdated'));
     setIsModalOpen(false);
   };
@@ -331,12 +380,12 @@ const SkillsManagement = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-teal-600/10 via-blue-600/10 to-indigo-600/10 dark:from-teal-500/20 dark:via-blue-500/20 dark:to-indigo-500/20 p-6 rounded-2xl border border-teal-500/20 dark:border-teal-500/30">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-purple-600/10 via-violet-600/10 to-purple-500/10 dark:from-purple-900/30 dark:via-violet-950/40 dark:to-purple-900/20 p-6 rounded-3xl border border-purple-500/20 dark:border-purple-500/30 shadow-md">
         <div>
           <PageHeader
             title={
               <span className="flex items-center gap-2.5 text-slate-900 dark:text-white font-extrabold text-2xl">
-                <Zap className="w-7 h-7 text-amber-500 fill-amber-500/20 animate-pulse" />
+                <Zap className="w-7 h-7 text-purple-600 dark:text-purple-400 fill-purple-500/20 animate-pulse" />
                 Skills Inventory & Dynamic Proficiency Management
               </span>
             }
@@ -345,7 +394,7 @@ const SkillsManagement = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer"
+          className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer"
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
           Add New Skill
@@ -354,8 +403,8 @@ const SkillsManagement = () => {
 
       {/* Notification Banner */}
       {notification && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
-          <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700/60 text-purple-800 dark:text-purple-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
+          <Check className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           {notification}
         </div>
       )}
@@ -365,45 +414,45 @@ const SkillsManagement = () => {
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Skills</span>
-            <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
+            <div className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl">
               <Layers className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{totalSkillsCount}</p>
-          <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 mt-1">Declared Competencies</p>
+          <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mt-1">Declared Competencies</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Advanced / Expert</span>
-            <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+            <div className="p-2 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-xl">
               <Award className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{advancedCount}</p>
-          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">High Mastery Skills</p>
+          <p className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 mt-1">High Mastery Skills</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Proficiency</span>
-            <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+            <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{avgProficiency}%</p>
-          <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-1">Overall Skill Score</p>
+          <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">Overall Skill Score</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Domains</span>
-            <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{categoriesCount}</p>
-          <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">Active Skill Categories</p>
+          <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mt-1">Active Skill Categories</p>
         </Card>
       </div>
 
@@ -418,7 +467,7 @@ const SkillsManagement = () => {
               placeholder="Search skills (e.g. React, Python, AWS)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+              className="w-full pl-10 pr-10 py-2.5 text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
             />
             {searchQuery && (
               <button
@@ -438,7 +487,7 @@ const SkillsManagement = () => {
             <select
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+              className="px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
             >
               <option value="All">All Levels</option>
               <option value="Beginner">Beginner</option>
@@ -455,7 +504,7 @@ const SkillsManagement = () => {
           <button
             onClick={() => scrollCategories('left')}
             title="Slide left"
-            className="absolute left-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
+            className="absolute left-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:scale-110 transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -477,7 +526,7 @@ const SkillsManagement = () => {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                     selectedCategory === cat
-                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                       : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -485,7 +534,7 @@ const SkillsManagement = () => {
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                       selectedCategory === cat
-                        ? 'bg-teal-700 text-teal-100'
+                        ? 'bg-purple-700 text-purple-100'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                     }`}
                   >
@@ -500,7 +549,7 @@ const SkillsManagement = () => {
           <button
             onClick={() => scrollCategories('right')}
             title="Slide right"
-            className="absolute right-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
+            className="absolute right-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:scale-110 transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -540,14 +589,14 @@ const SkillsManagement = () => {
           filteredSkills.map((skill) => {
             const levelColorClass = 
               skill.level === 'Expert' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
-              skill.level === 'Advanced' ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' :
-              skill.level === 'Intermediate' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' :
+              skill.level === 'Advanced' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' :
+              skill.level === 'Intermediate' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' :
               'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
 
             return (
               <Card
                 key={skill.id}
-                className="p-5 border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all duration-200 group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
+                className="p-5 border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-200 group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -564,12 +613,12 @@ const SkillsManagement = () => {
                       <button
                         onClick={() => handleOpenEdit(skill)}
                         title="Edit Skill"
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(skill.id)}
+                        onClick={() => handleDeleteClick(skill)}
                         title="Delete Skill"
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                       >
@@ -582,13 +631,13 @@ const SkillsManagement = () => {
                   <div className="space-y-1.5 pt-1">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span className="text-slate-500 dark:text-slate-400">Proficiency Score</span>
-                      <span className="text-teal-600 dark:text-teal-400">
+                      <span className="text-purple-600 dark:text-purple-400 font-extrabold">
                         {skill.proficiencyPercentage}%
                       </span>
                     </div>
                     <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
                       <div
-                        className="h-full bg-gradient-to-r from-teal-500 via-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-purple-600 to-violet-400 rounded-full transition-all duration-500"
                         style={{ width: `${skill.proficiencyPercentage}%` }}
                       ></div>
                     </div>
@@ -607,12 +656,12 @@ const SkillsManagement = () => {
 
                   <div className="flex items-center gap-1.5">
                     {skill.source === 'Resume' && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center gap-1">
                         <Sparkles className="w-2.5 h-2.5" /> Resume
                       </span>
                     )}
-                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-500/20" /> Verified
+                    <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-bold text-[11px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 fill-purple-500/20" /> Verified
                     </span>
                   </div>
                 </div>
@@ -628,7 +677,7 @@ const SkillsManagement = () => {
           <div className="w-full max-w-md rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
+                <Zap className="w-5 h-5 text-purple-500" />
                 {editingSkill ? 'Edit Skill Competency' : 'Add New Skill Competency'}
               </h3>
               <button
@@ -650,7 +699,7 @@ const SkillsManagement = () => {
                   placeholder="e.g. React.js, PyTorch, Kubernetes"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
@@ -670,12 +719,12 @@ const SkillsManagement = () => {
                           setFormData({ ...formData, category: e.target.value });
                         }
                       }}
-                      className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                      className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                     >
                       {dynamicCategories.filter((c) => c !== 'All').map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
-                      <option value="CUSTOM_NEW" className="text-teal-600 font-bold">+ Create Custom Category...</option>
+                      <option value="CUSTOM_NEW" className="text-purple-600 font-bold">+ Create Custom Category...</option>
                     </select>
                   ) : (
                     <div className="relative flex items-center">
@@ -685,7 +734,7 @@ const SkillsManagement = () => {
                         placeholder="e.g. CyberSecurity"
                         value={customCategoryInput}
                         onChange={(e) => setCustomCategoryInput(e.target.value)}
-                        className="w-full pl-3 pr-7 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-teal-500 rounded-xl text-slate-900 dark:text-white focus:outline-none"
+                        className="w-full pl-3 pr-7 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-purple-500 rounded-xl text-slate-900 dark:text-white focus:outline-none"
                       />
                       <button
                         type="button"
@@ -706,7 +755,7 @@ const SkillsManagement = () => {
                   <select
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   >
                     <option value="Beginner">Beginner</option>
                     <option value="Intermediate">Intermediate</option>
@@ -727,7 +776,7 @@ const SkillsManagement = () => {
                     max={30}
                     value={formData.yearsOfExperience}
                     onChange={(e) => setFormData({ ...formData, yearsOfExperience: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
 
@@ -742,7 +791,7 @@ const SkillsManagement = () => {
                     step={5}
                     value={formData.proficiencyPercentage}
                     onChange={(e) => setFormData({ ...formData, proficiencyPercentage: Number(e.target.value) })}
-                    className="w-full accent-teal-500 mt-2 cursor-pointer"
+                    className="w-full accent-purple-600 mt-2 cursor-pointer"
                   />
                 </div>
               </div>
@@ -766,6 +815,19 @@ const SkillsManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Skill"
+        message={`Are you sure you want to remove "${skillToDelete?.name}" from your skills profile?`}
+        confirmText="Yes, Delete Skill"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setSkillToDelete(null);
+        }}
+      />
     </div>
   );
 };

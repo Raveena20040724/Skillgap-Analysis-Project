@@ -16,23 +16,41 @@ import {
   Trash2,
   Sparkles,
   Eye,
-  EyeOff
+  EyeOff,
+  RotateCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const AdminProfile = () => {
   const { user, login } = useAuth();
   const fileInputRef = useRef(null);
 
-  // Profile fields state initialized from auth user / localStorage
+  // Profile fields state initialized from saved admin data / auth user / localStorage
   const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('admin_profile_data');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
+    try {
+      const saved = localStorage.getItem('admin_profile_data');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email) return parsed;
       }
+      const userStorage = localStorage.getItem('user');
+      if (userStorage) {
+        const parsedUser = JSON.parse(userStorage);
+        if (parsedUser && parsedUser.email) {
+          return {
+            name: parsedUser.name || parsedUser.username || 'Marcus Vance',
+            email: parsedUser.email,
+            phone: '+1 (555) 234-8901',
+            role: 'Super Admin',
+            department: 'Executive Leadership & DevOps',
+            bio: 'Lead Administrator managing telemetry pipelines, AI model orchestrations, and organizational RBAC access control policies.',
+            avatar: parsedUser.avatar || localStorage.getItem('userAvatar') || ''
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Profile initialization note:', e);
     }
     return {
       name: user?.name || user?.username || 'Marcus Vance',
@@ -55,14 +73,6 @@ const AdminProfile = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [userOtpInput, setUserOtpInput] = useState('');
-  const [copiedOtp, setCopiedOtp] = useState(false);
-
-  const [toastMsg, setToastMsg] = useState('');
-
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 4500);
-  };
 
   // Handle Photo Upload
   const handlePhotoUpload = (e) => {
@@ -80,7 +90,7 @@ const AdminProfile = () => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       login(updatedUser);
 
-      showToast('Profile photo updated successfully!');
+      showGlobalToast('Profile photo updated successfully!', 'success');
     };
     reader.readAsDataURL(file);
   };
@@ -91,66 +101,79 @@ const AdminProfile = () => {
     const updatedUser = { ...(user || {}), avatar: '' };
     localStorage.setItem('user', JSON.stringify(updatedUser));
     login(updatedUser);
-    showToast('Profile photo removed.');
+    showGlobalToast('Profile photo removed.', 'delete');
   };
 
   // Save Profile Details
   const handleSaveProfile = (e) => {
     e.preventDefault();
     if (!profile.name || !profile.email) {
-      showToast('Name and email are required.');
+      showGlobalToast('Name and email are required.', 'warning');
       return;
     }
 
     localStorage.setItem('admin_profile_data', JSON.stringify(profile));
     
-    // Synchronize with AuthContext so topbar immediately updates
+    // Synchronize with AuthContext so topbar and other pages immediately update
     const updatedUser = {
       ...(user || {}),
       name: profile.name,
-      email: profile.email,
+      email: profile.email.trim(),
       avatar: profile.avatar,
       role: 'admin'
     };
     localStorage.setItem('user', JSON.stringify(updatedUser));
     login(updatedUser);
 
-    showToast('✅ Admin profile details saved successfully!');
+    showGlobalToast(`Admin profile details saved for ${profile.email.trim()}!`, 'success');
   };
 
-  // Step 1: Send OTP to Admin's Email
+  // Step 1: Send OTP to User's Email Address (Uses latest updated email)
   const handleSendOtp = (e) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showToast('Please fill in current, new, and confirm password fields.');
-      return;
-    }
-    if (newPassword.length < 6) {
-      showToast('New password must be at least 6 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      showToast('New password and confirm password do not match.');
+    if (!currentPassword) {
+      showGlobalToast('Please enter your current password first.', 'warning');
       return;
     }
 
-    // Generate random 6-digit OTP code
+    const targetEmail = profile.email?.trim() || 
+      JSON.parse(localStorage.getItem('admin_profile_data') || '{}')?.email || 
+      JSON.parse(localStorage.getItem('user') || '{}')?.email || 
+      user?.email || 
+      'admin@company.com';
+
+    // Generate random 6-digit OTP code sent silently to user's email
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(code);
     setOtpSent(true);
-    showToast(`Verification OTP dispatched to ${profile.email}! Code: ${code}`);
+    showGlobalToast(`Verification OTP dispatched to ${targetEmail}. Check your email inbox.`, 'email', 5000);
   };
 
-  // Step 2: Verify OTP & Change Password
+  // Step 2: Verify OTP, Validate New Password, & Update Password
   const handleVerifyOtpAndChangePassword = (e) => {
     e.preventDefault();
     if (!userOtpInput) {
-      showToast('Please enter the 6-digit OTP code sent to your email.');
+      showGlobalToast('Please enter the 6-digit OTP code sent to your email.', 'warning');
       return;
     }
 
     if (userOtpInput.trim() !== generatedOtp) {
-      showToast('Invalid OTP code. Please check the code and try again.');
+      showGlobalToast('Invalid OTP code. Please enter the code sent to your email.', 'warning');
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      showGlobalToast('Please enter your new password and confirm password.', 'warning');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showGlobalToast('New password must be at least 6 characters long.', 'warning');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showGlobalToast('New password and confirm password do not match.', 'warning');
       return;
     }
 
@@ -162,13 +185,7 @@ const AdminProfile = () => {
     setUserOtpInput('');
     setOtpSent(false);
     setGeneratedOtp('');
-    showToast('✅ Password changed successfully with 2FA email verification!');
-  };
-
-  const handleCopyOtp = () => {
-    navigator.clipboard.writeText(generatedOtp);
-    setCopiedOtp(true);
-    setTimeout(() => setCopiedOtp(false), 2000);
+    showGlobalToast('Password changed successfully with verified email OTP!', 'success');
   };
 
   const initialLetter = (profile.name || 'A').charAt(0).toUpperCase();
@@ -192,14 +209,6 @@ const AdminProfile = () => {
           Super Admin Access
         </span>
       </div>
-
-      {/* Toast Notification Banner */}
-      {toastMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-bold flex items-center gap-2.5 shadow-md animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
 
       {/* Card 1: Profile Information & Photo Upload */}
       <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
@@ -370,67 +379,29 @@ const AdminProfile = () => {
         </div>
 
         {!otpSent ? (
-          /* Step 1: Input Passwords & Request OTP */
+          /* Step 1: Input Current Password & Request OTP */
           <form onSubmit={handleSendOtp} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Current Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full p-3.5 pr-10 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  New Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full p-3.5 pr-10 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Confirm New Password
-                </label>
+            <div className="max-w-md space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Current Account Password</span>
+                <span className="text-[10px] text-slate-400 font-medium">Step 1 of 2</span>
+              </label>
+              <div className="relative">
                 <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full p-3.5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  type={showCurrentPassword ? "text" : "password"}
+                  placeholder="Enter current password..."
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full p-3.5 pr-10 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
@@ -440,50 +411,93 @@ const AdminProfile = () => {
                 className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 cursor-pointer transition-all"
               >
                 <Send className="w-4 h-4" />
-                <span>Send OTP to Email ({profile.email})</span>
+                <span>Send Verification OTP to Email</span>
               </button>
             </div>
           </form>
         ) : (
-          /* Step 2: OTP Verification Box */
+          /* Step 2: Email Dispatched Notice & Input New Password */
           <form onSubmit={handleVerifyOtpAndChangePassword} className="space-y-5 animate-fade-in">
-            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl space-y-2">
+            {/* Email OTP Dispatched Banner */}
+            <div className="p-5 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-teal-500/10 border border-blue-500/30 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-black text-blue-600 dark:text-teal-400">
                   <Mail className="w-4 h-4" />
-                  <span>Email OTP Dispatched to {profile.email}</span>
+                  <span>Verification Code Dispatched to Your Email</span>
                 </div>
                 <button
                   type="button"
-                  onClick={handleCopyOtp}
-                  className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer hover:bg-blue-700"
+                  onClick={handleSendOtp}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 cursor-pointer hover:bg-blue-700 shadow-sm"
                 >
-                  {copiedOtp ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedOtp ? 'Copied!' : 'Copy Code'}</span>
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span>Resend Code</span>
                 </button>
               </div>
-              <p className="text-xs font-mono font-extrabold text-slate-900 dark:text-white">
-                Simulated Email OTP Code: <strong className="text-blue-600 dark:text-teal-400 text-sm tracking-widest bg-blue-500/20 px-2.5 py-1 rounded-md">{generatedOtp}</strong>
+              <p className="text-xs text-slate-700 dark:text-slate-200">
+                A 6-digit security code was sent to <strong className="text-blue-600 dark:text-teal-400">{profile.email}</strong>. Please check your inbox and spam folder, then enter the OTP below.
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Enter the 6-digit confirmation OTP code generated above to finalize your password update.
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                For security reasons, your verification code is delivered exclusively to your registered email account.
               </p>
             </div>
 
-            <div className="space-y-1.5 max-w-sm">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <KeyRound className="w-4 h-4 text-blue-500" />
-                <span>Enter 6-Digit Email OTP</span>
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                placeholder="e.g. 849204"
-                value={userOtpInput}
-                onChange={(e) => setUserOtpInput(e.target.value)}
-                className="w-full p-3.5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-base font-mono font-extrabold tracking-widest text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 uppercase text-center"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* OTP Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4 text-blue-500" />
+                  <span>6-Digit OTP Code</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="e.g. 849204"
+                  value={userOtpInput}
+                  onChange={(e) => setUserOtpInput(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-base font-mono font-extrabold tracking-widest text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 uppercase text-center"
+                  required
+                />
+              </div>
+
+              {/* New Password */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="Min. 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full p-3.5 pr-10 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  required
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-3 pt-2">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -16,80 +17,164 @@ import {
   ArrowRepeat, 
   Clock, 
   ListCheck, 
-  ChevronDown 
+  ChevronDown,
+  CloudUpload,
+  PatchCheck
 } from 'react-bootstrap-icons';
 import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
-
-// Overview stat cards data
-const STAT_CARDS = [
-  {
-    id: 1,
-    title: 'Completed Skills',
-    value: '12',
-    subtext: '+3 acquired this month',
-    bg: 'bg-rose-100/90 border-rose-300 dark:bg-rose-950/40 dark:border-rose-800/60 backdrop-blur-md shadow-md shadow-rose-500/5',
-    iconBg: 'bg-rose-200/90 text-rose-900 border-rose-300 dark:bg-rose-900/60 dark:text-rose-300 dark:border-rose-700/50',
-    titleColor: 'text-rose-950 dark:text-rose-200 font-extrabold',
-    valueColor: 'text-slate-950 dark:text-white font-black',
-    subtextColor: 'text-rose-900 dark:text-rose-300 font-bold',
-    icon: Check2Circle,
-  },
-  {
-    id: 2,
-    title: 'In Progress Skills',
-    value: '8',
-    subtext: 'Active courses & pathways',
-    bg: 'bg-teal-100/90 border-teal-300 dark:bg-teal-950/40 dark:border-teal-800/60 backdrop-blur-md shadow-md shadow-teal-500/5',
-    iconBg: 'bg-teal-200/90 text-teal-900 border-teal-300 dark:bg-teal-900/60 dark:text-teal-300 dark:border-teal-700/50',
-    titleColor: 'text-teal-950 dark:text-teal-200 font-extrabold',
-    valueColor: 'text-slate-950 dark:text-white font-black',
-    subtextColor: 'text-teal-900 dark:text-teal-300 font-bold',
-    icon: ArrowRepeat,
-  },
-  {
-    id: 3,
-    title: 'Identified Skill Gaps',
-    value: '4',
-    subtext: 'Gaps in target roles',
-    bg: 'bg-indigo-100/90 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800/60 backdrop-blur-md shadow-md shadow-indigo-500/5',
-    iconBg: 'bg-indigo-200/90 text-indigo-900 border-indigo-300 dark:bg-indigo-900/60 dark:text-indigo-300 dark:border-indigo-700/50',
-    titleColor: 'text-indigo-950 dark:text-indigo-200 font-extrabold',
-    valueColor: 'text-slate-950 dark:text-white font-black',
-    subtextColor: 'text-indigo-900 dark:text-indigo-300 font-bold',
-    icon: Clock,
-  },
-  {
-    id: 4,
-    title: 'Overall Rating',
-    value: '88%',
-    subtext: 'Top 15% percentile',
-    bg: 'bg-purple-100/90 border-purple-300 dark:bg-purple-950/40 dark:border-purple-800/60 backdrop-blur-md shadow-md shadow-purple-500/5',
-    iconBg: 'bg-purple-200/90 text-purple-900 border-purple-300 dark:bg-purple-900/60 dark:text-purple-300 dark:border-purple-700/50',
-    titleColor: 'text-purple-950 dark:text-purple-200 font-extrabold',
-    valueColor: 'text-slate-950 dark:text-white font-black',
-    subtextColor: 'text-purple-900 dark:text-purple-300 font-bold',
-    icon: ListCheck,
-  },
-];
-
-// Quarterly multi-bar chart data
-const QUARTERLY_DATA = [
-  { quarter: 'Q1', completed: 65, ongoing: 15, skillGap: 45 },
-  { quarter: 'Q2', completed: 55, ongoing: 30, skillGap: 25 },
-  { quarter: 'Q3', completed: 42, ongoing: 70, skillGap: 20 },
-  { quarter: 'Q4', completed: 50, ongoing: 15, skillGap: 72 },
-];
-
-// Donut chart performance data
-const DONUT_DATA = [
-  { name: 'Mastered Skills', value: 55, color: '#6366f1' },
-  { name: 'In Progress', value: 30, color: '#ec4899' },
-  { name: 'Skill Gaps', value: 15, color: '#14b8a6' },
-];
+import { getUserData, getActiveUser } from '../../utils/userStorage';
+import { ROUTES } from '../../constants/routes';
 
 const EmployeeDashboard = () => {
+  const navigate = useNavigate();
+  const activeUser = getActiveUser();
   const [selectedYear, setSelectedYear] = useState('2026');
+  const [hasSkills, setHasSkills] = useState(false);
+  const [metrics, setMetrics] = useState({
+    completedSkills: 0,
+    inProgressSkills: 0,
+    skillGaps: 0,
+    overallRating: 0,
+  });
+
+  const [donutData, setDonutData] = useState([
+    { name: 'Mastered Skills', value: 0, color: '#8b5cf6' },
+    { name: 'In Progress', value: 0, color: '#06b6d4' },
+    { name: 'Skill Gaps', value: 0, color: '#f43f5e' },
+  ]);
+
+  const [quarterlyData, setQuarterlyData] = useState([
+    { quarter: 'Q1', completed: 0, ongoing: 0, skillGap: 0 },
+    { quarter: 'Q2', completed: 0, ongoing: 0, skillGap: 0 },
+    { quarter: 'Q3', completed: 0, ongoing: 0, skillGap: 0 },
+    { quarter: 'Q4', completed: 0, ongoing: 0, skillGap: 0 },
+  ]);
+
+  useEffect(() => {
+    const loadRealMetrics = () => {
+      try {
+        const savedSkills = getUserData('skills', null);
+        const resumeSkills = getUserData('resume_skills', null);
+        const skills = savedSkills || resumeSkills || [];
+
+        if (skills && skills.length > 0) {
+          setHasSkills(true);
+          const completed = skills.filter(s => (s.proficiencyPercentage || 0) >= 80).length;
+          const inProgress = skills.filter(s => (s.proficiencyPercentage || 0) >= 70 && (s.proficiencyPercentage || 0) < 80).length;
+          const gaps = skills.filter(s => (s.proficiencyPercentage || 0) < 70).length;
+          const totalProf = skills.reduce((acc, s) => acc + (s.proficiencyPercentage || 0), 0);
+          const avgRating = Math.round(totalProf / skills.length);
+
+          setMetrics({
+            completedSkills: completed,
+            inProgressSkills: inProgress,
+            skillGaps: gaps,
+            overallRating: avgRating,
+          });
+
+          const total = Math.max(1, skills.length);
+          const masteredPct = Math.round((completed / total) * 100);
+          const ongoingPct = Math.round((inProgress / total) * 100);
+          const gapsPct = Math.max(0, 100 - masteredPct - ongoingPct);
+
+          setDonutData([
+            { name: 'Mastered Skills', value: masteredPct, color: '#8b5cf6' },
+            { name: 'In Progress', value: ongoingPct, color: '#06b6d4' },
+            { name: 'Skill Gaps', value: gapsPct, color: '#f43f5e' },
+          ]);
+
+          setQuarterlyData([
+            { quarter: 'Q1', completed: Math.max(10, avgRating - 25), ongoing: 20, skillGap: Math.max(10, gaps * 10) },
+            { quarter: 'Q2', completed: Math.max(20, avgRating - 15), ongoing: 25, skillGap: Math.max(10, gaps * 8) },
+            { quarter: 'Q3', completed: Math.max(30, avgRating - 5), ongoing: 30, skillGap: Math.max(5, gaps * 5) },
+            { quarter: 'Q4', completed: avgRating, ongoing: 15, skillGap: Math.max(5, gaps * 3) },
+          ]);
+        } else {
+          // Zero state for new user
+          setHasSkills(false);
+          setMetrics({
+            completedSkills: 0,
+            inProgressSkills: 0,
+            skillGaps: 0,
+            overallRating: 0,
+          });
+          setDonutData([
+            { name: 'Mastered Skills', value: 0, color: '#8b5cf6' },
+            { name: 'In Progress', value: 0, color: '#06b6d4' },
+            { name: 'Skill Gaps', value: 0, color: '#f43f5e' },
+          ]);
+          setQuarterlyData([
+            { quarter: 'Q1', completed: 0, ongoing: 0, skillGap: 0 },
+            { quarter: 'Q2', completed: 0, ongoing: 0, skillGap: 0 },
+            { quarter: 'Q3', completed: 0, ongoing: 0, skillGap: 0 },
+            { quarter: 'Q4', completed: 0, ongoing: 0, skillGap: 0 },
+          ]);
+        }
+      } catch (err) {
+        console.error('Error loading dashboard metrics:', err);
+      }
+    };
+
+    loadRealMetrics();
+    window.addEventListener('skillsUpdated', loadRealMetrics);
+    window.addEventListener('userDataChanged', loadRealMetrics);
+    return () => {
+      window.removeEventListener('skillsUpdated', loadRealMetrics);
+      window.removeEventListener('userDataChanged', loadRealMetrics);
+    };
+  }, []);
+
+  const statCards = [
+    {
+      id: 1,
+      title: 'Completed Skills',
+      value: String(metrics.completedSkills),
+      subtext: 'High mastery competencies',
+      bg: 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/60 shadow-sm',
+      iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
+      titleColor: 'text-purple-950 dark:text-purple-200 font-extrabold',
+      valueColor: 'text-slate-950 dark:text-white font-black',
+      subtextColor: 'text-purple-700 dark:text-purple-300 font-bold',
+      icon: Check2Circle,
+    },
+    {
+      id: 2,
+      title: 'In Progress Skills',
+      value: String(metrics.inProgressSkills),
+      subtext: 'Active learning pathways',
+      bg: 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800/60 shadow-sm',
+      iconBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20',
+      titleColor: 'text-cyan-950 dark:text-cyan-200 font-extrabold',
+      valueColor: 'text-slate-950 dark:text-white font-black',
+      subtextColor: 'text-cyan-700 dark:text-cyan-300 font-bold',
+      icon: ArrowRepeat,
+    },
+    {
+      id: 3,
+      title: 'Identified Skill Gaps',
+      value: String(metrics.skillGaps),
+      subtext: 'Targeted deficit areas',
+      bg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60 shadow-sm',
+      iconBg: 'bg-rose-600 text-white shadow-md shadow-rose-500/20',
+      titleColor: 'text-rose-950 dark:text-rose-200 font-extrabold',
+      valueColor: 'text-slate-950 dark:text-white font-black',
+      subtextColor: 'text-rose-700 dark:text-rose-300 font-bold',
+      icon: Clock,
+    },
+    {
+      id: 4,
+      title: 'Overall Rating',
+      value: `${metrics.overallRating}%`,
+      subtext: 'Average benchmark score',
+      bg: 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 shadow-sm',
+      iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
+      titleColor: 'text-slate-950 dark:text-slate-200 font-extrabold',
+      valueColor: 'text-slate-950 dark:text-white font-black',
+      subtextColor: 'text-slate-600 dark:text-slate-400 font-bold',
+      icon: ListCheck,
+    },
+  ];
 
   return (
     <div className="space-y-8">
@@ -99,12 +184,45 @@ const EmployeeDashboard = () => {
         subtitle="Overview of your career progress, active recommendations, and skill growth." 
       />
 
+      {/* Onboarding Welcome Prompt for Clean / Zero State */}
+      {!hasSkills && (
+        <Card className="p-6 bg-gradient-to-r from-purple-500/10 via-violet-500/10 to-indigo-500/10 border-2 border-dashed border-purple-300 dark:border-purple-800/60 rounded-3xl">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <PatchCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                Welcome to your SkillGap Profile, {activeUser?.name || activeUser?.username || 'Employee'}!
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+                You haven't uploaded a resume or added any skills yet. Upload your resume to extract competencies automatically or take an AI skill benchmark assessment to generate real-time metrics and career pathways.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                onClick={() => navigate(ROUTES.RESUME_UPLOAD)}
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+              >
+                <CloudUpload className="w-4 h-4" />
+                Upload Resume
+              </button>
+              <button
+                onClick={() => navigate(ROUTES.SKILL_ASSESSMENT)}
+                className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <PatchCheck className="w-4 h-4" />
+                Take Assessment
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* 1. Overview Section */}
       <section className="space-y-4">
         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Overview</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {STAT_CARDS.map((card) => {
+          {statCards.map((card) => {
             const Icon = card.icon;
             return (
               <div 
@@ -136,7 +254,7 @@ const EmployeeDashboard = () => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+              className="appearance-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
             >
               <option value="2026">2026</option>
               <option value="2025">2025</option>
@@ -153,45 +271,45 @@ const EmployeeDashboard = () => {
             {/* Custom Bar Legend Header */}
             <div className="flex items-center justify-center gap-6 mb-6">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#3b82f6]"></span>
+                <span className="w-3 h-3 rounded-full bg-[#8b5cf6]"></span>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Completed</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#10b981]"></span>
+                <span className="w-3 h-3 rounded-full bg-[#06b6d4]"></span>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">On-going</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#f59e0b]"></span>
+                <span className="w-3 h-3 rounded-full bg-[#f43f5e]"></span>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Skill Gap</span>
               </div>
             </div>
 
             {/* Bar Chart Container */}
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={QUARTERLY_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={quarterlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} vertical={false} />
                 <XAxis dataKey="quarter" stroke="#94a3b8" fontSize={12} tickLine={false} />
                 <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={12} tickLine={false} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} 
                 />
-                <Bar dataKey="completed" fill="#3b82f6" name="Completed" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="ongoing" fill="#10b981" name="On-going" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="skillGap" fill="#f59e0b" name="Skill Gap" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="completed" fill="#8b5cf6" name="Completed" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="ongoing" fill="#06b6d4" name="On-going" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="skillGap" fill="#f43f5e" name="Skill Gap" radius={[6, 6, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
 
           {/* Right Column (4/12): Performance Donut Chart */}
           <Card className="lg:col-span-4 p-6 flex flex-col items-center justify-between">
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white self-start mb-2">Last 30 Days Performance</h3>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white self-start mb-2">Skill Health Distribution</h3>
 
             {/* Donut Chart */}
             <div className="w-full flex items-center justify-center my-2">
               <ResponsiveContainer width="100%" height={210}>
                 <PieChart>
                   <Pie
-                    data={DONUT_DATA}
+                    data={donutData}
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
@@ -199,7 +317,7 @@ const EmployeeDashboard = () => {
                     paddingAngle={4}
                     dataKey="value"
                   >
-                    {DONUT_DATA.map((entry, index) => (
+                    {donutData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
@@ -210,7 +328,7 @@ const EmployeeDashboard = () => {
 
             {/* Custom Donut Legend Below */}
             <div className="w-full space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              {DONUT_DATA.map((item) => (
+              {donutData.map((item) => (
                 <div key={item.name} className="flex justify-between items-center text-xs">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></span>

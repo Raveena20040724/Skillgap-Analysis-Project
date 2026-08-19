@@ -78,12 +78,23 @@ const DEPARTMENTS = [
 ];
 
 const EmployeeDirectory = () => {
-  const [directoryEmployees, setDirectoryEmployees] = useState(INITIAL_DIRECTORY_EMPLOYEES);
+  const [directoryEmployees, setDirectoryEmployees] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_employee_directory');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_DIRECTORY_EMPLOYEES;
+  });
+
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('All');
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
 
   useEffect(() => {
     fetchDirectory();
@@ -96,24 +107,32 @@ const EmployeeDirectory = () => {
         search: search.trim() || undefined,
       });
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setDirectoryEmployees(res.data.map((emp) => ({
-          id: emp.id,
-          name: emp.name || emp.username,
-          designation: emp.designation || 'Software Engineer',
-          department: emp.department || 'Engineering',
-          skillReadinessScore: emp.readiness_score || 85,
-          experienceYears: emp.experience_years || 3,
-          status: 'Active',
-          email: emp.email,
-          location: emp.location || 'San Francisco, CA',
-          bio: emp.bio || 'Engineered high quality software products.',
-          avatar: emp.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
-        })));
-      } else if (!search && selectedDept === 'All') {
-        setDirectoryEmployees(INITIAL_DIRECTORY_EMPLOYEES);
+        setDirectoryEmployees(prev => {
+          const merged = [...prev];
+          res.data.forEach(emp => {
+            const exists = merged.some(m => m.email?.toLowerCase() === emp.email?.toLowerCase());
+            if (!exists) {
+              merged.push({
+                id: emp.id,
+                name: emp.name || emp.username,
+                designation: emp.designation || 'Software Engineer',
+                department: emp.department || 'Engineering',
+                skillReadinessScore: emp.readiness_score || 85,
+                experienceYears: emp.experience_years || 3,
+                status: 'Active',
+                email: emp.email,
+                location: emp.location || 'San Francisco, CA',
+                bio: emp.bio || 'Engineered high quality software products.',
+                avatar: emp.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
+              });
+            }
+          });
+          localStorage.setItem('custom_employee_directory', JSON.stringify(merged));
+          return merged;
+        });
       }
     } catch (err) {
-      console.log('Using default employee directory list.', err);
+      console.log('Using persistent employee directory list.', err);
     }
   };
 
@@ -125,13 +144,8 @@ const EmployeeDirectory = () => {
     location: 'San Francisco, CA',
     experienceYears: 3,
     bio: 'Engineered high quality software products.',
-    skillReadinessScore: 80
+    skillReadinessScore: 85
   });
-
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 4000);
-  };
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
@@ -144,7 +158,10 @@ const EmployeeDirectory = () => {
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80'
     };
 
-    setDirectoryEmployees([created, ...directoryEmployees]);
+    const updated = [created, ...directoryEmployees];
+    setDirectoryEmployees(updated);
+    localStorage.setItem('custom_employee_directory', JSON.stringify(updated));
+
     setFormData({
       name: '',
       email: '',
@@ -153,10 +170,10 @@ const EmployeeDirectory = () => {
       location: 'San Francisco, CA',
       experienceYears: 3,
       bio: 'Engineered high quality software products.',
-      skillReadinessScore: 80
+      skillReadinessScore: 85
     });
     setIsAddModalOpen(false);
-    showToast(`Added ${created.name} to workforce directory!`);
+    showGlobalToast(`Added ${created.name} to workforce directory!`, 'success');
   };
 
   const filtered = directoryEmployees.filter((emp) => {
@@ -173,7 +190,7 @@ const EmployeeDirectory = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <Users className="w-8 h-8 text-blue-600 dark:text-teal-400 stroke-[2.2]" />
+            <Users className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
             Workforce & Employee Directory ({directoryEmployees.length})
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -183,22 +200,14 @@ const EmployeeDirectory = () => {
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 cursor-pointer shrink-0"
+          className="px-5 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-teal-600/30 flex items-center gap-2 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Employee</span>
         </button>
       </div>
 
-      {/* Toast Notification Banner */}
-      {toastMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-bold flex items-center gap-2.5 shadow-md animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Filter & Search Bar */}
+      {/* Filter Tabs Toolbar */}
       <div className="p-4 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-80">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -207,7 +216,7 @@ const EmployeeDirectory = () => {
             placeholder="Search employee name or role..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
           />
         </div>
 
@@ -219,7 +228,7 @@ const EmployeeDirectory = () => {
               onClick={() => setSelectedDept(d)}
               className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition-all duration-200 cursor-pointer ${
                 selectedDept === d
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -235,13 +244,13 @@ const EmployeeDirectory = () => {
           <div key={emp.id} className="bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3.5">
-                <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-blue-500/40 shadow-md" />
+                <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-teal-500/40 shadow-md" />
                 <div className="min-w-0">
                   <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                     {emp.name}
-                    <CheckCircle2 className="w-4 h-4 text-blue-500 fill-current shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-teal-500 fill-current shrink-0" />
                   </h3>
-                  <p className="text-xs font-bold text-blue-600 dark:text-teal-400 truncate">{emp.designation}</p>
+                  <p className="text-xs font-bold text-teal-600 dark:text-teal-400 truncate">{emp.designation}</p>
                   <p className="text-[10px] font-semibold text-slate-400 truncate">{emp.department}</p>
                 </div>
               </div>
@@ -259,7 +268,7 @@ const EmployeeDirectory = () => {
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
                 <div>
                   <span className="text-slate-400 block text-[10px] font-bold uppercase">Status</span>
-                  <span className="font-black text-blue-500">Active</span>
+                  <span className="font-black text-teal-600 dark:text-teal-400">Active</span>
                 </div>
               </div>
             </div>
@@ -272,8 +281,8 @@ const EmployeeDirectory = () => {
                 <Eye className="w-3.5 h-3.5" /> View Profile
               </button>
               <button
-                onClick={() => showToast(`Generating Skill Telemetry Report for ${emp.name}...`)}
-                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/30 cursor-pointer"
+                onClick={() => showGlobalToast(`Generating Skill Telemetry Report for ${emp.name}...`, 'info')}
+                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-teal-600/30 cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" /> View Report
               </button>
@@ -288,10 +297,10 @@ const EmployeeDirectory = () => {
           <div className="w-full max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 animate-scale-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <img src={selectedEmp.avatar} alt={selectedEmp.name} className="w-12 h-12 rounded-2xl object-cover" />
+                <img src={selectedEmp.avatar} alt={selectedEmp.name} className="w-12 h-12 rounded-2xl object-cover border border-teal-500/30" />
                 <div>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-white">{selectedEmp.name}</h3>
-                  <p className="text-xs font-bold text-blue-500">{selectedEmp.designation}</p>
+                  <p className="text-xs font-bold text-teal-600 dark:text-teal-400">{selectedEmp.designation}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedEmp(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -338,7 +347,7 @@ const EmployeeDirectory = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Jordan Lee"
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -350,7 +359,7 @@ const EmployeeDirectory = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="jordan.lee@company.com"
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -360,7 +369,7 @@ const EmployeeDirectory = () => {
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
                   >
                     <option value="Engineering">Engineering</option>
                     <option value="Data Science & AI">Data Science & AI</option>
@@ -375,7 +384,7 @@ const EmployeeDirectory = () => {
                     type="text"
                     value={formData.designation}
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   />
                 </div>
               </div>
@@ -390,7 +399,7 @@ const EmployeeDirectory = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl cursor-pointer"
+                  className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-teal-600/30 cursor-pointer"
                 >
                   Add Employee
                 </button>

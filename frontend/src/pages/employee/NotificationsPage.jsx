@@ -8,116 +8,86 @@ import {
   BookOpen, 
   Award, 
   FileText, 
-  ChevronRight,
-  Zap,
-  CheckCheck,
+  ChevronRight, 
+  Zap, 
+  CheckCheck, 
+  ShieldCheck, 
+  AlertCircle, 
+  Layers,
   X
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+import { showGlobalToast } from '../../components/common/ToastContainer';
+import { getUserData, setUserData, getActiveUser } from '../../utils/userStorage';
 
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'AI Skill Gap Analysis Ready',
-    message: 'Your latest skill assessment has been processed by AI telemetry. 4 skill gaps identified for Senior Frontend Developer role.',
-    category: 'Skill Gap & AI',
-    time: '10 minutes ago',
-    date: '2026-08-07',
-    read: false,
-    type: 'ai',
-    link: ROUTES.SKILL_GAP_RESULTS,
-    actionLabel: 'View Skill Gap Results',
-  },
-  {
-    id: '2',
-    title: 'New Recommended Course Added',
-    message: 'Advanced React Design Systems & Micro-frontends course added to your personalized learning pathway.',
-    category: 'Courses & Path',
-    time: '1 hour ago',
-    date: '2026-08-07',
-    read: false,
-    type: 'course',
-    link: ROUTES.COURSE_RECOMMENDATIONS,
-    actionLabel: 'Explore Courses',
-  },
-  {
-    id: '3',
-    title: 'Resume Successfully Parsed',
-    message: 'CV telemetry updated. 8 technical skills extracted and automatically synced into your live profile.',
-    category: 'Skill Gap & AI',
-    time: '2 hours ago',
-    date: '2026-08-07',
-    read: false,
-    type: 'resume',
-    link: ROUTES.RESUME_UPLOAD,
-    actionLabel: 'View Active Resume',
-  },
-  {
-    id: '4',
-    title: 'Quarterly Assessment Due',
-    message: 'Frontend Architecture & State Management assessment is scheduled for completion before Aug 15.',
-    category: 'Assessments',
-    time: 'Yesterday at 4:30 PM',
-    date: '2026-08-06',
-    read: true,
-    type: 'assessment',
-    link: ROUTES.SKILL_ASSESSMENT,
-    actionLabel: 'Take Assessment',
-  },
-  {
-    id: '5',
-    title: 'Career Match Score Increase (+12%)',
-    message: 'Congratulations! Your profile match score for Senior Web Architect role increased from 74% to 86%.',
-    category: 'Skill Gap & AI',
-    time: '2 days ago',
-    date: '2026-08-05',
-    read: true,
-    type: 'career',
-    link: ROUTES.CAREER_RECOMMENDATIONS,
-    actionLabel: 'View Career Path',
-  },
-  {
-    id: '6',
-    title: 'Learning Milestone Reached',
-    message: 'You have completed 75% of your React & TypeScript mastery roadmap!',
-    category: 'Courses & Path',
-    time: '3 days ago',
-    date: '2026-08-04',
-    read: true,
-    type: 'course',
-    link: ROUTES.LEARNING_PATH,
-    actionLabel: 'View Learning Path',
-  },
-];
-
-const CATEGORIES = ['All', 'Unread', 'Skill Gap & AI', 'Courses & Path', 'Assessments'];
+const CATEGORIES = ['All', 'Unread', 'Skill Growth', 'Resume Processing', 'Skill Assessment', 'Courses & Path'];
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('employee_alerts_list');
-      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
-    } catch {
-      return INITIAL_NOTIFICATIONS;
-    }
-  });
+  const activeUser = getActiveUser();
+
+  const getInitialUserAlerts = () => {
+    const saved = getUserData('alerts_list', null);
+    if (saved !== null) return saved;
+
+    // Fallback single welcome alert if no alerts exist
+    return [
+      {
+        id: `notif_${Date.now()}`,
+        title: `Welcome to SkillGap, ${activeUser?.name || activeUser?.username || 'Employee'}!`,
+        message: 'Your account is ready. Get started by uploading your resume or taking your first AI skill assessment to diagnose skill gaps and explore career paths.',
+        category: 'Skill Growth',
+        time: 'Just now',
+        date: new Date().toISOString().split('T')[0],
+        read: false,
+        type: 'welcome',
+        link: ROUTES.RESUME_UPLOAD,
+        actionLabel: 'Upload Resume'
+      }
+    ];
+  };
+
+  const [notifications, setNotifications] = useState(getInitialUserAlerts);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
   const [bannerMsg, setBannerMsg] = useState('');
 
   // Automatically mark all unread notifications as read when opening the Notifications page
   useEffect(() => {
-    setNotifications((prev) => {
-      const allRead = prev.map((n) => ({ ...n, read: true }));
-      localStorage.setItem('employee_alerts_list', JSON.stringify(allRead));
-      window.dispatchEvent(new Event('notificationsUpdated'));
-      return allRead;
-    });
+    const current = getUserData('alerts_list', null);
+    if (current && Array.isArray(current) && current.length > 0) {
+      const hasUnread = current.some(n => !n.read);
+      if (hasUnread) {
+        const allRead = current.map((n) => ({ ...n, read: true }));
+        setNotifications(allRead);
+        setUserData('alerts_list', allRead);
+        window.dispatchEvent(new Event('notificationsUpdated'));
+      } else {
+        setNotifications(current);
+      }
+    } else {
+      const initial = getInitialUserAlerts();
+      setNotifications(initial);
+      setUserData('alerts_list', initial);
+    }
+
+    const handleExternalUpdate = () => {
+      const updated = getUserData('alerts_list', null);
+      if (updated && Array.isArray(updated)) {
+        setNotifications(updated);
+      }
+    };
+
+    window.addEventListener('userDataChanged', handleExternalUpdate);
+    return () => window.removeEventListener('userDataChanged', handleExternalUpdate);
   }, []);
 
   const showBanner = (msg) => {
@@ -128,52 +98,67 @@ const NotificationsPage = () => {
   const handleMarkAllRead = () => {
     const updated = notifications.map((n) => ({ ...n, read: true }));
     setNotifications(updated);
-    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    setUserData('alerts_list', updated);
     window.dispatchEvent(new Event('notificationsUpdated'));
-    showBanner('All notifications marked as read.');
+    showGlobalToast('All notifications marked as read.', 'success');
+  };
+
+  const handleDeleteClick = (n, e) => {
+    e.stopPropagation();
+    setItemToDelete(n);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+    const updated = notifications.filter((n) => n.id !== itemToDelete.id);
+    setNotifications(updated);
+    setUserData('alerts_list', updated);
+    window.dispatchEvent(new Event('notificationsUpdated'));
+    showGlobalToast(`Notification deleted.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    setItemToDelete(null);
+    if (selectedNotification?.id === itemToDelete.id) {
+      setSelectedNotification(null);
+    }
   };
 
   const handleClearAll = () => {
     setNotifications([]);
-    localStorage.setItem('employee_alerts_list', JSON.stringify([]));
+    setUserData('alerts_list', []);
     window.dispatchEvent(new Event('notificationsUpdated'));
-    showBanner('Notification inbox cleared.');
+    setSelectedNotification(null);
+    showGlobalToast('Cleared all notifications.', 'delete');
+    setIsClearAllConfirmOpen(false);
   };
 
-  const handleToggleRead = (id, e) => {
-    e.stopPropagation();
-    const updated = notifications.map((n) => (n.id === id ? { ...n, read: !n.read } : n));
+  const handleNotificationClick = (n) => {
+    const updated = notifications.map((item) => (item.id === n.id ? { ...item, read: true } : item));
     setNotifications(updated);
-    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
+    setUserData('alerts_list', updated);
     window.dispatchEvent(new Event('notificationsUpdated'));
+    setSelectedNotification({ ...n, read: true });
   };
 
-  const handleDelete = (id, e) => {
-    e.stopPropagation();
-    const updated = notifications.filter((n) => n.id !== id);
-    setNotifications(updated);
-    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
-    window.dispatchEvent(new Event('notificationsUpdated'));
-    if (selectedNotification?.id === id) setSelectedNotification(null);
-    showBanner('Notification removed.');
-  };
-
-  const handleNotificationClick = (item) => {
-    const updated = notifications.map((n) => (n.id === item.id ? { ...n, read: true } : n));
-    setNotifications(updated);
-    localStorage.setItem('employee_alerts_list', JSON.stringify(updated));
-    window.dispatchEvent(new Event('notificationsUpdated'));
-    setSelectedNotification(item);
+  const handleActionClick = (n) => {
+    if (n.link) {
+      const updated = notifications.map((item) => (item.id === n.id ? { ...item, read: true } : item));
+      setNotifications(updated);
+      setUserData('alerts_list', updated);
+      window.dispatchEvent(new Event('notificationsUpdated'));
+      navigate(n.link);
+    }
   };
 
   // Filtered list
-  const filteredNotifications = notifications.filter((item) => {
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const filteredNotifications = safeNotifications.filter((item) => {
     if (activeCategory === 'All') return true;
     if (activeCategory === 'Unread') return !item.read;
     return item.category === activeCategory;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = safeNotifications.filter((n) => !n.read).length;
 
   const getIcon = (type) => {
     switch (type) {
@@ -181,50 +166,48 @@ const NotificationsPage = () => {
       case 'career':
         return <Zap className="w-5 h-5 text-amber-500" />;
       case 'course':
-        return <BookOpen className="w-5 h-5 text-teal-500" />;
+        return <BookOpen className="w-5 h-5 text-violet-500" />;
       case 'assessment':
         return <Award className="w-5 h-5 text-indigo-500" />;
       case 'resume':
-        return <FileText className="w-5 h-5 text-blue-500" />;
+        return <FileText className="w-5 h-5 text-purple-500" />;
       default:
-        return <Bell className="w-5 h-5 text-teal-500" />;
+        return <Bell className="w-5 h-5 text-purple-500" />;
     }
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-600/10 via-teal-600/10 to-indigo-600/10 dark:from-blue-500/20 dark:via-teal-500/20 dark:to-indigo-500/20 p-6 rounded-2xl border border-blue-500/20 dark:border-blue-500/30">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <PageHeader
-            title={
-              <span className="flex items-center gap-2.5 text-slate-900 dark:text-white font-extrabold text-2xl">
-                <Bell className="w-7 h-7 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
-                Notifications Center
-              </span>
-            }
-            subtitle="Stay updated on AI skill gap insights, learning pathways, assessment deadlines, and platform telemetry."
-          />
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+            <Bell className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+            Notifications Center
+          </h1>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+            Stay up to date with skill assessments, AI gap recommendations, and curriculum milestones.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2.5 bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 dark:bg-white/10 dark:hover:bg-white/20 text-purple-700 dark:text-purple-200 border border-purple-200 dark:border-purple-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <CheckCheck className="w-4 h-4" />
-              Mark All Read
+              <CheckCheck className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+              <span>Mark All Read</span>
             </button>
           )}
 
-          {notifications.length > 0 && (
+          {safeNotifications.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="px-4 py-2.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <Trash2 className="w-4 h-4" />
-              Clear All
+              <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+              <span>Clear All</span>
             </button>
           )}
         </div>
@@ -232,8 +215,8 @@ const NotificationsPage = () => {
 
       {/* Banner Feedback */}
       {bannerMsg && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-sm font-semibold shadow-sm animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700/60 text-purple-800 dark:text-purple-200 rounded-xl text-sm font-semibold shadow-sm animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           {bannerMsg}
         </div>
       )}
@@ -255,7 +238,7 @@ const NotificationsPage = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${
                   activeCategory === cat
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -263,7 +246,7 @@ const NotificationsPage = () => {
                 <span
                   className={`px-2 py-0.2 rounded-full text-[10px] ${
                     activeCategory === cat
-                      ? 'bg-blue-700 text-blue-100'
+                      ? 'bg-purple-700 text-purple-100'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -294,9 +277,9 @@ const NotificationsPage = () => {
             <Card
               key={item.id}
               onClick={() => handleNotificationClick(item)}
-              className={`p-5 border transition-all duration-200 cursor-pointer group hover:border-blue-500/50 ${
+              className={`p-5 border transition-all duration-200 cursor-pointer group hover:border-purple-500/50 ${
                 !item.read
-                  ? 'bg-white dark:bg-slate-900/90 border-blue-500/30 dark:border-blue-500/40 shadow-md'
+                  ? 'bg-white dark:bg-slate-900/90 border-purple-500/30 dark:border-purple-500/40 shadow-md'
                   : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800/80 opacity-85'
               }`}
             >
@@ -309,7 +292,7 @@ const NotificationsPage = () => {
 
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                         {item.category}
                       </span>
                       {!item.read && (
@@ -322,7 +305,7 @@ const NotificationsPage = () => {
                       </span>
                     </div>
 
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors">
+                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                       {item.title}
                     </h3>
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -339,7 +322,7 @@ const NotificationsPage = () => {
                         e.stopPropagation();
                         navigate(item.link);
                       }}
-                      className="px-4 py-2 bg-blue-600/10 hover:bg-blue-600 text-blue-600 hover:text-white dark:text-blue-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600 text-purple-600 hover:text-white dark:text-purple-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>{item.actionLabel || 'View Detail'}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -347,15 +330,7 @@ const NotificationsPage = () => {
                   )}
 
                   <button
-                    onClick={(e) => handleToggleRead(item.id, e)}
-                    title={item.read ? 'Mark as Unread' : 'Mark as Read'}
-                    className="p-2 rounded-xl text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    <CheckCheck className={`w-4 h-4 ${item.read ? 'text-teal-500' : ''}`} />
-                  </button>
-
-                  <button
-                    onClick={(e) => handleDelete(item.id, e)}
+                    onClick={(e) => handleDeleteClick(item, e)}
                     title="Delete Notification"
                     className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
@@ -374,11 +349,11 @@ const NotificationsPage = () => {
           <div className="w-full max-w-lg rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-500/10 rounded-xl">
+                <div className="p-2.5 bg-purple-500/10 rounded-xl">
                   {getIcon(selectedNotification.type)}
                 </div>
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase text-blue-600 dark:text-blue-400">
+                  <span className="text-[10px] font-extrabold uppercase text-purple-600 dark:text-purple-400">
                     {selectedNotification.category}
                   </span>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug">
@@ -428,6 +403,29 @@ const NotificationsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Notification Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Notification"
+        message={`Are you sure you want to delete this notification "${itemToDelete?.title || 'Selected Alert'}"?`}
+        confirmText="Yes, Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setItemToDelete(null);
+        }}
+      />
+
+      {/* Clear All Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isClearAllConfirmOpen}
+        title="Clear All Notifications"
+        message="Are you sure you want to remove all notifications from your inbox?"
+        confirmText="Clear All"
+        onConfirm={handleClearAll}
+        onCancel={() => setIsClearAllConfirmOpen(false)}
+      />
     </div>
   );
 };
