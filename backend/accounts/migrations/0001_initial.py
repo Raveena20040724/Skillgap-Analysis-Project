@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'user',
                 'verbose_name_plural': 'users',
                 'abstract': False,
+                'swappable': 'AUTH_USER_MODEL',
             },
             managers=[
                 ('objects', django.contrib.auth.models.UserManager()),
