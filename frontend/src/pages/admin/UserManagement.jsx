@@ -107,6 +107,24 @@ const UserManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('hr'); // 'hr' | 'employee'
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_employee_directory');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return [
+      { id: 'emp-1', name: 'Alex Morgan', designation: 'Senior Frontend Developer', department: 'Engineering', company: 'TechCorp Systems', email: 'alex.morgan@techcorp.com', skillReadinessScore: 84, status: 'Active', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80' },
+      { id: 'emp-2', name: 'Sophia Patel', designation: 'Senior ML Engineer', department: 'Data Science & AI', company: 'InnoTech Global', email: 'sophia.patel@techcorp.com', skillReadinessScore: 91, status: 'Active', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80' },
+      { id: 'emp-3', name: 'David Chen', designation: 'Backend DevOps Engineer', department: 'Engineering', company: 'CloudScale Networks', email: 'david.chen@techcorp.com', skillReadinessScore: 78, status: 'Active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80' },
+      { id: 'emp-4', name: 'Emily Watson', designation: 'Lead Product Designer', department: 'UI/UX Design', company: 'CreativeStack Studios', email: 'emily.watson@techcorp.com', skillReadinessScore: 88, status: 'Active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80' }
+    ];
+  });
   const [selectedHr, setSelectedHr] = useState(null);
   const [reportModalHr, setReportModalHr] = useState(null);
   const [hrToDelete, setHrToDelete] = useState(null);
@@ -241,6 +259,25 @@ const UserManagement = () => {
 
   const handleConfirmDelete = async () => {
     if (!hrToDelete) return;
+
+    if (activeTab === 'employee' || hrToDelete.id?.toString().startsWith('emp-')) {
+      const updatedEmps = employees.filter((e) => e.id !== hrToDelete.id);
+      setEmployees(updatedEmps);
+      localStorage.setItem('custom_employee_directory', JSON.stringify(updatedEmps));
+      
+      try {
+        if (typeof hrToDelete.id === 'number' && hrToDelete.id < 1000000000000) {
+          await adminService.deleteUser(hrToDelete.id);
+        }
+      } catch (err) {
+        console.warn('Backend employee delete note:', err);
+      }
+      
+      showGlobalToast(`Employee account "${hrToDelete.name}" removed from directory.`, 'delete');
+      setIsDeleteConfirmOpen(false);
+      setHrToDelete(null);
+      return;
+    }
     
     const updated = hrs.filter((h) => h.id !== hrToDelete.id);
     setHrs(updated);
@@ -264,43 +301,66 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
-      {/* Header Banner (Matching Photo) */}
+      {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
             <Users className="w-8 h-8 text-blue-600 dark:text-teal-400 stroke-[2.2]" />
-            Workforce & HR Directory ({filteredHrs.length})
+            Workforce Directory ({activeTab === 'hr' ? filteredHrs.length : employees.length})
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Inspect individual HR leads, company details, assigned departments, and active management reports.
+            Inspect individual HR leads and employee personnel. Manage active user access and permissions.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New HR</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setActiveTab('hr')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                activeTab === 'hr' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              HR Managers
+            </button>
+            <button
+              onClick={() => setActiveTab('employee')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                activeTab === 'employee' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              Employee Users
+            </button>
+          </div>
+
+          {activeTab === 'hr' && (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New HR</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Filter & Search Toolbar (Without Side Scrollbar) */}
+      {/* Filter & Search Toolbar */}
       <div className="p-4 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row items-stretch md:items-center gap-4">
         {/* Search Input Box */}
         <div className="relative w-full md:w-80 shrink-0">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search HR name or role..."
+            placeholder={activeTab === 'hr' ? "Search HR name or role..." : "Search employee name or email..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
           />
         </div>
 
-        {/* Category Pills Container (NO SCROLLBAR) */}
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
           <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0">
             <Filter className="w-4 h-4" />
           </div>
@@ -324,8 +384,55 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* HR Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Directory Grid: HR vs Employees */}
+      {activeTab === 'employee' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {employees
+            .filter(emp => {
+              const matchesDept = selectedCategory === 'All' || emp.department === selectedCategory;
+              const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) || emp.email?.toLowerCase().includes(searchQuery.toLowerCase()) || emp.designation?.toLowerCase().includes(searchQuery.toLowerCase());
+              return matchesDept && matchesSearch;
+            })
+            .map((emp) => (
+              <div
+                key={emp.id}
+                className="bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl relative"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'}
+                      alt={emp.name}
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
+                    />
+                    <div className="space-y-0.5 min-w-0">
+                      <h3 className="font-extrabold text-base text-slate-900 dark:text-white truncate">{emp.name}</h3>
+                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 truncate">{emp.designation}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{emp.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl space-y-1.5 text-xs">
+                    <div className="flex justify-between"><span className="text-slate-400">Department:</span> <span className="font-bold text-slate-700 dark:text-slate-200">{emp.department}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-400">Readiness Score:</span> <span className="font-bold text-emerald-500">{emp.skillReadinessScore || 85}%</span></div>
+                    <div className="flex justify-between"><span className="text-slate-400">Status:</span> <span className="font-bold text-blue-600">Active</span></div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={(e) => handleDeleteClick(emp, e)}
+                    className="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remove Employee</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredHrs.map((hr) => (
           <div
             key={hr.id}
@@ -399,6 +506,7 @@ const UserManagement = () => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Add New HR Modal */}
       {isAddModalOpen && (

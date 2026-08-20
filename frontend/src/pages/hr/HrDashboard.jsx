@@ -48,7 +48,7 @@ const CustomBarTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold">
         <p className="text-slate-400 font-semibold">{label}</p>
-        <p className="text-teal-400 font-extrabold text-sm mt-1">
+        <p className="text-purple-400 font-extrabold text-sm mt-1">
           Readiness: {payload[0].value}%
         </p>
       </div>
@@ -209,8 +209,8 @@ const HrDashboard = () => {
   };
   return (
     <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
-      {/* Top Hero Gradient Banner (Teal / Emerald Theme) */}
-      <div className="p-8 md:p-10 bg-gradient-to-r from-teal-800 via-teal-600 to-emerald-600 text-white rounded-3xl shadow-2xl space-y-3 relative overflow-hidden">
+      {/* Top Hero Gradient Banner (Purple / Violet Theme) */}
+      <div className="p-8 md:p-10 bg-gradient-to-r from-purple-800 via-purple-600 to-violet-600 text-white rounded-3xl shadow-2xl space-y-3 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 transform pointer-events-none"></div>
 
         <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white/20 text-white backdrop-blur-md border border-white/30 inline-block">
@@ -221,7 +221,7 @@ const HrDashboard = () => {
           Organization Skill Readiness Portal
         </h1>
 
-        <p className="text-xs md:text-sm font-medium text-teal-100 max-w-3xl leading-relaxed">
+        <p className="text-xs md:text-sm font-medium text-purple-100 max-w-3xl leading-relaxed">
           Real-time talent telemetry across {stats.departmentsCount} departments and {stats.totalWorkforce} active employees. Average skill readiness index is <strong className="text-emerald-200 font-black">{stats.avgReadiness}%</strong> (Benchmark target: {targetBenchmark}%).
         </p>
       </div>
@@ -238,13 +238,13 @@ const HrDashboard = () => {
               {stats.totalWorkforce}
             </p>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <span className="text-teal-600 dark:text-teal-400 font-black">+12 this month</span>
+              <span className="text-purple-600 dark:text-purple-400 font-black">+12 this month</span>
               <span>• Active Personnel</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
         </div>
 
@@ -277,13 +277,13 @@ const HrDashboard = () => {
               {stats.avgReadiness}%
             </p>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <span className="text-teal-600 dark:text-teal-400 font-black">+4.2% YoY</span>
+              <span className="text-purple-600 dark:text-purple-400 font-black">+4.2% YoY</span>
               <span>• Skill Benchmark</span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
         </div>
 
@@ -313,7 +313,7 @@ const HrDashboard = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               Department Skill Readiness Score (Bar Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -346,7 +346,7 @@ const HrDashboard = () => {
                   axisLine={{ stroke: '#475569' }} 
                 />
                 <Tooltip content={<CustomBarTooltip />} />
-                <Bar dataKey="readiness" fill="#0d9488" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="readiness" fill="#9333ea" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -356,7 +356,7 @@ const HrDashboard = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <PieChartIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               Organization Skill Taxonomy Distribution (Pie Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">

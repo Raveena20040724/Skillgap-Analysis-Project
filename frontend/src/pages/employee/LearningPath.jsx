@@ -20,7 +20,7 @@ const BASE_STAGES = [
   {
     id: 1,
     stageLevel: 'BEGINNER STAGE',
-    stageLevelBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
+    stageLevelBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30',
     duration: '4 Weeks',
     title: 'Foundation & Core Fundamentals',
     courses: [
@@ -35,7 +35,7 @@ const BASE_STAGES = [
   {
     id: 2,
     stageLevel: 'INTERMEDIATE STAGE',
-    stageLevelBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30',
+    stageLevelBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
     duration: '6 Weeks',
     title: 'State Architecture & Performance',
     courses: [
@@ -107,11 +107,11 @@ const LearningPath = () => {
       if (idx < completedStagesCount) {
         status = 'completed';
         statusLabel = '✓ Stage Completed';
-        statusBg = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30';
+        statusBg = 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30';
       } else if (idx === completedStagesCount) {
         status = 'in-progress';
         statusLabel = 'In Progress';
-        statusBg = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30';
+        statusBg = 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30';
       }
 
       return {
@@ -147,7 +147,7 @@ const LearningPath = () => {
       {/* Top Banner Box Matching Photo */}
       <div className="p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
         <div className="space-y-3">
-          <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 inline-block">
+          <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/30 inline-block">
             Dynamic AI Roadmap
           </span>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -160,7 +160,7 @@ const LearningPath = () => {
 
         {/* Path Completion Box */}
         <div className="p-5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-slate-800 rounded-2xl text-center min-w-[170px] shrink-0">
-          <div className="text-3xl font-black text-purple-600 dark:text-purple-400 leading-none">
+          <div className="text-3xl font-black text-teal-600 dark:text-teal-400 leading-none">
             {progressPercentage}%
           </div>
           <div className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-400 mt-1">
@@ -183,11 +183,11 @@ const LearningPath = () => {
               {/* Timeline Marker Node Icon */}
               <div className="shrink-0 mt-6">
                 {isCompleted ? (
-                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border-2 border-purple-500 flex items-center justify-center text-purple-500 shadow-md shadow-purple-500/20">
+                  <div className="w-8 h-8 rounded-full bg-teal-500/20 border-2 border-teal-500 flex items-center justify-center text-teal-500 shadow-md shadow-teal-500/20">
                     <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
                   </div>
                 ) : isInProgress ? (
-                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border-2 border-purple-500 flex items-center justify-center text-purple-500 shadow-md shadow-purple-500/20 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-teal-500/20 border-2 border-teal-500 flex items-center justify-center text-teal-500 shadow-md shadow-teal-500/20 animate-pulse">
                     <Play className="w-4 h-4 fill-current ml-0.5" />
                   </div>
                 ) : (
@@ -201,7 +201,7 @@ const LearningPath = () => {
               <div
                 className={`flex-1 p-6 md:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border rounded-3xl shadow-xl transition-all duration-300 space-y-6 ${
                   isInProgress
-                    ? 'border-purple-500/50 shadow-purple-500/10 ring-2 ring-purple-500/20'
+                    ? 'border-teal-500/50 shadow-teal-500/10 ring-2 ring-teal-500/20'
                     : 'border-slate-200/90 dark:border-slate-800'
                 }`}
               >
@@ -232,13 +232,13 @@ const LearningPath = () => {
                   {/* Key Courses Column */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-purple-500" />
+                      <BookOpen className="w-4 h-4 text-teal-500" />
                       Key Courses
                     </h4>
                     <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                       {stage.courses.map((course, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
                           {course}
                         </li>
                       ))}
@@ -248,13 +248,13 @@ const LearningPath = () => {
                   {/* Real-World Projects Column */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-violet-500" />
+                      <Layers className="w-4 h-4 text-emerald-500" />
                       Real-World Projects
                     </h4>
                     <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                       {stage.projects.map((project, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                           {project}
                         </li>
                       ))}
@@ -270,7 +270,7 @@ const LearningPath = () => {
 
                   <button
                     onClick={() => setSelectedStage(stage)}
-                    className="text-xs font-extrabold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-extrabold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>View Step Modules</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -310,7 +310,7 @@ const LearningPath = () => {
                   {selectedStage.courses.map((c, i) => (
                     <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                       <span>{c}</span>
-                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-extrabold uppercase">3 Modules</span>
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-extrabold uppercase">3 Modules</span>
                     </div>
                   ))}
                 </div>
@@ -334,7 +334,7 @@ const LearningPath = () => {
                   setSelectedStage(null);
                   navigate(ROUTES.COURSE_RECOMMENDATIONS);
                 }}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-teal-600 hover:bg-teal-700"
               >
                 Explore Courses
               </Button>

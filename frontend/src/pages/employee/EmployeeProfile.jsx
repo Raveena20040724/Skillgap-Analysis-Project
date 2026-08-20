@@ -234,8 +234,8 @@ const EmployeeProfile = () => {
 
       {/* Success Notification */}
       {message && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700/60 text-purple-800 dark:text-purple-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
-          <UserCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700/60 text-teal-800 dark:text-teal-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
+          <UserCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           {message}
         </div>
       )}
@@ -250,7 +250,7 @@ const EmployeeProfile = () => {
                 className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white dark:border-slate-800 shadow-xl"
               />
             ) : (
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-purple-700 via-purple-600 to-violet-500 text-white font-black text-4xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-xl select-none">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-teal-700 via-teal-600 to-emerald-500 text-white font-black text-4xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-xl select-none">
                 {(profile.name || activeUser?.username || 'U').charAt(0).toUpperCase()}
               </div>
             )}
@@ -266,9 +266,9 @@ const EmployeeProfile = () => {
               <div>
                 <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-2">
                   {profile.name || activeUser?.username || 'Employee'}
-                  <CheckCircle2 className="w-5 h-5 text-purple-500 fill-purple-500/20" />
+                  <CheckCircle2 className="w-5 h-5 text-teal-500 fill-teal-500/20" />
                 </h1>
-                <p className="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1">
+                <p className="text-xs font-bold text-teal-600 dark:text-teal-400 mt-1">
                   {profile.designation ? `${profile.designation} • ` : ''}{profile.department || 'General'}
                 </p>
               </div>
@@ -276,7 +276,7 @@ const EmployeeProfile = () => {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 transition-all cursor-pointer self-center sm:self-auto"
+                  className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 transition-all cursor-pointer self-center sm:self-auto"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit Profile
@@ -292,7 +292,7 @@ const EmployeeProfile = () => {
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-purple-600/20"
+                    className="px-5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-teal-600/20"
                   >
                     <Save className="w-4 h-4" />
                     Save Changes
@@ -307,9 +307,9 @@ const EmployeeProfile = () => {
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-5 text-xs font-medium text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
               <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-rose-500" /> {profile.location || 'Location not set'}</span>
-              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-purple-500" /> {profile.email || 'Email not set'}</span>
-              <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-purple-500" /> {profile.phone || 'Phone not set'}</span>
-              <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-violet-500" /> {profile.experienceYears ? `${profile.experienceYears} Years Exp` : '0 Years Exp'}</span>
+              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-teal-500" /> {profile.email || 'Email not set'}</span>
+              <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-teal-500" /> {profile.phone || 'Phone not set'}</span>
+              <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-emerald-500" /> {profile.experienceYears ? `${profile.experienceYears} Years Exp` : '0 Years Exp'}</span>
             </div>
           </div>
         </div>
@@ -329,7 +329,7 @@ const EmployeeProfile = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   required
                 />
               </div>
@@ -341,7 +341,7 @@ const EmployeeProfile = () => {
                   value={formData.designation}
                   onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                   placeholder="e.g. Frontend Developer"
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -351,7 +351,7 @@ const EmployeeProfile = () => {
                   type="text"
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -363,7 +363,7 @@ const EmployeeProfile = () => {
                   max="50"
                   value={formData.experienceYears}
                   onChange={(e) => setFormData({ ...formData, experienceYears: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -373,7 +373,7 @@ const EmployeeProfile = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   required
                 />
               </div>
@@ -384,7 +384,7 @@ const EmployeeProfile = () => {
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -395,7 +395,7 @@ const EmployeeProfile = () => {
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   placeholder="e.g. New York, NY"
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -406,7 +406,7 @@ const EmployeeProfile = () => {
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   placeholder="Write a short summary about your background and engineering interests..."
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -417,7 +417,7 @@ const EmployeeProfile = () => {
                   value={formData.linkedin}
                   onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                   placeholder="https://linkedin.com/in/..."
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -428,7 +428,7 @@ const EmployeeProfile = () => {
                   value={formData.github}
                   onChange={(e) => setFormData({ ...formData, github: e.target.value })}
                   placeholder="https://github.com/..."
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -439,7 +439,7 @@ const EmployeeProfile = () => {
                   value={formData.portfolio}
                   onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })}
                   placeholder="https://myportfolio.com"
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
             </div>
@@ -454,7 +454,7 @@ const EmployeeProfile = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-600/20 cursor-pointer"
+                className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl shadow-md shadow-teal-600/20 cursor-pointer"
               >
                 Save Profile Changes
               </button>
@@ -466,7 +466,7 @@ const EmployeeProfile = () => {
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-lg space-y-4">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-purple-500/10 text-purple-500 rounded-lg">
+                <div className="p-1.5 bg-teal-500/10 text-teal-500 rounded-lg">
                   <Briefcase className="w-4 h-4" />
                 </div>
                 Work Experience
@@ -480,7 +480,7 @@ const EmployeeProfile = () => {
                         <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{exp.role}</h4>
                         <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{exp.duration}</span>
                       </div>
-                      <p className="text-xs font-bold text-purple-600 dark:text-purple-400">{exp.company}</p>
+                      <p className="text-xs font-bold text-teal-600 dark:text-teal-400">{exp.company}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pt-1">{exp.description}</p>
                     </div>
                   ))
@@ -496,7 +496,7 @@ const EmployeeProfile = () => {
 
             <Card className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-lg space-y-4">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-purple-500/10 text-purple-500 rounded-lg">
+                <div className="p-1.5 bg-teal-500/10 text-teal-500 rounded-lg">
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 Education & Certifications
@@ -529,7 +529,7 @@ const EmployeeProfile = () => {
 
             <Card className="p-6 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-lg space-y-4">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <div className="p-1.5 bg-purple-500/10 text-purple-500 rounded-lg">
+                <div className="p-1.5 bg-teal-500/10 text-teal-500 rounded-lg">
                   <Globe className="w-4 h-4" />
                 </div>
                 Featured Projects
@@ -543,7 +543,7 @@ const EmployeeProfile = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{proj.description}</p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {proj.technologies.map((tech, i) => (
-                          <span key={i} className="px-2.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold border border-purple-500/20">
+                          <span key={i} className="px-2.5 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 text-[10px] font-bold border border-teal-500/20">
                             {tech}
                           </span>
                         ))}
@@ -573,11 +573,11 @@ const EmployeeProfile = () => {
                     <div key={sk.id || sk.name} className="space-y-1.5 text-xs">
                       <div className="flex justify-between font-bold">
                         <span className="text-slate-800 dark:text-slate-200">{sk.name}</span>
-                        <span className="text-purple-600 dark:text-purple-400">{sk.proficiencyPercentage || 70}%</span>
+                        <span className="text-teal-600 dark:text-teal-400">{sk.proficiencyPercentage || 70}%</span>
                       </div>
                       <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
                         <div
-                          className="h-full bg-gradient-to-r from-purple-600 to-violet-400 rounded-full"
+                          className="h-full bg-gradient-to-r from-teal-600 to-emerald-400 rounded-full"
                           style={{ width: `${sk.proficiencyPercentage || 70}%` }}
                         ></div>
                       </div>
@@ -590,7 +590,7 @@ const EmployeeProfile = () => {
                     </p>
                     <button
                       onClick={() => navigate(ROUTES.SKILLS)}
-                      className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Add Skills
@@ -612,9 +612,9 @@ const EmployeeProfile = () => {
                     href={profile.linkedin}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-500/40 transition-all"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-500/40 transition-all"
                   >
-                    <Share2 className="w-4 h-4 text-purple-500" />
+                    <Share2 className="w-4 h-4 text-teal-500" />
                     <span className="truncate">LinkedIn Profile</span>
                   </a>
                 )}
@@ -623,7 +623,7 @@ const EmployeeProfile = () => {
                     href={profile.github}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-500/40 transition-all"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-500/40 transition-all"
                   >
                     <Globe className="w-4 h-4 text-slate-400" />
                     <span className="truncate">GitHub Profile</span>
@@ -634,9 +634,9 @@ const EmployeeProfile = () => {
                     href={profile.portfolio}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-500/40 transition-all"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-200 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-500/40 transition-all"
                   >
-                    <Globe className="w-4 h-4 text-purple-500" />
+                    <Globe className="w-4 h-4 text-teal-500" />
                     <span className="truncate">Personal Portfolio</span>
                   </a>
                 )}

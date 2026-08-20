@@ -92,10 +92,10 @@ const CareerRecommendations = () => {
   return (
     <div className="space-y-8 pb-12 animate-fade-in">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-purple-600/10 via-violet-600/10 to-purple-500/10 dark:from-purple-900/30 dark:via-violet-950/40 dark:to-purple-900/20 p-6 rounded-3xl border border-purple-500/20 dark:border-purple-500/30">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-teal-600/10 via-emerald-600/10 to-teal-500/10 dark:from-teal-900/30 dark:via-emerald-950/40 dark:to-teal-900/20 p-6 rounded-3xl border border-teal-500/20 dark:border-teal-500/30">
         <div className="space-y-1">
           <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
-            <Compass className="w-7 h-7 text-purple-500 dark:text-purple-400 stroke-[2.4]" />
+            <Compass className="w-7 h-7 text-teal-500 dark:text-teal-400 stroke-[2.4]" />
             AI Career Pathway & Role Recommendations
           </h1>
           <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -137,7 +137,7 @@ const CareerRecommendations = () => {
             <div className="space-y-5">
               {/* Top Header Row: Match Pill & AI Confidence */}
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
                   {path.matchScore}% Match
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-400">
@@ -150,7 +150,7 @@ const CareerRecommendations = () => {
                 <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white leading-snug min-h-[3rem] flex items-center">
                   {path.role}
                 </h2>
-                <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-extrabold text-sm">
+                <div className="flex items-center gap-1 text-teal-600 dark:text-teal-400 font-extrabold text-sm">
                   <DollarSign className="w-4 h-4 shrink-0 -mr-1" />
                   <span>{path.salary}</span>
                 </div>
@@ -159,10 +159,10 @@ const CareerRecommendations = () => {
               {/* Upskill Time & YoY Growth Box */}
               <div className="p-4 bg-slate-50 dark:bg-[#0f1524] rounded-2xl border border-slate-200/80 dark:border-[#2b3854] space-y-1.5">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
-                  <Clock className="w-4 h-4 text-purple-500 shrink-0" />
+                  <Clock className="w-4 h-4 text-teal-500 shrink-0" />
                   <span>Estimated Upskill Time: <strong className="text-slate-900 dark:text-white">{path.upskillTime}</strong></span>
                 </div>
-                <div className="text-[11px] font-extrabold text-purple-600 dark:text-purple-400 pl-6">
+                <div className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 pl-6">
                   {path.demandGrowth}
                 </div>
               </div>
@@ -178,7 +178,7 @@ const CareerRecommendations = () => {
                       key={idx}
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                         skill.possessed
-                          ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60'
+                          ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800/60'
                           : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60'
                       }`}
                     >
@@ -204,7 +204,7 @@ const CareerRecommendations = () => {
               </button>
               <button
                 onClick={() => navigate(ROUTES.LEARNING_PATH)}
-                className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-1"
+                className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-teal-600/30 transition-all cursor-pointer flex items-center justify-center gap-1"
               >
                 <span>Start Pathway</span>
               </button>
@@ -219,7 +219,7 @@ const CareerRecommendations = () => {
           <div className="w-full max-w-lg rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 animate-scale-up">
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-1">
-                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                   {selectedRole.matchScore}% Match Rate
                 </span>
                 <h3 className="font-extrabold text-xl text-slate-900 dark:text-white">
@@ -245,7 +245,7 @@ const CareerRecommendations = () => {
               <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <span className="text-slate-400 font-bold block text-[10px] uppercase">Average Salary</span>
-                  <span className="font-extrabold text-purple-600 dark:text-purple-400">{selectedRole.salary}</span>
+                  <span className="font-extrabold text-teal-600 dark:text-teal-400">{selectedRole.salary}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-bold block text-[10px] uppercase">Upskill Timeline</span>
@@ -264,7 +264,7 @@ const CareerRecommendations = () => {
                   setSelectedRole(null);
                   navigate(ROUTES.LEARNING_PATH);
                 }}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-teal-600 hover:bg-teal-700"
               >
                 Start Pathway Now
               </Button>
