@@ -40,15 +40,27 @@ const EmployeeLogin = () => {
     e.preventDefault();
     setError('');
 
-    if (!formData.username || !formData.password) {
-      setError('Please fill in both fields');
+    const inputUser = (formData.username || '').trim();
+    const inputPassword = formData.password || '';
+
+    // 1. Field presence validation
+    if (!inputUser && !inputPassword) {
+      setError('Please enter both username and password.');
+      return;
+    }
+    if (!inputUser) {
+      setError('Please enter your username or email address.');
+      return;
+    }
+    if (!inputPassword) {
+      setError('Please enter your password.');
       return;
     }
 
     // Check System Maintenance Mode
     const isMaintenance = localStorage.getItem('system_maintenance_mode') === 'true';
     if (isMaintenance) {
-      const lowerUser = formData.username.trim().toLowerCase();
+      const lowerUser = inputUser.toLowerCase();
       if (!lowerUser.includes('admin')) {
         setError('⚠️ System Maintenance Mode is currently active for database upgrades. Employee logins are temporarily restricted. Please try again later or contact your administrator.');
         return;
@@ -56,65 +68,205 @@ const EmployeeLogin = () => {
     }
 
     setLoading(true);
+    const lowerUser = inputUser.toLowerCase();
+
+    // 2. Try real API login first
     try {
-      // 1. Try real API login first
-      const response = await authService.login(formData);
+      const response = await authService.login({
+        username: inputUser,
+        password: inputPassword
+      });
       const authData = response.data?.data || response.data;
       const access = authData?.access;
       const refresh = authData?.refresh;
       const user = authData?.user;
 
       if (user && access) {
-        login(user, access, refresh);
-        navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
+        setSuccessMsg(`Welcome back, ${user.name || user.username}! Login successful. Redirecting...`);
+        setTimeout(() => {
+          login(user, access, refresh);
+          navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
+        }, 500);
         return;
       }
     } catch (err) {
-      console.warn('API login attempt failed, attempting demo account login fallback...', err);
+      console.warn('API login attempt failed, checking local accounts...', err);
     }
 
-    // 2. Seamless Fallback Handler: Ensures login ALWAYS succeeds for valid demo inputs
-    const lowerUser = formData.username.trim().toLowerCase();
-    const isPasswordValid = formData.password.length >= 4 || formData.password === 'password123' || formData.password === 'employee123';
+    // 3. Known / Registered Users Database check
+    const registeredEmployees = JSON.parse(localStorage.getItem('registered_employees_list') || '[]');
+    const localHrs = [
+      ...JSON.parse(localStorage.getItem('all_hr_users_list') || '[]'),
+      ...JSON.parse(localStorage.getItem('custom_hr_users') || '[]')
+    ];
 
-    if (isPasswordValid) {
-      let role = 'employee';
-      let department = 'Engineering';
-      let designation = 'Software Developer';
+    const matchedEmp = registeredEmployees.find(u => 
+      (u.username && u.username.toLowerCase() === lowerUser) ||
+      (u.email && u.email.toLowerCase() === lowerUser)
+    );
 
-      if (lowerUser.includes('hr') || lowerUser.includes('sarah')) {
-        role = 'hr';
-        department = 'Human Resources';
-        designation = 'HR Manager';
-      } else if (lowerUser.includes('admin')) {
-        role = 'admin';
-        department = 'Operations';
-        designation = 'System Administrator';
+    const isDemoEmp = (lowerUser === 'alex_morgan' || lowerUser === 'alex.morgan@company.com');
+    const isDemoHr = (lowerUser === 'sarah_hr' || lowerUser === 'sarah.jenkins@company.com' || lowerUser === 'hr');
+    const isDemoAdmin = (lowerUser === 'admin' || lowerUser === 'admin@company.com');
+
+    const matchedHr = localHrs.find(h => 
+      (h.email && h.email.toLowerCase() === lowerUser) ||
+      (h.name && h.name.toLowerCase() === lowerUser) ||
+      (h.username && h.username.toLowerCase() === lowerUser)
+    );
+
+    const usernameExists = Boolean(matchedEmp || isDemoEmp || isDemoHr || isDemoAdmin || matchedHr);
+
+    // Case 1: Username exists in Registered Accounts
+    if (matchedEmp) {
+      if (matchedEmp.password && matchedEmp.password !== inputPassword) {
+        setError('Incorrect password. Please verify your password and try again.');
+        setLoading(false);
+        return;
       }
 
-      const demoUser = {
-        id: Date.now(),
-        username: formData.username.trim(),
-        email: `${formData.username.trim().toLowerCase()}@company.com`,
-        role: role,
-        department: department,
-        designation: designation,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+      const empUserObj = {
+        id: matchedEmp.id || Date.now(),
+        username: matchedEmp.username,
+        name: matchedEmp.username,
+        email: matchedEmp.email,
+        role: 'employee',
+        department: matchedEmp.department || '',
+        phone: matchedEmp.phone || '',
+        designation: matchedEmp.designation || '',
+        avatar: matchedEmp.avatar || ''
       };
-      const mockToken = `mock_${role}_token_` + Date.now();
-      login(demoUser, mockToken, mockToken);
-      navigate(roleRedirects[role] || ROUTES.EMPLOYEE_DASHBOARD);
-    } else {
-      setError('Invalid username or password');
+      const mockToken = `mock_employee_token_` + Date.now();
+      setSuccessMsg(`Welcome back, ${empUserObj.username}! Login successful. Redirecting...`);
+      setTimeout(() => {
+        login(empUserObj, mockToken, mockToken);
+        navigate(ROUTES.EMPLOYEE_DASHBOARD);
+      }, 500);
+      return;
     }
+
+    // Case 2: Username is Alex Morgan (Demo Employee)
+    if (isDemoEmp) {
+      if (inputPassword === 'password123' || inputPassword === 'employee123') {
+        const demoUser = {
+          id: 3,
+          username: 'alex_morgan',
+          name: 'Alex Morgan',
+          email: 'alex.morgan@company.com',
+          role: 'employee',
+          department: 'Engineering',
+          designation: 'Senior Frontend Developer',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+        };
+        const mockToken = `mock_employee_token_` + Date.now();
+        setSuccessMsg(`Welcome back, Alex Morgan! Login successful. Redirecting...`);
+        setTimeout(() => {
+          login(demoUser, mockToken, mockToken);
+          navigate(ROUTES.EMPLOYEE_DASHBOARD);
+        }, 500);
+        return;
+      } else {
+        setError('Incorrect password. Please verify your password and try again.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Case 3: Username is HR account
+    if (matchedHr) {
+      if (matchedHr.password ? matchedHr.password === inputPassword : (inputPassword === 'password123' || inputPassword === 'hr123')) {
+        const hrUserObj = {
+          id: matchedHr.id || Date.now(),
+          username: matchedHr.name || matchedHr.email,
+          name: matchedHr.name,
+          email: matchedHr.email,
+          role: 'hr',
+          department: matchedHr.department || 'People Operations',
+          company: matchedHr.company || 'TechCorp Systems',
+          avatar: matchedHr.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80'
+        };
+        const mockToken = `mock_hr_token_` + Date.now();
+        login(hrUserObj, mockToken, mockToken);
+        navigate(ROUTES.HR_DASHBOARD);
+        setLoading(false);
+        return;
+      } else {
+        setError('Incorrect password. Please verify your password and try again.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (isDemoHr) {
+      if (inputPassword === 'password123' || inputPassword === 'hr123') {
+        const hrUserObj = {
+          id: 2,
+          username: 'sarah_hr',
+          name: 'Sarah Jenkins',
+          email: 'sarah.jenkins@company.com',
+          role: 'hr',
+          department: 'People Operations',
+          company: 'TechCorp Systems',
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80'
+        };
+        const mockToken = `mock_hr_token_` + Date.now();
+        login(hrUserObj, mockToken, mockToken);
+        navigate(ROUTES.HR_DASHBOARD);
+        setLoading(false);
+        return;
+      } else {
+        setError('Incorrect password. Please verify your password and try again.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Case 4: Username is Admin
+    if (isDemoAdmin) {
+      if (inputPassword === 'password123' || inputPassword === 'admin123') {
+        const adminUser = {
+          id: 1,
+          username: 'Marcus Vance',
+          name: 'Marcus Vance',
+          email: 'admin@company.com',
+          role: 'admin',
+          department: 'Executive Leadership & DevOps',
+          avatar: localStorage.getItem('userAvatar') || ''
+        };
+        const mockToken = `mock_admin_token_` + Date.now();
+        login(adminUser, mockToken, mockToken);
+        navigate(ROUTES.ADMIN_DASHBOARD);
+        setLoading(false);
+        return;
+      } else {
+        setError('Incorrect password. Please verify your password and try again.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Case 5: Username doesn't exist vs Both incorrect
+    if (!usernameExists) {
+      // If user typed random credentials on both
+      if (inputPassword.length < 4) {
+        setError('Both username and password are incorrect.');
+      } else {
+        setError("Username doesn't exist. Please check your username or click 'Create one' to register.");
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Default error
+    setError('Both username and password are incorrect.');
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-600 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-purple-700 via-purple-800 to-violet-900 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
       {/* Decorative ambient background spheres */}
       <div className="w-[600px] h-[600px] rounded-full bg-white/10 absolute -top-40 -right-40 pointer-events-none blur-2xl"></div>
-      <div className="w-[500px] h-[500px] rounded-full bg-indigo-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
+      <div className="w-[500px] h-[500px] rounded-full bg-purple-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
 
       {/* Top Header Logo */}
       <header className="relative z-10 max-w-7xl w-full mx-auto">
@@ -151,14 +303,14 @@ const EmployeeLogin = () => {
           </h1>
 
           {/* Hero Subtitle */}
-          <p className="text-base md:text-lg text-indigo-100/90 font-medium max-w-lg leading-relaxed">
+          <p className="text-base md:text-lg text-purple-100/90 font-medium max-w-lg leading-relaxed">
             Analyze skill gaps, track learning milestones, and unlock strategic career recommendations designed for your professional success.
           </p>
         </div>
 
         {/* Right Column: Floating Auth Card */}
         <div className="lg:col-span-5 w-full">
-          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-indigo-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
+          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-purple-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Sign in to account</h2>
               <p className="text-xs font-semibold text-slate-400 mt-1">Enter your details to access your portal</p>
@@ -171,8 +323,8 @@ const EmployeeLogin = () => {
             )}
 
             {successMsg && (
-              <div className="p-3.5 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold text-center flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="p-3.5 mb-6 rounded-2xl bg-purple-50 border border-purple-200 text-purple-700 text-xs font-bold text-center flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -192,7 +344,7 @@ const EmployeeLogin = () => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Enter your username"
-                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all outline-none"
+                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all outline-none"
                 />
               </div>
 
@@ -205,12 +357,12 @@ const EmployeeLogin = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm font-medium transition-all outline-none"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm font-medium transition-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-indigo-600 focus:outline-none cursor-pointer"
+                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -222,7 +374,7 @@ const EmployeeLogin = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-indigo-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
+                  className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-purple-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -231,7 +383,7 @@ const EmployeeLogin = () => {
 
             <p className="text-xs text-center mt-6 text-slate-500 font-semibold">
               Don't have an account?{' '}
-              <Link to={ROUTES.EMPLOYEE_REGISTER} className="text-indigo-600 font-bold hover:underline">
+              <Link to={ROUTES.EMPLOYEE_REGISTER} className="text-purple-600 font-bold hover:underline">
                 Create one
               </Link>
             </p>

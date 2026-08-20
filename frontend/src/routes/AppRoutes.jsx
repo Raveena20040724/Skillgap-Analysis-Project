@@ -67,22 +67,20 @@ const AppRoutes = () => {
         <Route path={ROUTES.LEARNING_PATH} element={<LearningPath />} />
         <Route path={ROUTES.COURSE_RECOMMENDATIONS} element={<CourseRecommendations />} />
         <Route path={ROUTES.PROGRESS_TRACKING} element={<ProgressTracking />} />
-        {/* Notification and Settings routes for all roles */}
+        {/* Employee Notifications and Settings */}
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path={ROUTES.HR_NOTIFICATIONS} element={<NotificationsPage />} />
-        <Route path={ROUTES.ADMIN_NOTIFICATIONS} element={<NotificationsPage />} />
-        
         <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path={ROUTES.HR_SETTINGS} element={<SettingsPage />} />
 
-        {/* HR & Admin routes */}
+        {/* HR routes */}
         <Route path={ROUTES.HR_DASHBOARD} element={<HrDashboard />} />
         <Route path={ROUTES.HR_DIRECTORY} element={<EmployeeDirectory />} />
         <Route path={ROUTES.HR_REPORTS} element={<HrReports />} />
         <Route path={ROUTES.HR_NOTIFICATIONS} element={<HrNotifications />} />
         <Route path={ROUTES.HR_SETTINGS} element={<HrSettings />} />
+
+        {/* Admin routes */}
         <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
         <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
         <Route path={ROUTES.ADMIN_USERS} element={<UserManagement />} />

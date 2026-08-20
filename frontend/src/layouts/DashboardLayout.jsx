@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
+import { getUserData } from '../utils/userStorage';
 import { 
   SunFill, 
   MoonFill, 
@@ -32,7 +33,8 @@ import {
   ShieldCheck, 
   Building2, 
   PieChart, 
-  Sliders 
+  Sliders,
+  User
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -45,10 +47,12 @@ const DashboardLayout = () => {
   const [portalDropdownOpen, setPortalDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const dropdownRef = useRef(null);
   const portalRef = useRef(null);
   const notifRef = useRef(null);
+  const searchRef = useRef(null);
 
   // Active workspace mode detection
   const isAdmin = location.pathname.startsWith('/admin');
@@ -79,10 +83,231 @@ const DashboardLayout = () => {
     : ROUTES.SETTINGS;
 
   const profilePath = isAdmin 
-    ? ROUTES.ADMIN_DASHBOARD 
+    ? ROUTES.ADMIN_PROFILE 
     : isHr 
     ? ROUTES.HR_DIRECTORY 
     : ROUTES.EMPLOYEE_PROFILE;
+
+  // Search items database strictly isolated for current portal (Live data dynamically loaded from system state)
+  const getSearchDatabase = () => {
+    if (isAdmin) {
+      // 1. Admin Pages ONLY
+      const adminPages = [
+        { label: 'Admin Dashboard', category: 'Admin Page', path: ROUTES.ADMIN_DASHBOARD, desc: 'Live telemetry, system health & KPIs' },
+        { label: 'User Management', category: 'Admin Page', path: ROUTES.ADMIN_USERS, desc: 'Manage workforce & HR managers' },
+        { label: 'Roles & Access (RBAC)', category: 'Admin Page', path: ROUTES.ADMIN_ROLES, desc: 'Configure system permissions matrix' },
+        { label: 'Departments Management', category: 'Admin Page', path: ROUTES.ADMIN_DEPARTMENTS, desc: 'Manage organizational units & benchmarks' },
+        { label: 'System Reports & Telemetry', category: 'Admin Page', path: ROUTES.ADMIN_REPORTS, desc: 'Download audit logs & real datasets' },
+        { label: 'System Settings & Security', category: 'Admin Page', path: ROUTES.ADMIN_SETTINGS, desc: 'Change password & preferences' },
+        { label: 'System Alerts & Audit Logs', category: 'Admin Page', path: ROUTES.ADMIN_NOTIFICATIONS, desc: 'View administrative notifications' },
+        { label: 'Administrator Profile', category: 'Admin Page', path: ROUTES.ADMIN_PROFILE, desc: 'Admin account identity & credentials' },
+      ];
+
+      // 2. Admin System Users (HR accounts created in Admin)
+      let adminUsers = [];
+      try {
+        const savedHrs = JSON.parse(localStorage.getItem('all_hr_users_list') || '[]');
+        const customHrs = JSON.parse(localStorage.getItem('custom_hr_users') || '[]');
+        const mergedHrs = [...savedHrs, ...customHrs];
+        const seenEmails = new Set();
+        mergedHrs.forEach((u) => {
+          if (u && u.email && !seenEmails.has(u.email.toLowerCase())) {
+            seenEmails.add(u.email.toLowerCase());
+            adminUsers.push({
+              label: u.name || 'System User',
+              category: 'System Account',
+              desc: `Role: ${u.role || 'HR'} • Email: ${u.email} • Dept: ${u.department || 'General'}`,
+              path: ROUTES.ADMIN_USERS
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('Admin user search load:', e);
+      }
+
+      // 3. Admin Departments
+      let adminDepts = [];
+      try {
+        const savedDepts = JSON.parse(localStorage.getItem('custom_departments_list') || '[]');
+        if (Array.isArray(savedDepts)) {
+          savedDepts.forEach((d) => {
+            if (d && d.name) {
+              adminDepts.push({
+                label: `${d.name} (${d.code || 'DEP'})`,
+                category: 'Department',
+                desc: `Lead: ${d.lead || 'Head'} • Benchmark: ${d.targetScore || 85}%`,
+                path: ROUTES.ADMIN_DEPARTMENTS
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Admin department search load:', e);
+      }
+
+      // 4. Admin RBAC Roles
+      const adminRoles = [
+        { label: 'Administrator Role', category: 'System Role', desc: 'Full root access, RBAC management, system audit permissions', path: ROUTES.ADMIN_ROLES },
+        { label: 'HR Manager Role', category: 'System Role', desc: 'Talent management, candidate sync, team gap analysis', path: ROUTES.ADMIN_ROLES },
+        { label: 'Department Lead Role', category: 'System Role', desc: 'Team evaluations, performance metrics, approval workflows', path: ROUTES.ADMIN_ROLES },
+      ];
+
+      return [...adminPages, ...adminUsers, ...adminDepts, ...adminRoles];
+    }
+
+    if (isHr) {
+      // 1. HR Pages ONLY
+      const hrPages = [
+        { label: 'HR Dashboard', category: 'HR Page', path: ROUTES.HR_DASHBOARD, desc: 'Workforce analytics & skill readiness' },
+        { label: 'Workforce & Employee Directory', category: 'HR Page', path: ROUTES.HR_DIRECTORY, desc: 'Browse talent, profiles & competencies' },
+        { label: 'Skill Gap Reports', category: 'HR Page', path: ROUTES.HR_REPORTS, desc: 'Department benchmark reports' },
+        { label: 'HR Notification Hub', category: 'HR Page', path: ROUTES.HR_NOTIFICATIONS, desc: 'HR telemetry alerts' },
+        { label: 'HR Workspace Settings', category: 'HR Page', path: ROUTES.HR_SETTINGS, desc: 'HR preferences & security' },
+      ];
+
+      // 2. Directory Personnel
+      let directoryPersonnel = [];
+      try {
+        const savedEmps = JSON.parse(localStorage.getItem('custom_employee_directory') || '[]');
+        const baseEmps = [
+          { name: 'Alex Morgan', designation: 'Senior Frontend Developer', department: 'Engineering', skillReadinessScore: 84 },
+          { name: 'Sophia Patel', designation: 'Senior ML Engineer', department: 'Data Science & AI', skillReadinessScore: 91 },
+          { name: 'David Chen', designation: 'Backend DevOps Engineer', department: 'Engineering', skillReadinessScore: 78 },
+          { name: 'Emily Watson', designation: 'Lead Product Designer', department: 'UI/UX Design', skillReadinessScore: 88 }
+        ];
+        const allEmps = Array.isArray(savedEmps) && savedEmps.length > 0 ? savedEmps : baseEmps;
+        const seenNames = new Set();
+        allEmps.forEach((emp) => {
+          if (emp && emp.name && !seenNames.has(emp.name.toLowerCase())) {
+            seenNames.add(emp.name.toLowerCase());
+            directoryPersonnel.push({
+              label: emp.name,
+              category: 'Directory Personnel',
+              desc: `${emp.designation || 'Specialist'} • ${emp.department || 'Engineering'} • Score: ${emp.skillReadinessScore || 80}%`,
+              path: ROUTES.HR_DIRECTORY
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('HR directory search load:', e);
+      }
+
+      // 3. Monitored Departments
+      let hrDepts = [];
+      try {
+        const savedDepts = JSON.parse(localStorage.getItem('custom_departments_list') || '[]');
+        const defaultDepts = [
+          { name: 'Engineering', code: 'ENG', lead: 'David Chen', targetScore: 85 },
+          { name: 'Data Science & AI', code: 'DS', lead: 'Sophia Patel', targetScore: 90 },
+          { name: 'UI/UX Design', code: 'UX', lead: 'Emily Watson', targetScore: 82 },
+          { name: 'Product Management', code: 'PM', lead: 'Michael Scott', targetScore: 88 }
+        ];
+        const depts = Array.isArray(savedDepts) && savedDepts.length > 0 ? savedDepts : defaultDepts;
+        depts.forEach((d) => {
+          if (d && d.name) {
+            hrDepts.push({
+              label: `${d.name} (${d.code || 'DEP'})`,
+              category: 'Department',
+              desc: `Monitored Department • Lead: ${d.lead || 'Head'} • Benchmark: ${d.targetScore || 85}%`,
+              path: ROUTES.HR_DASHBOARD
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('HR department search load:', e);
+      }
+
+      return [...hrPages, ...directoryPersonnel, ...hrDepts];
+    }
+
+    // 3. EMPLOYEE PORTAL ONLY
+    // 1. Employee Pages
+    const employeePages = [
+      { label: 'Employee Dashboard', category: 'Employee Page', path: ROUTES.EMPLOYEE_DASHBOARD, desc: 'Personal readiness & overview' },
+      { label: 'My Profile & Details', category: 'Employee Page', path: ROUTES.EMPLOYEE_PROFILE, desc: 'Edit personal info & portfolio' },
+      { label: 'Resume Parser & Upload', category: 'Employee Page', path: ROUTES.RESUME_UPLOAD, desc: 'Upload and parse your CV' },
+      { label: 'Skills Portfolio', category: 'Employee Page', path: ROUTES.SKILLS_MANAGEMENT, desc: 'Manage verified technical skills' },
+      { label: 'Experience & History', category: 'Employee Page', path: ROUTES.EXPERIENCE_MANAGEMENT, desc: 'Work experience & roles' },
+      { label: 'Skill Assessment Quiz', category: 'Employee Page', path: ROUTES.SKILL_ASSESSMENT, desc: 'Take technical competency tests' },
+      { label: 'Skill Gap Results', category: 'Employee Page', path: ROUTES.SKILL_GAP_RESULTS, desc: 'AI analysis & targeted improvements' },
+      { label: 'Career Recommendations', category: 'Employee Page', path: ROUTES.CAREER_RECOMMENDATIONS, desc: 'Explore career progression' },
+      { label: 'Learning Path Roadmap', category: 'Employee Page', path: ROUTES.LEARNING_PATH, desc: 'Milestone-based learning roadmap' },
+      { label: 'Course Recommendations', category: 'Employee Page', path: ROUTES.COURSE_RECOMMENDATIONS, desc: 'Curated technical courses' },
+      { label: 'Progress Tracking', category: 'Employee Page', path: ROUTES.PROGRESS_TRACKING, desc: 'Weekly learning statistics' },
+      { label: 'Notifications', category: 'Employee Page', path: ROUTES.NOTIFICATIONS, desc: 'Personal updates & alerts' },
+      { label: 'Settings', category: 'Employee Page', path: ROUTES.SETTINGS, desc: 'Security credentials & theme' },
+    ];
+
+    // 2. Employee Skills
+    let employeeSkills = [];
+    try {
+      const savedSkills = JSON.parse(localStorage.getItem('custom_user_skills') || '[]');
+      const resumeSkills = JSON.parse(localStorage.getItem('employee_resume_skills') || '[]');
+      const defaultSkills = [
+        { name: 'React.js', category: 'Frontend', level: 'Advanced' },
+        { name: 'TypeScript', category: 'Frontend', level: 'Advanced' },
+        { name: 'Node.js', category: 'Backend', level: 'Intermediate' },
+        { name: 'Python', category: 'Data/AI', level: 'Intermediate' },
+        { name: 'Docker & Kubernetes', category: 'DevOps', level: 'Beginner' }
+      ];
+      const allSkills = [...savedSkills, ...resumeSkills, ...defaultSkills];
+      const seenSkills = new Set();
+      allSkills.forEach((sk) => {
+        if (sk && sk.name && !seenSkills.has(sk.name.toLowerCase())) {
+          seenSkills.add(sk.name.toLowerCase());
+          employeeSkills.push({
+            label: sk.name,
+            category: 'Skill',
+            desc: `Skill • Category: ${sk.category || 'Technical'} • Level: ${sk.level || 'Intermediate'}`,
+            path: ROUTES.SKILLS_MANAGEMENT
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('Employee skill search load:', e);
+    }
+
+    // 3. Recommended Courses
+    const courses = [
+      { label: 'Advanced React & Micro-frontends', category: 'Course', desc: 'Architecture patterns, performance optimization & state machines', path: ROUTES.COURSE_RECOMMENDATIONS },
+      { label: 'Cloud Architecture & Kubernetes Deep Dive', category: 'Course', desc: 'Container orchestration, CI/CD pipelines & GCP infrastructure', path: ROUTES.COURSE_RECOMMENDATIONS },
+      { label: 'PyTorch & Generative AI Model Deployment', category: 'Course', desc: 'LLM fine-tuning, embeddings & inference optimization', path: ROUTES.COURSE_RECOMMENDATIONS },
+      { label: 'Enterprise Design Systems & UX Research', category: 'Course', desc: 'Scalable UI components, accessibility & user research', path: ROUTES.COURSE_RECOMMENDATIONS }
+    ];
+
+    // 4. Career Roles
+    const careers = [
+      { label: 'Senior Fullstack Architect', category: 'Career Path', desc: 'Target Match: 88% • Key Skills: React, Node.js, Cloud Architecture', path: ROUTES.CAREER_RECOMMENDATIONS },
+      { label: 'Staff ML Engineer', category: 'Career Path', desc: 'Target Match: 82% • Key Skills: Python, PyTorch, BigQuery ML', path: ROUTES.CAREER_RECOMMENDATIONS },
+      { label: 'Cloud Platform DevOps Lead', category: 'Career Path', desc: 'Target Match: 76% • Key Skills: Kubernetes, Terraform, CI/CD', path: ROUTES.CAREER_RECOMMENDATIONS }
+    ];
+
+    return [...employeePages, ...employeeSkills, ...courses, ...careers];
+  };
+
+  const searchDatabase = getSearchDatabase();
+  const searchResults = globalSearch.trim()
+    ? searchDatabase.filter(item => 
+        item.label.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        item.desc.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        item.category.toLowerCase().includes(globalSearch.toLowerCase())
+      )
+    : [];
+
+  const handleSelectSearchResult = (path) => {
+    setGlobalSearch('');
+    setSearchOpen(false);
+    navigate(path);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && searchResults.length > 0) {
+      handleSelectSearchResult(searchResults[0].path);
+    }
+    if (e.key === 'Escape') {
+      setSearchOpen(false);
+    }
+  };
 
   // Dynamic Navigation Items matching user photo
   const getNavItems = () => {
@@ -95,6 +320,7 @@ const DashboardLayout = () => {
         { label: 'System Reports', path: ROUTES.ADMIN_REPORTS, icon: PieChart, isLucide: true },
         { label: 'System Settings', path: ROUTES.ADMIN_SETTINGS, icon: Sliders, isLucide: true },
         { label: 'System Alerts', path: ROUTES.ADMIN_NOTIFICATIONS, icon: BellFill },
+        { label: 'Admin Profile', path: ROUTES.ADMIN_PROFILE, icon: User, isLucide: true },
       ];
     }
 
@@ -210,6 +436,10 @@ const DashboardLayout = () => {
 
   const [notifications, setNotifications] = useState(() => {
     try {
+      if (!isAdmin && !isHr) {
+        const userAlerts = getUserData('alerts_list', null);
+        if (userAlerts !== null) return userAlerts;
+      }
       const saved = localStorage.getItem(notifStorageKey);
       return saved ? JSON.parse(saved) : getInitialNotifications();
     } catch {
@@ -223,6 +453,13 @@ const DashboardLayout = () => {
   useEffect(() => {
     const syncNotifs = () => {
       try {
+        if (!isAdmin && !isHr) {
+          const userAlerts = getUserData('alerts_list', null);
+          if (userAlerts !== null) {
+            setNotifications(userAlerts);
+            return;
+          }
+        }
         const saved = localStorage.getItem(notifStorageKey);
         if (saved) {
           setNotifications(JSON.parse(saved));
@@ -236,8 +473,12 @@ const DashboardLayout = () => {
 
     syncNotifs();
     window.addEventListener('notificationsUpdated', syncNotifs);
-    return () => window.removeEventListener('notificationsUpdated', syncNotifs);
-  }, [location.pathname, notifStorageKey]);
+    window.addEventListener('userDataChanged', syncNotifs);
+    return () => {
+      window.removeEventListener('notificationsUpdated', syncNotifs);
+      window.removeEventListener('userDataChanged', syncNotifs);
+    };
+  }, [location.pathname, notifStorageKey, isAdmin, isHr]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -250,6 +491,9 @@ const DashboardLayout = () => {
       }
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setNotifOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -265,7 +509,11 @@ const DashboardLayout = () => {
   const markAllAsRead = () => {
     const updated = notifications.map(n => ({ ...n, read: true }));
     setNotifications(updated);
-    localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    if (!isAdmin && !isHr) {
+      setUserData('alerts_list', updated);
+    } else {
+      localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    }
     window.dispatchEvent(new Event('notificationsUpdated'));
   };
 
@@ -279,15 +527,19 @@ const DashboardLayout = () => {
   };
 
   const handleReadNotif = (id) => {
-    const updated = notifications.map(n => ({ ...n, read: true }));
+    const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
     setNotifications(updated);
-    localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    if (!isAdmin && !isHr) {
+      setUserData('alerts_list', updated);
+    } else {
+      localStorage.setItem(notifStorageKey, JSON.stringify(updated));
+    }
     window.dispatchEvent(new Event('notificationsUpdated'));
     setNotifOpen(false);
     navigate(notificationsPath);
   };
 
-  const initialLetter = (user?.name || user?.username || 'Employee').charAt(0).toUpperCase();
+  const initialLetter = (user?.name || user?.username || (isAdmin ? 'Admin' : isHr ? 'HR' : 'Employee')).charAt(0).toUpperCase();
 
   return (
     <div className="h-screen w-screen overflow-hidden flex bg-slate-100 dark:bg-[#0b1120] text-slate-800 dark:text-slate-100 transition-colors duration-300">
@@ -296,17 +548,31 @@ const DashboardLayout = () => {
         {/* Brand Header with Exact SkillBridge.AI Logo */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800/60 shrink-0">
           <div className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 p-0.5 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <div className={`w-10 h-10 rounded-xl p-0.5 shadow-md group-hover:scale-105 transition-transform ${
+              isHr 
+                ? 'bg-gradient-to-tr from-teal-700 via-teal-600 to-emerald-500 shadow-teal-500/20' 
+                : isAdmin 
+                ? 'bg-gradient-to-tr from-indigo-700 via-indigo-600 to-purple-500 shadow-indigo-500/20' 
+                : 'bg-gradient-to-tr from-purple-700 via-purple-600 to-violet-500 shadow-purple-500/20'
+            }`}>
               <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                <BrainCircuit className="w-5 h-5 text-emerald-400" />
+                <BrainCircuit className={`w-5 h-5 ${isHr ? 'text-teal-400' : isAdmin ? 'text-indigo-400' : 'text-purple-400'}`} />
               </div>
             </div>
             <div>
-              <span className="text-xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 bg-clip-text text-transparent tracking-tight block leading-tight">
-                SkillBridge<span className="text-blue-600 dark:text-emerald-400">.AI</span>
+              <span className={`text-xl font-extrabold bg-clip-text text-transparent tracking-tight block leading-tight ${
+                isHr
+                  ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-400'
+                  : isAdmin
+                  ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500'
+                  : 'bg-gradient-to-r from-purple-600 via-violet-600 to-purple-400'
+              }`}>
+                SkillBridge<span className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500 dark:text-purple-400'}>.AI</span>
               </span>
-              <span className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase leading-snug">
-                SKILL GAP & CAREER PLATFORM
+              <span className={`block text-[10px] font-bold tracking-wider uppercase leading-snug ${
+                isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
+              }`}>
+                {workspaceName}
               </span>
             </div>
           </div>
@@ -323,8 +589,16 @@ const DashboardLayout = () => {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 group ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-blue-600 dark:hover:text-white'
+                    ? isHr
+                      ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
+                      : isAdmin
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                      : 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                    : isHr
+                    ? 'text-slate-600 dark:text-slate-400 hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400'
+                    : isAdmin
+                    ? 'text-slate-600 dark:text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400'
                 }`}
               >
                 {item.isLucide ? (
@@ -343,16 +617,79 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 z-10 bg-slate-100 dark:bg-[#0b1120]">
         {/* Navbar Header */}
         <header className="h-16 px-8 flex justify-between items-center border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900 backdrop-blur-md shrink-0 relative z-50">
-          {/* Global Search Bar (Center/Left) */}
-          <div className="relative w-80 md:w-96">
+          {/* Global Search Bar with Live Command Dropdown */}
+          <div className="relative w-80 md:w-96" ref={searchRef}>
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder={isAdmin ? "Search system logs, users..." : isHr ? "Search employees, skills..." : "Search skills, courses, careers..."}
+              placeholder={isAdmin ? "Search system logs, users, pages..." : isHr ? "Search employees, skills, reports..." : "Search skills, courses, careers..."}
               value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              onFocus={() => setSearchOpen(true)}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value);
+                setSearchOpen(true);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              className={`w-full pl-10 pr-8 py-2 text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 ${
+                isHr ? 'focus:ring-teal-500/40' : isAdmin ? 'focus:ring-indigo-500/40' : 'focus:ring-purple-500/40'
+              }`}
             />
+            {globalSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setGlobalSearch('');
+                  setSearchOpen(false);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold px-1"
+              >
+                ✕
+              </button>
+            )}
+
+            {/* Quick Search Results Dropdown */}
+            {searchOpen && globalSearch.trim().length > 0 && (
+              <div className="absolute left-0 mt-2 w-full max-h-80 overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Results ({searchResults.length})</span>
+                </div>
+
+                {searchResults.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                    No results found for "{globalSearch}"
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
+                    {searchResults.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => handleSelectSearchResult(item.path)}
+                        className={`p-3 hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer transition-colors flex items-center justify-between gap-3`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
+                            <span>{item.label}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                              isHr
+                                ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300'
+                                : isAdmin
+                                ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                                : 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                            }`}>
+                              {item.category}
+                            </span>
+                          </p>
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.desc}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold shrink-0 ${
+                          isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
+                        }`}>Open →</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Header Actions */}
@@ -363,7 +700,7 @@ const DashboardLayout = () => {
               className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer"
               title="Toggle Theme"
             >
-              {isDark ? <SunFill size={16} /> : <MoonFill size={16} className="text-blue-600" />}
+              {isDark ? <SunFill size={16} /> : <MoonFill size={16} className="text-purple-600" />}
             </button>
 
             {/* Notification Bell Button & Blinking Badge */}
@@ -396,7 +733,9 @@ const DashboardLayout = () => {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
+                        className={`text-[11px] font-bold hover:underline cursor-pointer ${
+                          isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
+                        }`}
                       >
                         Mark all read
                       </button>
@@ -410,7 +749,7 @@ const DashboardLayout = () => {
                         onClick={() => handleReadNotif(n.id)}
                         className={`p-3 text-xs transition-colors cursor-pointer ${
                           !n.read 
-                            ? 'bg-blue-50/60 dark:bg-slate-700/40 hover:bg-blue-100/60 dark:hover:bg-slate-700/70' 
+                            ? 'bg-purple-50/60 dark:bg-slate-700/40 hover:bg-purple-100/60 dark:hover:bg-slate-700/70' 
                             : 'hover:bg-slate-50 dark:hover:bg-slate-700/30 opacity-75'
                         }`}
                       >
@@ -431,7 +770,9 @@ const DashboardLayout = () => {
                         setNotifOpen(false);
                         navigate(notificationsPath);
                       }}
-                      className="w-full py-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-700/60 rounded-xl transition-colors cursor-pointer"
+                      className={`w-full py-1.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
+                        isHr ? 'text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-700/60' : isAdmin ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700/60' : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/60'
+                      }`}
                     >
                       View All Notifications →
                     </button>
@@ -444,23 +785,33 @@ const DashboardLayout = () => {
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2.5 p-1 rounded-full hover:ring-4 hover:ring-teal-500/10 transition-all duration-200 cursor-pointer focus:outline-none"
+                className={`flex items-center gap-2.5 p-1 rounded-full hover:ring-4 transition-all duration-200 cursor-pointer focus:outline-none ${
+                  isHr ? 'hover:ring-teal-500/20' : isAdmin ? 'hover:ring-indigo-500/20' : 'hover:ring-purple-500/20'
+                }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-teal-400 p-0.5 shadow-md shadow-teal-500/20">
-                  {user?.avatar || localStorage.getItem('userAvatar') ? (
+                <div className={`w-10 h-10 rounded-full p-0.5 shadow-md ${
+                  isHr 
+                    ? 'bg-gradient-to-r from-teal-500 to-emerald-400 shadow-teal-500/20' 
+                    : isAdmin 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-indigo-500/20' 
+                    : 'bg-gradient-to-r from-purple-500 to-violet-400 shadow-purple-500/20'
+                }`}>
+                  {user?.avatar ? (
                     <img 
-                      src={user?.avatar || localStorage.getItem('userAvatar')} 
+                      src={user.avatar} 
                       alt="Profile" 
                       className="w-full h-full rounded-full object-cover" 
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-sm font-black text-blue-600 dark:text-teal-400">
+                    <div className={`w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-sm font-black ${
+                      isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
+                    }`}>
                       {initialLetter}
                     </div>
                   )}
                 </div>
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden md:inline-block">
-                  {user?.name || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Alex Morgan')}
+                  {user?.name || user?.username || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Employee')}
                 </span>
                 <ChevronDown size={14} className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -472,7 +823,7 @@ const DashboardLayout = () => {
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700/70">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Signed in as</p>
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate mt-0.5">
-                      {user?.name || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Alex Morgan')}
+                      {user?.name || user?.username || (isAdmin ? 'Marcus Vance' : isHr ? 'Sarah Jenkins' : 'Employee')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                       {user?.email || (isAdmin ? 'admin@skillbridge.ai' : isHr ? 'hr@skillbridge.ai' : 'employee@skillbridge.ai')}
@@ -486,9 +837,11 @@ const DashboardLayout = () => {
                         setDropdownOpen(false);
                         navigate(profilePath);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer text-left"
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${
+                        isHr ? 'hover:text-teal-600 dark:hover:text-teal-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-purple-600 dark:hover:text-purple-400'
+                      }`}
                     >
-                      <PersonFill size={15} className="text-teal-500" />
+                      <PersonFill size={15} className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500'} />
                       Profile
                     </button>
 
@@ -497,9 +850,11 @@ const DashboardLayout = () => {
                         setDropdownOpen(false);
                         navigate(settingsPath);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer text-left"
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${
+                        isHr ? 'hover:text-teal-600 dark:hover:text-teal-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-purple-600 dark:hover:text-purple-400'
+                      }`}
                     >
-                      <GearFill size={15} className="text-blue-500" />
+                      <GearFill size={15} className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500'} />
                       Settings
                     </button>
 

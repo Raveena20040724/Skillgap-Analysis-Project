@@ -11,6 +11,8 @@ import {
   Trash2
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const INITIAL_DEPARTMENTS = [
   { id: 1, name: 'Engineering', code: 'ENG', employeeCount: 145, readinessScore: 88, lead: 'Marcus Vance', targetScore: 90 },
@@ -37,12 +39,8 @@ const DepartmentsManagement = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newDept, setNewDept] = useState({ name: '', code: '', lead: '', targetScore: '' });
-  const [toastMsg, setToastMsg] = useState('');
-
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3500);
-  };
+  const [deptToDelete, setDeptToDelete] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const handleAddDepartment = (e) => {
     e.preventDefault();
@@ -61,14 +59,22 @@ const DepartmentsManagement = () => {
     localStorage.setItem('custom_departments_list', JSON.stringify(updated));
     setNewDept({ name: '', code: '', lead: '', targetScore: '' });
     setIsAddModalOpen(false);
-    showToast(`Department "${item.name}" added successfully.`);
+    showGlobalToast(`Department "${item.name}" added successfully.`, 'success');
   };
 
-  const handleDeleteDepartment = (id, name) => {
-    const updated = departments.filter((d) => d.id !== id);
+  const handleDeleteDepartmentClick = (dept) => {
+    setDeptToDelete(dept);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deptToDelete) return;
+    const updated = departments.filter((d) => d.id !== deptToDelete.id);
     setDepartments(updated);
     localStorage.setItem('custom_departments_list', JSON.stringify(updated));
-    showToast(`Department "${name}" removed successfully.`);
+    showGlobalToast(`Department "${deptToDelete.name}" removed.`, 'delete');
+    setIsDeleteConfirmOpen(false);
+    setDeptToDelete(null);
   };
 
   return (
@@ -94,14 +100,6 @@ const DepartmentsManagement = () => {
         </button>
       </div>
 
-      {/* Toast Notification Banner */}
-      {toastMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-bold flex items-center gap-2.5 shadow-md animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
       {/* Department Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((dept) => (
@@ -121,7 +119,7 @@ const DepartmentsManagement = () => {
                   </div>
 
                   <button
-                    onClick={() => handleDeleteDepartment(dept.id, dept.name)}
+                    onClick={() => handleDeleteDepartmentClick(dept)}
                     className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                     title="Delete Department"
                   >
@@ -248,6 +246,19 @@ const DepartmentsManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Department"
+        message={`Are you sure you want to delete the department "${deptToDelete?.name}" (${deptToDelete?.code})?`}
+        confirmText="Yes, Delete Department"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeptToDelete(null);
+        }}
+      />
     </div>
   );
 };

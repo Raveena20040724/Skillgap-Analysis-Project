@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircle2, 
@@ -14,108 +14,153 @@ import {
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { ROUTES } from '../../constants/routes';
+import { getUserData, getActiveUser } from '../../utils/userStorage';
 
-const STAGES = [
+const BASE_STAGES = [
   {
     id: 1,
     stageLevel: 'BEGINNER STAGE',
-    stageLevelBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+    stageLevelBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
     duration: '4 Weeks',
-    title: 'Foundation & Modern Core',
-    status: 'completed',
-    statusLabel: '✓ Stage Completed',
-    statusBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+    title: 'Foundation & Core Fundamentals',
     courses: [
-      'Modern TypeScript Design Patterns',
-      'Advanced React 18 Patterns'
+      'Modern TypeScript & JavaScript Fundamentals',
+      'Frontend Architecture Essentials'
     ],
     projects: [
-      'Responsive Component Library with Tailwind'
+      'Responsive Component Library'
     ],
-    credentials: 'Meta Frontend Professional'
+    credentials: 'Core Engineering Competency Certificate'
   },
   {
     id: 2,
     stageLevel: 'INTERMEDIATE STAGE',
-    stageLevelBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+    stageLevelBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30',
     duration: '6 Weeks',
     title: 'State Architecture & Performance',
-    status: 'completed',
-    statusLabel: '✓ Stage Completed',
-    statusBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
     courses: [
-      'Redux Toolkit & Zustand Mastery',
+      'State Management & Modern APIs',
       'Web Vitals & Performance Optimization'
     ],
     projects: [
-      'High-Throughput Financial Dashboard'
+      'High-Throughput Analytics Dashboard'
     ],
-    credentials: 'Senior React Developer Certificate'
+    credentials: 'Senior Developer Benchmark Certificate'
   },
   {
     id: 3,
     stageLevel: 'ADVANCED STAGE',
     stageLevelBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
     duration: '8 Weeks',
-    title: 'Micro-Frontends & Design Systems',
-    status: 'in-progress',
-    statusLabel: 'In Progress',
-    statusBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+    title: 'Micro-Frontends & Cloud Scaling',
     courses: [
-      'Module Federation & Micro-frontends',
+      'Cloud Architecture & Micro-Services',
       'Enterprise Design System Engineering'
     ],
     projects: [
       'Enterprise Multi-App Design System v3'
     ],
-    credentials: 'Frontend System Architect Certification'
+    credentials: 'System Architect Certification'
   },
   {
     id: 4,
     stageLevel: 'EXPERT STAGE',
-    stageLevelBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
+    stageLevelBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
     duration: '6 Weeks',
-    title: 'AI Integration & WebAssembly',
-    status: 'upcoming',
-    statusLabel: 'Upcoming',
-    statusBg: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/30',
+    title: 'AI Integration & Advanced Telemetry',
     courses: [
       'Client-Side AI & Vector Embeddings',
-      'WebAssembly & C++ Modules in Web Apps'
+      'AI Automation Pipelines'
     ],
     projects: [
-      'In-Browser AI Code Assistant Extension'
+      'In-Browser AI Assistant Extension'
     ],
-    credentials: 'AI Web Application Specialist'
+    credentials: 'AI Application Specialist'
   }
 ];
 
 const LearningPath = () => {
   const navigate = useNavigate();
+  const activeUser = getActiveUser();
   const [selectedStage, setSelectedStage] = useState(null);
+  const [stages, setStages] = useState([]);
 
-  const completedCount = STAGES.filter((s) => s.status === 'completed').length;
-  const progressPercentage = Math.round((completedCount / STAGES.length) * 100);
+  const computeStages = () => {
+    const userSkills = getUserData('skills', []) || [];
+    const enrolledCourses = getUserData('enrolled_courses', []) || [];
+    const assessments = getUserData('assessment_results', []) || [];
+
+    const skillCount = userSkills.length;
+    const enrolledCount = enrolledCourses.length;
+    const testCount = assessments.length;
+
+    // Dynamically calculate stage status based on user actions
+    let completedStagesCount = 0;
+    if (skillCount >= 6 || testCount >= 2) completedStagesCount = 2;
+    else if (skillCount >= 2 || enrolledCount >= 1 || testCount >= 1) completedStagesCount = 1;
+
+    const dynamicStages = BASE_STAGES.map((stg, idx) => {
+      let status = 'upcoming';
+      let statusLabel = 'Upcoming';
+      let statusBg = 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/30';
+
+      if (idx < completedStagesCount) {
+        status = 'completed';
+        statusLabel = '✓ Stage Completed';
+        statusBg = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30';
+      } else if (idx === completedStagesCount) {
+        status = 'in-progress';
+        statusLabel = 'In Progress';
+        statusBg = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30';
+      }
+
+      return {
+        ...stg,
+        status,
+        statusLabel,
+        statusBg
+      };
+    });
+
+    setStages(dynamicStages);
+  };
+
+  useEffect(() => {
+    computeStages();
+    window.addEventListener('skillsUpdated', computeStages);
+    window.addEventListener('coursesUpdated', computeStages);
+    window.addEventListener('assessmentsUpdated', computeStages);
+    window.addEventListener('userDataChanged', computeStages);
+    return () => {
+      window.removeEventListener('skillsUpdated', computeStages);
+      window.removeEventListener('coursesUpdated', computeStages);
+      window.removeEventListener('assessmentsUpdated', computeStages);
+      window.removeEventListener('userDataChanged', computeStages);
+    };
+  }, []);
+
+  const completedCount = stages.filter((s) => s.status === 'completed').length;
+  const progressPercentage = stages.length > 0 ? Math.round((completedCount / stages.length) * 100) : 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-fade-in">
       {/* Top Banner Box Matching Photo */}
       <div className="p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
         <div className="space-y-3">
-          <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 inline-block">
+          <span className="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 inline-block">
             Dynamic AI Roadmap
           </span>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             Learning Path for Principal Frontend Architect
           </h1>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Estimated Total Duration: <strong className="text-slate-800 dark:text-slate-200">6 Months</strong> • Completed Steps: <strong className="text-slate-800 dark:text-slate-200">{completedCount}/{STAGES.length}</strong>
+            Estimated Total Duration: <strong className="text-slate-800 dark:text-slate-200">6 Months</strong> • Completed Steps: <strong className="text-slate-800 dark:text-slate-200">{completedCount}/{stages.length}</strong>
           </p>
         </div>
 
         {/* Path Completion Box */}
         <div className="p-5 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-slate-800 rounded-2xl text-center min-w-[170px] shrink-0">
-          <div className="text-3xl font-black text-emerald-500 dark:text-emerald-400 leading-none">
+          <div className="text-3xl font-black text-purple-600 dark:text-purple-400 leading-none">
             {progressPercentage}%
           </div>
           <div className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-400 mt-1">
@@ -129,7 +174,7 @@ const LearningPath = () => {
         {/* Timeline Connecting Vertical Line */}
         <div className="absolute left-[22px] md:left-[34px] top-6 bottom-6 w-0.5 bg-slate-200 dark:bg-slate-800 z-0"></div>
 
-        {STAGES.map((stage) => {
+        {stages.map((stage) => {
           const isCompleted = stage.status === 'completed';
           const isInProgress = stage.status === 'in-progress';
 
@@ -138,11 +183,11 @@ const LearningPath = () => {
               {/* Timeline Marker Node Icon */}
               <div className="shrink-0 mt-6">
                 {isCompleted ? (
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-emerald-500 shadow-md shadow-emerald-500/20">
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border-2 border-purple-500 flex items-center justify-center text-purple-500 shadow-md shadow-purple-500/20">
                     <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
                   </div>
                 ) : isInProgress ? (
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center text-blue-500 shadow-md shadow-blue-500/20 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border-2 border-purple-500 flex items-center justify-center text-purple-500 shadow-md shadow-purple-500/20 animate-pulse">
                     <Play className="w-4 h-4 fill-current ml-0.5" />
                   </div>
                 ) : (
@@ -156,7 +201,7 @@ const LearningPath = () => {
               <div
                 className={`flex-1 p-6 md:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border rounded-3xl shadow-xl transition-all duration-300 space-y-6 ${
                   isInProgress
-                    ? 'border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20'
+                    ? 'border-purple-500/50 shadow-purple-500/10 ring-2 ring-purple-500/20'
                     : 'border-slate-200/90 dark:border-slate-800'
                 }`}
               >
@@ -187,13 +232,13 @@ const LearningPath = () => {
                   {/* Key Courses Column */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-blue-500" />
+                      <BookOpen className="w-4 h-4 text-purple-500" />
                       Key Courses
                     </h4>
                     <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                       {stage.courses.map((course, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0"></span>
                           {course}
                         </li>
                       ))}
@@ -203,13 +248,13 @@ const LearningPath = () => {
                   {/* Real-World Projects Column */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-extrabold uppercase text-slate-400 dark:text-slate-400 flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-emerald-500" />
+                      <Layers className="w-4 h-4 text-violet-500" />
                       Real-World Projects
                     </h4>
                     <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                       {stage.projects.map((project, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
                           {project}
                         </li>
                       ))}
@@ -225,7 +270,7 @@ const LearningPath = () => {
 
                   <button
                     onClick={() => setSelectedStage(stage)}
-                    className="text-xs font-extrabold text-blue-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-extrabold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>View Step Modules</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -265,7 +310,7 @@ const LearningPath = () => {
                   {selectedStage.courses.map((c, i) => (
                     <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                       <span>{c}</span>
-                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-extrabold uppercase">3 Modules</span>
+                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-extrabold uppercase">3 Modules</span>
                     </div>
                   ))}
                 </div>
@@ -289,7 +334,7 @@ const LearningPath = () => {
                   setSelectedStage(null);
                   navigate(ROUTES.COURSE_RECOMMENDATIONS);
                 }}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 Explore Courses
               </Button>

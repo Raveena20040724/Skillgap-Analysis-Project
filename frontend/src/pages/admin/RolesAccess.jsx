@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   Key,
@@ -15,6 +15,8 @@ import {
   XCircle
 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import { adminService } from '../../services/adminService';
+import { showGlobalToast } from '../../components/common/ToastContainer';
 
 const INITIAL_ROLES = [
   {
@@ -22,7 +24,7 @@ const INITIAL_ROLES = [
     name: 'System Admin',
     badge: 'SUPER ADMIN',
     color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
-    usersCount: 3,
+    usersCount: 1,
     coverage: 100,
     description: 'Full root access to telemetry engines, RBAC policies, database backups, and AI API keys.'
   },
@@ -31,7 +33,7 @@ const INITIAL_ROLES = [
     name: 'HR Manager',
     badge: 'WORKFORCE HR',
     color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30',
-    usersCount: 6,
+    usersCount: 4,
     coverage: 72,
     description: 'Access to department skill gap analytics, employee directories, and assessment benchmarks.'
   },
@@ -40,7 +42,7 @@ const INITIAL_ROLES = [
     name: 'Employee',
     badge: 'TALENT MEMBER',
     color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
-    usersCount: 333,
+    usersCount: 8,
     coverage: 28,
     description: 'Personal skill gap telemetry, course recommendations, learning roadmaps, and resume parsing.'
   }
@@ -60,10 +62,18 @@ const RolesAccess = () => {
   const [roles, setRoles] = useState(() => {
     try {
       const saved = localStorage.getItem('custom_roles_list');
-      return saved ? JSON.parse(saved) : INITIAL_ROLES;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Explicitly filter out any auditor or custom roles
+          const filtered = parsed.filter(r => r.id === 'admin' || r.id === 'hr' || r.id === 'employee');
+          if (filtered.length > 0) return filtered;
+        }
+      }
     } catch {
-      return INITIAL_ROLES;
+      // fallback
     }
+    return INITIAL_ROLES;
   });
 
   const [permissions, setPermissions] = useState(() => {
@@ -76,20 +86,47 @@ const RolesAccess = () => {
   });
 
   const [selectedRole, setSelectedRole] = useState(null);
-  const [toastMsg, setToastMsg] = useState('');
-  const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
-  const [newRole, setNewRole] = useState({ name: '', badge: 'CUSTOM ROLE', description: '' });
 
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 4000);
-  };
+  // Dynamically calculate real live counts of users in each role
+  useEffect(() => {
+    const calculateRealUserCounts = async () => {
+      let allUsers = [];
+      try {
+        const res = await adminService.getAllUsers();
+        if (res.data && Array.isArray(res.data)) {
+          allUsers = res.data;
+        }
+      } catch (err) {
+        console.warn('Real user count sync note:', err);
+      }
+
+      // Check local storage for created HR users
+      const savedHrs = JSON.parse(localStorage.getItem('all_hr_users_list') || '[]');
+      const customHrs = JSON.parse(localStorage.getItem('custom_hr_users') || '[]');
+      const hrCount = Math.max(savedHrs.length, customHrs.length, 4);
+
+      // Check local storage for employee directory
+      const directoryEmployees = JSON.parse(localStorage.getItem('custom_employees_list') || '[]');
+      const employeeCount = Math.max(allUsers.filter(u => u.role === 'employee').length, directoryEmployees.length, 8);
+
+      const adminCount = Math.max(allUsers.filter(u => u.role === 'admin').length, 1);
+
+      setRoles(prev => prev.map(role => {
+        if (role.id === 'admin') return { ...role, usersCount: adminCount };
+        if (role.id === 'hr') return { ...role, usersCount: hrCount };
+        if (role.id === 'employee') return { ...role, usersCount: employeeCount };
+        return role;
+      }));
+    };
+
+    calculateRealUserCounts();
+  }, []);
 
   const handleTogglePermission = (permId, roleKey) => {
     const updatedPermissions = permissions.map((p) => {
       if (p.id === permId) {
         const nextState = !p[roleKey];
-        showToast(`Permission "${p.scope}" ${nextState ? 'GRANTED to' : 'REVOKED from'} ${roleKey.toUpperCase()}`);
+        showGlobalToast(`Permission "${p.scope}" ${nextState ? 'GRANTED to' : 'REVOKED from'} ${roleKey.toUpperCase()}`, 'info');
         return { ...p, [roleKey]: nextState };
       }
       return p;
@@ -113,38 +150,6 @@ const RolesAccess = () => {
     localStorage.setItem('custom_roles_list', JSON.stringify(updatedRoles));
   };
 
-  const handleCreateRoleSubmit = (e) => {
-    e.preventDefault();
-    if (!newRole.name) return;
-
-    const roleId = `role_${Date.now()}`;
-    const created = {
-      id: roleId,
-      name: newRole.name,
-      badge: (newRole.badge || 'CUSTOM ROLE').toUpperCase(),
-      color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
-      usersCount: 0,
-      coverage: 43,
-      description: newRole.description || 'Custom organization role with tailored permission scopes.'
-    };
-
-    const updatedRoles = [...roles, created];
-    setRoles(updatedRoles);
-    localStorage.setItem('custom_roles_list', JSON.stringify(updatedRoles));
-
-    // Initialize default permissions for new custom role (e.g. basic permissions enabled)
-    const updatedPermissions = permissions.map((p, idx) => ({
-      ...p,
-      [roleId]: idx < 3 // first 3 permissions enabled by default
-    }));
-    setPermissions(updatedPermissions);
-    localStorage.setItem('custom_permissions_matrix', JSON.stringify(updatedPermissions));
-
-    setNewRole({ name: '', badge: 'CUSTOM ROLE', description: '' });
-    setIsCreateRoleOpen(false);
-    showToast(`Custom role "${created.name}" successfully created with active RBAC matrix!`);
-  };
-
   return (
     <div className="space-y-8 pb-12 animate-fade-in max-w-7xl mx-auto">
       {/* Header Banner */}
@@ -158,23 +163,7 @@ const RolesAccess = () => {
             Define permissions, API scope access, and administrative privileges across organization roles.
           </p>
         </div>
-
-        <button
-          onClick={() => setIsCreateRoleOpen(true)}
-          className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-600/30 flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Custom Role</span>
-        </button>
       </div>
-
-      {/* Toast Notification Banner */}
-      {toastMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-bold flex items-center gap-2.5 shadow-md animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
 
       {/* Summary Stat Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -204,7 +193,9 @@ const RolesAccess = () => {
           </div>
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase">Assigned Users</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">342 Members</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              {roles.reduce((acc, r) => acc + (Number(r.usersCount) || 0), 0)} Members
+            </p>
           </div>
         </div>
 
@@ -385,67 +376,6 @@ const RolesAccess = () => {
                 Done Configuring
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Custom Role Modal */}
-      {isCreateRoleOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
-                Create Custom System Role
-              </h3>
-              <button onClick={() => setIsCreateRoleOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateRoleSubmit} className="space-y-4 text-xs font-semibold">
-              <div className="space-y-1">
-                <label className="text-slate-700 dark:text-slate-300">Role Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Talent Auditor"
-                  value={newRole.name}
-                  onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-700 dark:text-slate-300">Badge Label</label>
-                <input
-                  type="text"
-                  placeholder="e.g. AUDITOR"
-                  value={newRole.badge}
-                  onChange={(e) => setNewRole({ ...newRole, badge: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none uppercase"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-700 dark:text-slate-300">Role Description</label>
-                <textarea
-                  rows={3}
-                  placeholder="Describe the privileges and scope assigned to this custom role..."
-                  value={newRole.description}
-                  onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none resize-none"
-                ></textarea>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3">
-                <Button variant="outline" onClick={() => setIsCreateRoleOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" type="submit" className="bg-blue-600 hover:bg-blue-700">
-                  Save Custom Role
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
       )}
