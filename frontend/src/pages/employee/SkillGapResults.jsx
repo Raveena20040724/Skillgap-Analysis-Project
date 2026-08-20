@@ -85,14 +85,14 @@ const SkillGapResults = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <PageHeader 
-        title="Skill Gap Analysis Results" 
+      <PageHeader
+        title="Skill Gap Analysis Results"
         subtitle="Compare your active skill ratings against target role benchmarks and resolve competency deficits."
       />
 
       {gapsWithDiff.length === 0 ? (
-        <Card className="p-12 text-center border-2 border-dashed border-purple-200 dark:border-purple-800/60 rounded-3xl bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-inner">
+        <Card className="p-12 text-center border-2 border-dashed border-teal-200 dark:border-teal-800/60 rounded-3xl bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto shadow-inner">
             <Target className="w-8 h-8" />
           </div>
           <div className="space-y-2 max-w-md mx-auto">
@@ -106,14 +106,14 @@ const SkillGapResults = () => {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={() => navigate(ROUTES.RESUME_UPLOAD)}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer"
             >
               <CloudUpload className="w-4 h-4" />
               Upload Resume
             </button>
             <button
               onClick={() => navigate(ROUTES.SKILLS)}
-              className="px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-700 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
             >
               <Award className="w-4 h-4" />
               Add Skills Manually
@@ -152,14 +152,14 @@ const SkillGapResults = () => {
             )}
 
             {strongestSkill && (
-              <Card className="border-l-4 border-purple-500 p-6 flex flex-col justify-between space-y-4">
+              <Card className="border-l-4 border-teal-500 p-6 flex flex-col justify-between space-y-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Strongest Role Competency
                   </p>
                   <p className="text-xl font-black mt-2 text-slate-900 dark:text-white">{strongestSkill.skill}</p>
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">
-                    Rating: <span className="font-extrabold text-purple-600 dark:text-purple-400">{strongestSkill.currentLevel}%</span> (Target Benchmark: {strongestSkill.requiredLevel}%)
+                    Rating: <span className="font-extrabold text-teal-600 dark:text-teal-400">{strongestSkill.currentLevel}%</span> (Target Benchmark: {strongestSkill.requiredLevel}%)
                   </p>
                 </div>
 
@@ -213,20 +213,20 @@ const SkillGapResults = () => {
                       <td className="py-3.5 px-3 font-bold text-slate-900 dark:text-white">{item.skill}</td>
                       <td className="py-3.5 px-3 text-slate-600 dark:text-slate-300 font-semibold">{item.currentLevel}%</td>
                       <td className="py-3.5 px-3 text-slate-600 dark:text-slate-300 font-semibold">{item.requiredLevel}%</td>
-                      <td className={`py-3.5 px-3 font-black ${item.gap >= 20 ? 'text-rose-600 dark:text-rose-400' : item.gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-purple-600 dark:text-purple-400'}`}>
+                      <td className={`py-3.5 px-3 font-black ${item.gap >= 20 ? 'text-rose-600 dark:text-rose-400' : item.gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-teal-600 dark:text-teal-400'}`}>
                         {item.gap > 0 ? `-${item.gap}% Deficit` : 'Benchmark Met'}
                       </td>
                       <td className="py-3.5 px-3 text-right">
                         {item.gap > 0 ? (
                           <button
                             onClick={() => handleTakeAssessmentForGap(item.skill)}
-                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer shadow-sm shadow-purple-500/20"
+                            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer shadow-sm shadow-teal-500/20"
                           >
                             <span>Take Assessment</span>
                             <ArrowRight className="w-3 h-3" />
                           </button>
                         ) : (
-                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 inline-flex items-center gap-1">
+                          <span className="text-xs font-bold text-teal-600 dark:text-teal-400 inline-flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                           </span>
                         )}

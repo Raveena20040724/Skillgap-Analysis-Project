@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../constants/routes';
-import { ShieldCheck, Lock, Mail, Server, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, Server, Eye, EyeOff, BrainCircuit } from 'lucide-react';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -102,17 +102,15 @@ const AdminLogin = () => {
     <div className="min-h-screen w-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
       <header className="relative z-10 max-w-7xl w-full mx-auto">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt="SkillBridge Logo" 
-              className="w-12 h-12 rounded-2xl object-cover shadow-xl shadow-black/40 border border-white/20"
-            />
-            <div>
-              <span className="text-2xl font-black tracking-tight text-white block leading-tight">SkillBridge.AI</span>
-              <span className="text-[10px] font-bold text-teal-400 tracking-wider uppercase block">Super Admin Security Operations</span>
+            <div className="w-10 h-10 rounded-xl p-0.5 shadow-md bg-gradient-to-tr from-indigo-700 via-indigo-600 to-purple-500 shadow-indigo-500/20">
+              <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                <BrainCircuit className="w-5 h-5 text-indigo-400" />
+              </div>
             </div>
-          </div>
+            <div>
+              <span className="text-2xl font-black tracking-tight text-white block leading-tight">SkillBridge<span className="text-indigo-400">.AI</span></span>
+              <span className="text-[10px] font-bold text-indigo-300 tracking-wider uppercase block">Super Admin Portal</span>
+            </div>
 
           <Link
             to={ROUTES.EMPLOYEE_LOGIN}

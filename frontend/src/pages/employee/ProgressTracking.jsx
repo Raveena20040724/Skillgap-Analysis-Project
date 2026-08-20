@@ -37,7 +37,7 @@ const CustomBarTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-2.5 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-center">
         <p className="text-slate-500 font-semibold text-[11px]">{label}</p>
-        <p className="text-purple-600 dark:text-purple-400 font-extrabold text-sm mt-0.5">
+        <p className="text-teal-600 dark:text-teal-400 font-extrabold text-sm mt-0.5">
           hours : {payload[0].value}
         </p>
       </div>
@@ -52,7 +52,7 @@ const CustomLineTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-xl border border-slate-700 text-xs font-bold text-center">
         <p className="text-slate-400 font-semibold text-[11px]">{label}</p>
-        <p className="text-purple-400 font-extrabold text-sm mt-0.5">
+        <p className="text-teal-400 font-extrabold text-sm mt-0.5">
           Score : {payload[0].value}%
         </p>
       </div>
@@ -170,7 +170,7 @@ const ProgressTracking = () => {
       {/* Page Header */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-          <BarChart2 className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+          <BarChart2 className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
           Employee Learning Progress & Growth Tracking
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -182,8 +182,8 @@ const ProgressTracking = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Learning Hours */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -197,8 +197,8 @@ const ProgressTracking = () => {
 
         {/* Card 2: Completed Courses */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-            <BookOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -212,8 +212,8 @@ const ProgressTracking = () => {
 
         {/* Card 3: Certificates Earned */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-            <Award className="w-5 h-5 text-indigo-500" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Award className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -227,8 +227,8 @@ const ProgressTracking = () => {
 
         {/* Card 4: Avg Assessment Score */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-            <CheckSquare className="w-5 h-5 text-amber-500" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -247,7 +247,7 @@ const ProgressTracking = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
+              <TrendingUp className="w-5 h-5 text-teal-500" />
               Skill Growth Evolution (Line Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -294,7 +294,7 @@ const ProgressTracking = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-500" />
+              <Calendar className="w-5 h-5 text-teal-500" />
               Weekly Learning Hours Log (Bar Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">

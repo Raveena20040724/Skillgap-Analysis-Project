@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  CheckCircle2, 
-  Trash2, 
-  Award, 
-  FileText, 
+import {
+  Bell,
+  CheckCircle2,
+  Trash2,
+  Award,
+  FileText,
   ChevronRight,
   Zap,
   CheckCheck,
@@ -228,7 +228,7 @@ const HrNotifications = () => {
       case 'appraisal':
         return <Award className="w-5 h-5 text-purple-500" />;
       case 'training':
-        return <GraduationCap className="w-5 h-5 text-teal-500" />;
+        return <GraduationCap className="w-5 h-5 text-violet-500" />;
       case 'resume':
         return <Users className="w-5 h-5 text-indigo-500" />;
       case 'report':
@@ -244,7 +244,7 @@ const HrNotifications = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <Bell className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
+            <Bell className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
             HR Notification Hub
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -256,9 +256,9 @@ const HrNotifications = () => {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 dark:bg-white/10 dark:hover:bg-white/20 text-teal-700 dark:text-teal-200 border border-teal-200 dark:border-teal-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 dark:bg-white/10 dark:hover:bg-white/20 text-purple-700 dark:text-purple-200 border border-purple-200 dark:border-purple-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <CheckCheck className="w-4 h-4 text-teal-600 dark:text-teal-300" />
+              <CheckCheck className="w-4 h-4 text-purple-600 dark:text-purple-300" />
               <span>Mark All Read</span>
             </button>
           )}
@@ -283,26 +283,24 @@ const HrNotifications = () => {
               cat === 'All'
                 ? safeNotifications.length
                 : cat === 'Unread'
-                ? unreadCount
-                : safeNotifications.filter((n) => n.category === cat).length;
+                  ? unreadCount
+                  : safeNotifications.filter((n) => n.category === cat).length;
 
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${
-                  activeCategory === cat
-                    ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                className={`px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${activeCategory === cat
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
+                  }`}
               >
                 <span>{cat}</span>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] ${
-                    activeCategory === cat
-                      ? 'bg-teal-700 text-teal-100'
+                  className={`px-2 py-0.5 rounded-full text-[10px] ${activeCategory === cat
+                      ? 'bg-purple-700 text-purple-100'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                  }`}
+                    }`}
                 >
                   {count}
                 </span>
@@ -316,7 +314,7 @@ const HrNotifications = () => {
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
           <div className="p-12 text-center bg-white dark:bg-[#161f33] rounded-3xl border-dashed border-2 border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto mb-4">
               <Bell className="w-8 h-8 opacity-60" />
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">No HR notifications found</h3>
@@ -329,26 +327,24 @@ const HrNotifications = () => {
             <div
               key={item.id}
               onClick={() => handleNotificationClick(item)}
-              className={`p-4 md:p-5 rounded-3xl border transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                !item.read
-                  ? 'bg-white dark:bg-[#161f33] border-teal-500/40 dark:border-teal-500/30 shadow-md shadow-teal-500/5'
+              className={`p-4 md:p-5 rounded-3xl border transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${!item.read
+                  ? 'bg-white dark:bg-[#161f33] border-purple-500/40 dark:border-purple-500/30 shadow-md shadow-purple-500/5'
                   : 'bg-slate-50/80 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800 opacity-90 hover:opacity-100'
-              } hover:border-teal-500/60 hover:shadow-lg`}
+                } hover:border-purple-500/60 hover:shadow-lg`}
             >
               <div className="flex items-start gap-4">
                 <div
-                  className={`p-3 rounded-2xl shrink-0 mt-0.5 ${
-                    !item.read
-                      ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400'
+                  className={`p-3 rounded-2xl shrink-0 mt-0.5 ${!item.read
+                      ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'
                       : 'bg-slate-200/70 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'
-                  }`}
+                    }`}
                 >
                   {getIcon(item.type)}
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
                       {item.category}
                     </span>
                     {!item.read && (
@@ -378,7 +374,7 @@ const HrNotifications = () => {
                       e.stopPropagation();
                       navigate(item.link);
                     }}
-                    className="px-3.5 py-2 bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-300 hover:bg-teal-600 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    className="px-3.5 py-2 bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-300 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
                   >
                     <span>{item.actionLabel || 'View'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -410,11 +406,11 @@ const HrNotifications = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-2xl">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-2xl">
                 {getIcon(selectedNotification.type)}
               </div>
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2.5 py-0.5 rounded-full">
                   {selectedNotification.category}
                 </span>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">
@@ -429,8 +425,8 @@ const HrNotifications = () => {
 
             {/* Metadata Preview if present */}
             {selectedNotification.metadata && (
-              <div className="p-4 bg-teal-50/50 dark:bg-teal-950/20 rounded-2xl border border-teal-100 dark:border-teal-900/40 space-y-2">
-                <p className="text-xs font-bold text-teal-900 dark:text-teal-200 uppercase tracking-wider">Event Details</p>
+              <div className="p-4 bg-purple-50/50 dark:bg-purple-950/20 rounded-2xl border border-purple-100 dark:border-purple-900/40 space-y-2">
+                <p className="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider">Event Details</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {Object.entries(selectedNotification.metadata).map(([key, val]) => (
                     <div key={key}>
@@ -460,7 +456,7 @@ const HrNotifications = () => {
                     setSelectedNotification(null);
                     navigate(link);
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-lg shadow-teal-600/30 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <span>{selectedNotification.actionLabel || 'Proceed'}</span>
                   <ArrowRight className="w-4 h-4" />

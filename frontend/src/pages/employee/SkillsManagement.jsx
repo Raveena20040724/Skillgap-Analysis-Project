@@ -380,12 +380,12 @@ const SkillsManagement = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-purple-600/10 via-violet-600/10 to-purple-500/10 dark:from-purple-900/30 dark:via-violet-950/40 dark:to-purple-900/20 p-6 rounded-3xl border border-purple-500/20 dark:border-purple-500/30 shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-teal-600/10 via-emerald-600/10 to-teal-500/10 dark:from-teal-900/30 dark:via-emerald-950/40 dark:to-teal-900/20 p-6 rounded-3xl border border-teal-500/20 dark:border-teal-500/30 shadow-md">
         <div>
           <PageHeader
             title={
               <span className="flex items-center gap-2.5 text-slate-900 dark:text-white font-extrabold text-2xl">
-                <Zap className="w-7 h-7 text-purple-600 dark:text-purple-400 fill-purple-500/20 animate-pulse" />
+                <Zap className="w-7 h-7 text-teal-600 dark:text-teal-400 fill-teal-500/20 animate-pulse" />
                 Skills Inventory & Dynamic Proficiency Management
               </span>
             }
@@ -394,7 +394,7 @@ const SkillsManagement = () => {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer"
+          className="px-5 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25 transition-all transform hover:-translate-y-0.5 shrink-0 cursor-pointer"
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
           Add New Skill
@@ -403,8 +403,8 @@ const SkillsManagement = () => {
 
       {/* Notification Banner */}
       {notification && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700/60 text-purple-800 dark:text-purple-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
-          <Check className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700/60 text-teal-800 dark:text-teal-200 rounded-xl text-sm font-semibold animate-fade-in shadow-sm">
+          <Check className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           {notification}
         </div>
       )}
@@ -414,45 +414,45 @@ const SkillsManagement = () => {
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Skills</span>
-            <div className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl">
+            <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
               <Layers className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{totalSkillsCount}</p>
-          <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mt-1">Declared Competencies</p>
+          <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 mt-1">Declared Competencies</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Advanced / Expert</span>
-            <div className="p-2 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-xl">
+            <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
               <Award className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{advancedCount}</p>
-          <p className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 mt-1">High Mastery Skills</p>
+          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">High Mastery Skills</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Proficiency</span>
-            <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{avgProficiency}%</p>
-          <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">Overall Skill Score</p>
+          <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 mt-1">Overall Skill Score</p>
         </Card>
 
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Domains</span>
-            <div className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl">
+            <div className="p-2 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">{categoriesCount}</p>
-          <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mt-1">Active Skill Categories</p>
+          <p className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 mt-1">Active Skill Categories</p>
         </Card>
       </div>
 
@@ -467,7 +467,7 @@ const SkillsManagement = () => {
               placeholder="Search skills (e.g. React, Python, AWS)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+              className="w-full pl-10 pr-10 py-2.5 text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
             />
             {searchQuery && (
               <button
@@ -487,7 +487,7 @@ const SkillsManagement = () => {
             <select
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+              className="px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
             >
               <option value="All">All Levels</option>
               <option value="Beginner">Beginner</option>
@@ -504,7 +504,7 @@ const SkillsManagement = () => {
           <button
             onClick={() => scrollCategories('left')}
             title="Slide left"
-            className="absolute left-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:scale-110 transition-all cursor-pointer"
+            className="absolute left-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -526,7 +526,7 @@ const SkillsManagement = () => {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                     selectedCategory === cat
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
                       : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -534,7 +534,7 @@ const SkillsManagement = () => {
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                       selectedCategory === cat
-                        ? 'bg-purple-700 text-purple-100'
+                        ? 'bg-teal-700 text-teal-100'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                     }`}
                   >
@@ -549,7 +549,7 @@ const SkillsManagement = () => {
           <button
             onClick={() => scrollCategories('right')}
             title="Slide right"
-            className="absolute right-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:scale-110 transition-all cursor-pointer"
+            className="absolute right-0 z-10 p-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:scale-110 transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -589,14 +589,14 @@ const SkillsManagement = () => {
           filteredSkills.map((skill) => {
             const levelColorClass = 
               skill.level === 'Expert' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
-              skill.level === 'Advanced' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' :
+              skill.level === 'Advanced' ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' :
               skill.level === 'Intermediate' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' :
               'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20';
 
             return (
               <Card
                 key={skill.id}
-                className="p-5 border border-slate-200/80 dark:border-slate-800/80 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-200 group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
+                className="p-5 border border-slate-200/80 dark:border-slate-800/80 hover:border-teal-500/50 dark:hover:border-teal-500/50 transition-all duration-200 group flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -613,7 +613,7 @@ const SkillsManagement = () => {
                       <button
                         onClick={() => handleOpenEdit(skill)}
                         title="Edit Skill"
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -631,13 +631,13 @@ const SkillsManagement = () => {
                   <div className="space-y-1.5 pt-1">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span className="text-slate-500 dark:text-slate-400">Proficiency Score</span>
-                      <span className="text-purple-600 dark:text-purple-400 font-extrabold">
+                      <span className="text-teal-600 dark:text-teal-400 font-extrabold">
                         {skill.proficiencyPercentage}%
                       </span>
                     </div>
                     <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-600 to-violet-400 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-teal-600 to-emerald-400 rounded-full transition-all duration-500"
                         style={{ width: `${skill.proficiencyPercentage}%` }}
                       ></div>
                     </div>
@@ -656,12 +656,12 @@ const SkillsManagement = () => {
 
                   <div className="flex items-center gap-1.5">
                     {skill.source === 'Resume' && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center gap-1">
                         <Sparkles className="w-2.5 h-2.5" /> Resume
                       </span>
                     )}
-                    <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-bold text-[11px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 fill-purple-500/20" /> Verified
+                    <span className="flex items-center gap-1 text-teal-600 dark:text-teal-400 font-bold text-[11px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 fill-teal-500/20" /> Verified
                     </span>
                   </div>
                 </div>
@@ -677,7 +677,7 @@ const SkillsManagement = () => {
           <div className="w-full max-w-md rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-extrabold text-lg text-slate-900 dark:text-white flex items-center gap-2">
-                <Zap className="w-5 h-5 text-purple-500" />
+                <Zap className="w-5 h-5 text-teal-500" />
                 {editingSkill ? 'Edit Skill Competency' : 'Add New Skill Competency'}
               </h3>
               <button
@@ -699,7 +699,7 @@ const SkillsManagement = () => {
                   placeholder="e.g. React.js, PyTorch, Kubernetes"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
@@ -719,12 +719,12 @@ const SkillsManagement = () => {
                           setFormData({ ...formData, category: e.target.value });
                         }
                       }}
-                      className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                      className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                     >
                       {dynamicCategories.filter((c) => c !== 'All').map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
-                      <option value="CUSTOM_NEW" className="text-purple-600 font-bold">+ Create Custom Category...</option>
+                      <option value="CUSTOM_NEW" className="text-teal-600 font-bold">+ Create Custom Category...</option>
                     </select>
                   ) : (
                     <div className="relative flex items-center">
@@ -734,7 +734,7 @@ const SkillsManagement = () => {
                         placeholder="e.g. CyberSecurity"
                         value={customCategoryInput}
                         onChange={(e) => setCustomCategoryInput(e.target.value)}
-                        className="w-full pl-3 pr-7 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-purple-500 rounded-xl text-slate-900 dark:text-white focus:outline-none"
+                        className="w-full pl-3 pr-7 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-teal-500 rounded-xl text-slate-900 dark:text-white focus:outline-none"
                       />
                       <button
                         type="button"
@@ -755,7 +755,7 @@ const SkillsManagement = () => {
                   <select
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full px-3 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   >
                     <option value="Beginner">Beginner</option>
                     <option value="Intermediate">Intermediate</option>
@@ -776,7 +776,7 @@ const SkillsManagement = () => {
                     max={30}
                     value={formData.yearsOfExperience}
                     onChange={(e) => setFormData({ ...formData, yearsOfExperience: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
                   />
                 </div>
 
@@ -791,7 +791,7 @@ const SkillsManagement = () => {
                     step={5}
                     value={formData.proficiencyPercentage}
                     onChange={(e) => setFormData({ ...formData, proficiencyPercentage: Number(e.target.value) })}
-                    className="w-full accent-purple-600 mt-2 cursor-pointer"
+                    className="w-full accent-teal-600 mt-2 cursor-pointer"
                   />
                 </div>
               </div>

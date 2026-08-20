@@ -26,6 +26,7 @@ import SettingsPage from '../pages/employee/SettingsPage';
 
 // HR / Admin
 import HrDashboard from '../pages/hr/HrDashboard';
+import HrProfile from '../pages/hr/HrProfile';
 import EmployeeDirectory from '../pages/hr/EmployeeDirectory';
 import HrReports from '../pages/hr/HrReports';
 import HrNotifications from '../pages/hr/HrNotifications';
@@ -75,6 +76,7 @@ const AppRoutes = () => {
 
         {/* HR routes */}
         <Route path={ROUTES.HR_DASHBOARD} element={<HrDashboard />} />
+        <Route path={ROUTES.HR_PROFILE} element={<HrProfile />} />
         <Route path={ROUTES.HR_DIRECTORY} element={<EmployeeDirectory />} />
         <Route path={ROUTES.HR_REPORTS} element={<HrReports />} />
         <Route path={ROUTES.HR_NOTIFICATIONS} element={<HrNotifications />} />

@@ -144,7 +144,7 @@ const SettingsPage = () => {
       {/* Header Banner */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-          <SettingsIcon className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+          <SettingsIcon className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
           Account & Application Settings
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -156,13 +156,13 @@ const SettingsPage = () => {
       <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Lock className="w-5 h-5 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+            <Lock className="w-5 h-5 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
             <h2 className="text-base md:text-lg font-black tracking-tight text-slate-900 dark:text-white">
               Security & Change Password
             </h2>
           </div>
 
-          <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-black uppercase">
+          <span className="px-3 py-1 bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/30 rounded-full text-[10px] font-black uppercase">
             2FA Email OTP Protected
           </span>
         </div>
@@ -170,8 +170,8 @@ const SettingsPage = () => {
         {!otpSent ? (
           /* STEP 1: Enter Current Password & Request OTP */
           <form onSubmit={handleSendOtp} className="space-y-4 max-w-lg">
-            <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-3">
-              <Mail className="w-5 h-5 text-purple-500 shrink-0" />
+            <div className="p-4 rounded-2xl bg-teal-500/5 border border-teal-500/20 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-3">
+              <Mail className="w-5 h-5 text-teal-500 shrink-0" />
               <span>
                 To change your password, a one-time verification code (OTP) will be dispatched to your registered email: <strong>{targetEmail}</strong>
               </span>
@@ -187,13 +187,13 @@ const SettingsPage = () => {
                 placeholder="Enter current password to receive OTP..."
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
               />
             </div>
 
             <button
               type="submit"
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-purple-600/30 transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-teal-600/30 transition-all cursor-pointer flex items-center gap-2"
             >
               <Send className="w-4 h-4" />
               <span>Send Verification Code (OTP)</span>
@@ -202,15 +202,15 @@ const SettingsPage = () => {
         ) : (
           /* STEP 2: Enter OTP, New Password, Confirm Password */
           <form onSubmit={handleVerifyOtpAndChangePassword} className="space-y-5 animate-fade-in">
-            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-700 dark:text-teal-300 text-xs font-bold flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-purple-500 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-teal-500 shrink-0" />
                 <span>Verification code dispatched to <strong>{targetEmail}</strong>. Check inbox and enter OTP below.</span>
               </div>
               <button
                 type="button"
                 onClick={handleSendOtp}
-                className="text-purple-600 dark:text-purple-400 hover:underline text-[11px] font-black cursor-pointer shrink-0 ml-2"
+                className="text-teal-600 dark:text-teal-400 hover:underline text-[11px] font-black cursor-pointer shrink-0 ml-2"
               >
                 Resend Code
               </button>
@@ -218,7 +218,7 @@ const SettingsPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                <label className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
                   <Key className="w-4 h-4" />
                   Enter 6-Digit Email OTP
                 </label>
@@ -229,7 +229,7 @@ const SettingsPage = () => {
                   placeholder="e.g. 849201"
                   value={userOtpInput}
                   onChange={(e) => setUserOtpInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full px-4 py-3 bg-purple-500/5 dark:bg-[#0f1524] border-2 border-purple-500/40 rounded-2xl text-center text-base font-black tracking-widest text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                  className="w-full px-4 py-3 bg-teal-500/5 dark:bg-[#0f1524] border-2 border-teal-500/40 rounded-2xl text-center text-base font-black tracking-widest text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
                 />
               </div>
 
@@ -243,7 +243,7 @@ const SettingsPage = () => {
                   placeholder="Min 4 characters..."
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
                 />
               </div>
 
@@ -257,7 +257,7 @@ const SettingsPage = () => {
                   placeholder="Re-type new password..."
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0f1524] border border-slate-200 dark:border-[#2b3854] rounded-2xl text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition-all"
                 />
               </div>
             </div>
@@ -266,7 +266,7 @@ const SettingsPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-purple-600/30 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-teal-600/30 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
                 <Check className="w-4 h-4" />
                 <span>{loading ? 'Verifying & Updating...' : 'Verify OTP & Change Password'}</span>
@@ -290,7 +290,7 @@ const SettingsPage = () => {
       {/* Card 2: Notification & Theme Preferences */}
       <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6 transition-colors">
         <div className="flex items-center gap-2.5">
-          <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+          <Bell className="w-5 h-5 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
           <h2 className="text-base md:text-lg font-black tracking-tight text-slate-900 dark:text-white">
             Notification & Theme Preferences
           </h2>
@@ -304,7 +304,7 @@ const SettingsPage = () => {
                 Dark / Light Mode Theme
               </h3>
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                Current Theme: <span className="font-extrabold text-purple-600 dark:text-purple-400">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+                Current Theme: <span className="font-extrabold text-teal-600 dark:text-teal-400">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
               </p>
             </div>
 
@@ -335,7 +335,7 @@ const SettingsPage = () => {
                 setEmailNotifs(val);
                 localStorage.setItem('employee_email_notifications', val.toString());
               }}
-              className="w-5 h-5 accent-purple-600 rounded cursor-pointer"
+              className="w-5 h-5 accent-teal-600 rounded cursor-pointer"
             />
           </div>
 
@@ -357,7 +357,7 @@ const SettingsPage = () => {
                 setLanguage(val);
                 localStorage.setItem('employee_language', val);
               }}
-              className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/40 cursor-pointer"
+              className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
             >
               <option value="English (US)">English (US)</option>
               <option value="Spanish">Spanish</option>

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Eye, 
-  FileText, 
-  Plus, 
-  X, 
-  CheckCircle2, 
-  ChevronLeft, 
+import {
+  Users,
+  Search,
+  Filter,
+  Eye,
+  FileText,
+  Plus,
+  X,
+  CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Download
 } from 'lucide-react';
@@ -70,10 +70,10 @@ const INITIAL_DIRECTORY_EMPLOYEES = [
 ];
 
 const DEPARTMENTS = [
-  'All', 
-  'Engineering', 
-  'Data Science & AI', 
-  'UI/UX Design', 
+  'All',
+  'Engineering',
+  'Data Science & AI',
+  'UI/UX Design',
   'Product Management'
 ];
 
@@ -94,6 +94,7 @@ const EmployeeDirectory = () => {
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('All');
   const [selectedEmp, setSelectedEmp] = useState(null);
+  const [reportEmp, setReportEmp] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
@@ -190,7 +191,7 @@ const EmployeeDirectory = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <Users className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
+            <Users className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
             Workforce & Employee Directory ({directoryEmployees.length})
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -200,7 +201,7 @@ const EmployeeDirectory = () => {
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-5 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-teal-600/30 flex items-center gap-2 cursor-pointer shrink-0"
+          className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Employee</span>
@@ -216,7 +217,7 @@ const EmployeeDirectory = () => {
             placeholder="Search employee name or role..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+            className="w-full pl-10 pr-4 py-2.5 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/40"
           />
         </div>
 
@@ -226,11 +227,10 @@ const EmployeeDirectory = () => {
             <button
               key={d}
               onClick={() => setSelectedDept(d)}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition-all duration-200 cursor-pointer ${
-                selectedDept === d
-                  ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30'
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition-all duration-200 cursor-pointer ${selectedDept === d
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
+                }`}
             >
               {d}
             </button>
@@ -244,13 +244,13 @@ const EmployeeDirectory = () => {
           <div key={emp.id} className="bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3.5">
-                <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-teal-500/40 shadow-md" />
+                <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-purple-500/40 shadow-md" />
                 <div className="min-w-0">
                   <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                     {emp.name}
-                    <CheckCircle2 className="w-4 h-4 text-teal-500 fill-current shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-purple-500 fill-current shrink-0" />
                   </h3>
-                  <p className="text-xs font-bold text-teal-600 dark:text-teal-400 truncate">{emp.designation}</p>
+                  <p className="text-xs font-bold text-purple-600 dark:text-purple-400 truncate">{emp.designation}</p>
                   <p className="text-[10px] font-semibold text-slate-400 truncate">{emp.department}</p>
                 </div>
               </div>
@@ -268,7 +268,7 @@ const EmployeeDirectory = () => {
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
                 <div>
                   <span className="text-slate-400 block text-[10px] font-bold uppercase">Status</span>
-                  <span className="font-black text-teal-600 dark:text-teal-400">Active</span>
+                  <span className="font-black text-purple-600 dark:text-purple-400">Active</span>
                 </div>
               </div>
             </div>
@@ -281,8 +281,8 @@ const EmployeeDirectory = () => {
                 <Eye className="w-3.5 h-3.5" /> View Profile
               </button>
               <button
-                onClick={() => showGlobalToast(`Generating Skill Telemetry Report for ${emp.name}...`, 'info')}
-                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-teal-600/30 cursor-pointer"
+                onClick={() => setReportEmp(emp)}
+                className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/30 cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" /> View Report
               </button>
@@ -291,16 +291,83 @@ const EmployeeDirectory = () => {
         ))}
       </div>
 
+      {/* View Employee Report Modal */}
+      {reportEmp && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl p-6 md:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-white">Skill Telemetry Audit Report</h3>
+                  <p className="text-xs font-bold text-purple-600 dark:text-purple-400">{reportEmp.name} • {reportEmp.department}</p>
+                </div>
+              </div>
+              <button onClick={() => setReportEmp(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs font-semibold">
+              <div className="p-4 bg-purple-50 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/40 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase">Overall Readiness Score</span>
+                  <span className="text-2xl font-black text-purple-600 dark:text-purple-400">{reportEmp.skillReadinessScore}%</span>
+                </div>
+                <span className="px-3 py-1 bg-purple-600 text-white rounded-full text-[10px] font-black uppercase">
+                  {reportEmp.skillReadinessScore >= 80 ? 'Optimal Benchmark' : 'Upskilling Active'}
+                </span>
+              </div>
+
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl">
+                <p className="text-slate-400 text-[10px] font-bold uppercase">Audit Summary</p>
+                <p className="text-slate-700 dark:text-slate-200 leading-relaxed">
+                  Verified {reportEmp.experienceYears} years of technical experience in {reportEmp.designation}. Competency evaluations indicate strong baseline architecture compliance.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Email Contact</span>
+                  <span className="text-slate-900 dark:text-white font-extrabold truncate block">{reportEmp.email}</span>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Location</span>
+                  <span className="text-slate-900 dark:text-white font-extrabold truncate block">{reportEmp.location}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => {
+                  showGlobalToast(`Downloaded audit report PDF for ${reportEmp.name}!`, 'success');
+                  setReportEmp(null);
+                }}
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl shadow-md shadow-purple-600/30 cursor-pointer flex items-center gap-1.5"
+              >
+                <Download className="w-4 h-4" /> Download Report File
+              </button>
+              <button onClick={() => setReportEmp(null)} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-800 text-xs font-extrabold rounded-xl cursor-pointer">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* View Employee Detail Modal */}
       {selectedEmp && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 animate-scale-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <img src={selectedEmp.avatar} alt={selectedEmp.name} className="w-12 h-12 rounded-2xl object-cover border border-teal-500/30" />
+                <img src={selectedEmp.avatar} alt={selectedEmp.name} className="w-12 h-12 rounded-2xl object-cover border border-purple-500/30" />
                 <div>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-white">{selectedEmp.name}</h3>
-                  <p className="text-xs font-bold text-teal-600 dark:text-teal-400">{selectedEmp.designation}</p>
+                  <p className="text-xs font-bold text-purple-600 dark:text-purple-400">{selectedEmp.designation}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedEmp(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -347,7 +414,7 @@ const EmployeeDirectory = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Jordan Lee"
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
@@ -359,7 +426,7 @@ const EmployeeDirectory = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="jordan.lee@company.com"
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
@@ -369,7 +436,7 @@ const EmployeeDirectory = () => {
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/40 cursor-pointer"
                   >
                     <option value="Engineering">Engineering</option>
                     <option value="Data Science & AI">Data Science & AI</option>
@@ -384,7 +451,7 @@ const EmployeeDirectory = () => {
                     type="text"
                     value={formData.designation}
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
               </div>
@@ -399,7 +466,7 @@ const EmployeeDirectory = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-teal-600/30 cursor-pointer"
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 cursor-pointer"
                 >
                   Add Employee
                 </button>

@@ -166,13 +166,13 @@ const NotificationsPage = () => {
       case 'career':
         return <Zap className="w-5 h-5 text-amber-500" />;
       case 'course':
-        return <BookOpen className="w-5 h-5 text-violet-500" />;
+        return <BookOpen className="w-5 h-5 text-emerald-500" />;
       case 'assessment':
         return <Award className="w-5 h-5 text-indigo-500" />;
       case 'resume':
-        return <FileText className="w-5 h-5 text-purple-500" />;
+        return <FileText className="w-5 h-5 text-teal-500" />;
       default:
-        return <Bell className="w-5 h-5 text-purple-500" />;
+        return <Bell className="w-5 h-5 text-teal-500" />;
     }
   };
 
@@ -182,7 +182,7 @@ const NotificationsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <Bell className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+            <Bell className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
             Notifications Center
           </h1>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -194,9 +194,9 @@ const NotificationsPage = () => {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 dark:bg-white/10 dark:hover:bg-white/20 text-purple-700 dark:text-purple-200 border border-purple-200 dark:border-purple-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              className="px-4 py-2.5 bg-teal-50 hover:bg-teal-100 dark:bg-white/10 dark:hover:bg-white/20 text-teal-700 dark:text-teal-200 border border-teal-200 dark:border-teal-400/30 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <CheckCheck className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+              <CheckCheck className="w-4 h-4 text-teal-600 dark:text-teal-300" />
               <span>Mark All Read</span>
             </button>
           )}
@@ -215,8 +215,8 @@ const NotificationsPage = () => {
 
       {/* Banner Feedback */}
       {bannerMsg && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700/60 text-purple-800 dark:text-purple-200 rounded-xl text-sm font-semibold shadow-sm animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700/60 text-teal-800 dark:text-teal-200 rounded-xl text-sm font-semibold shadow-sm animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           {bannerMsg}
         </div>
       )}
@@ -238,7 +238,7 @@ const NotificationsPage = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-2 ${
                   activeCategory === cat
-                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                    ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -246,7 +246,7 @@ const NotificationsPage = () => {
                 <span
                   className={`px-2 py-0.2 rounded-full text-[10px] ${
                     activeCategory === cat
-                      ? 'bg-purple-700 text-purple-100'
+                      ? 'bg-teal-700 text-teal-100'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -277,9 +277,9 @@ const NotificationsPage = () => {
             <Card
               key={item.id}
               onClick={() => handleNotificationClick(item)}
-              className={`p-5 border transition-all duration-200 cursor-pointer group hover:border-purple-500/50 ${
+              className={`p-5 border transition-all duration-200 cursor-pointer group hover:border-teal-500/50 ${
                 !item.read
-                  ? 'bg-white dark:bg-slate-900/90 border-purple-500/30 dark:border-purple-500/40 shadow-md'
+                  ? 'bg-white dark:bg-slate-900/90 border-teal-500/30 dark:border-teal-500/40 shadow-md'
                   : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800/80 opacity-85'
               }`}
             >
@@ -292,7 +292,7 @@ const NotificationsPage = () => {
 
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                         {item.category}
                       </span>
                       {!item.read && (
@@ -305,7 +305,7 @@ const NotificationsPage = () => {
                       </span>
                     </div>
 
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                       {item.title}
                     </h3>
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -322,7 +322,7 @@ const NotificationsPage = () => {
                         e.stopPropagation();
                         navigate(item.link);
                       }}
-                      className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600 text-purple-600 hover:text-white dark:text-purple-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 bg-teal-600/10 hover:bg-teal-600 text-teal-600 hover:text-white dark:text-teal-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>{item.actionLabel || 'View Detail'}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -349,11 +349,11 @@ const NotificationsPage = () => {
           <div className="w-full max-w-lg rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-scale-up">
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-purple-500/10 rounded-xl">
+                <div className="p-2.5 bg-teal-500/10 rounded-xl">
                   {getIcon(selectedNotification.type)}
                 </div>
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase text-purple-600 dark:text-purple-400">
+                  <span className="text-[10px] font-extrabold uppercase text-teal-600 dark:text-teal-400">
                     {selectedNotification.category}
                   </span>
                   <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-snug">
