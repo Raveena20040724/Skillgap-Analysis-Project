@@ -400,11 +400,17 @@ const UserManagement = () => {
               >
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
-                    <img
-                      src={emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'}
-                      alt={emp.name}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700"
-                    />
+                    {emp.avatar ? (
+                      <img
+                        src={emp.avatar}
+                        alt={emp.name}
+                        className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 font-extrabold text-lg flex items-center justify-center border-2 border-indigo-500/20 shrink-0">
+                        {(emp.name || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="space-y-0.5 min-w-0">
                       <h3 className="font-extrabold text-base text-slate-900 dark:text-white truncate">{emp.name}</h3>
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 truncate">{emp.designation}</p>

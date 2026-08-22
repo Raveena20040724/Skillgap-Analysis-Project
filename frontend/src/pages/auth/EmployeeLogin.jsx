@@ -82,11 +82,8 @@ const EmployeeLogin = () => {
       const user = authData?.user;
 
       if (user && access) {
-        setSuccessMsg(`Welcome back, ${user.name || user.username}! Login successful. Redirecting...`);
-        setTimeout(() => {
-          login(user, access, refresh);
-          navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
-        }, 500);
+        login(user, access, refresh);
+        navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
         return;
       }
     } catch (err) {
@@ -137,11 +134,8 @@ const EmployeeLogin = () => {
         avatar: matchedEmp.avatar || ''
       };
       const mockToken = `mock_employee_token_` + Date.now();
-      setSuccessMsg(`Welcome back, ${empUserObj.username}! Login successful. Redirecting...`);
-      setTimeout(() => {
-        login(empUserObj, mockToken, mockToken);
-        navigate(ROUTES.EMPLOYEE_DASHBOARD);
-      }, 500);
+      login(empUserObj, mockToken, mockToken);
+      navigate(ROUTES.EMPLOYEE_DASHBOARD);
       return;
     }
 
@@ -156,14 +150,11 @@ const EmployeeLogin = () => {
           role: 'employee',
           department: 'Engineering',
           designation: 'Senior Frontend Developer',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+          avatar: ''
         };
         const mockToken = `mock_employee_token_` + Date.now();
-        setSuccessMsg(`Welcome back, Alex Morgan! Login successful. Redirecting...`);
-        setTimeout(() => {
-          login(demoUser, mockToken, mockToken);
-          navigate(ROUTES.EMPLOYEE_DASHBOARD);
-        }, 500);
+        login(demoUser, mockToken, mockToken);
+        navigate(ROUTES.EMPLOYEE_DASHBOARD);
         return;
       } else {
         setError('Incorrect password. Please verify your password and try again.');

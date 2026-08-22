@@ -96,13 +96,16 @@ export const initNewUserEnvironment = (username, details = {}) => {
   localStorage.setItem(`emp_${identifier}_profile`, JSON.stringify(initialProfile));
 
   // 6. Initial single welcome notification
+  const nowTs = Date.now();
   const welcomeNotification = {
-    id: `notif_${Date.now()}`,
+    id: `notif_${nowTs}`,
     title: `Welcome to SkillGap, ${details.username || username}!`,
     message: `Your account is ready. Get started by uploading your resume or adding your skills in Skills Management.`,
     category: 'Onboarding & Welcome',
     time: 'Just now',
-    date: new Date().toISOString().split('T')[0],
+    timestamp: nowTs,
+    createdAt: new Date(nowTs).toISOString(),
+    date: new Date(nowTs).toISOString().split('T')[0],
     read: false,
     type: 'welcome',
     severity: 'info',
@@ -117,13 +120,16 @@ export const initNewUserEnvironment = (username, details = {}) => {
 export const addActiveUserNotification = (notification) => {
   try {
     const currentAlerts = getUserData('alerts_list', []);
+    const nowTs = Date.now();
     const newAlert = {
-      id: notification.id || `notif_${Date.now()}`,
+      id: notification.id || `notif_${nowTs}`,
       title: notification.title || 'System Update',
       message: notification.message || '',
       category: notification.category || 'Skill Growth',
       time: 'Just now',
-      date: new Date().toISOString().split('T')[0],
+      timestamp: notification.timestamp || nowTs,
+      createdAt: notification.createdAt || new Date(nowTs).toISOString(),
+      date: notification.date || new Date(nowTs).toISOString().split('T')[0],
       read: false,
       type: notification.type || 'info',
       severity: notification.severity || 'info',
@@ -139,4 +145,44 @@ export const addActiveUserNotification = (notification) => {
     console.error('Error adding user notification:', err);
     return null;
   }
+};
+
+// Helper function to format notification creation time as relative time (e.g. '23 minutes ago', '2 days ago', '1 week ago', '1 month ago')
+export const formatRelativeTime = (item) => {
+  if (!item) return 'Just now';
+
+  let ts = item.timestamp || item.createdAt;
+  if (!ts && item.date) {
+    const parsedDate = new Date(item.date).getTime();
+    if (!isNaN(parsedDate)) ts = parsedDate;
+  }
+  if (!ts && typeof item.id === 'string' && item.id.startsWith('notif_')) {
+    const extractedNum = Number(item.id.replace('notif_', ''));
+    if (!isNaN(extractedNum) && extractedNum > 1600000000000) {
+      ts = extractedNum;
+    }
+  }
+
+  if (!ts) {
+    return (item.time && item.time !== 'Just now') ? item.time : 'Just now';
+  }
+
+  const now = Date.now();
+  const diffMs = Math.max(0, now - new Date(ts).getTime());
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+
+  if (diffSecs < 45) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffWeeks < 4) return `${diffWeeks} week${diffWeeks === 1 ? '' : 's'} ago`;
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
+
+  return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) === 1 ? '' : 's'} ago`;
 };

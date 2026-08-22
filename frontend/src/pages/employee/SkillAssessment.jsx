@@ -553,9 +553,9 @@ const SkillAssessment = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Dynamically derive assessments based on user's actual skills
-  const [assessmentsList, setAssessmentsList] = useState(DEFAULT_FALLBACK_ASSESSMENTS);
-  const [selectedDomain, setSelectedDomain] = useState(DEFAULT_FALLBACK_ASSESSMENTS[0]);
+  // Dynamically derive assessments based on user's actual skills ONLY
+  const [assessmentsList, setAssessmentsList] = useState([]);
+  const [selectedDomain, setSelectedDomain] = useState(null);
   const [isStarted, setIsStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -569,9 +569,41 @@ const SkillAssessment = () => {
   // Generate dynamic assessments from active user's skills
   useEffect(() => {
     try {
-      const savedSkills = getUserData('skills', null);
-      const resumeSkills = getUserData('resume_skills', null);
-      let skills = savedSkills || resumeSkills || [];
+      const savedSkills = getUserData('skills', []) || [];
+      const resumeSkills = getUserData('resume_skills', []) || [];
+      const DUMMY_SKILL_NAMES = new Set([
+        'react.js & frontend',
+        'python & django',
+        'postgresql & sql',
+        'aws cloud infrastructure',
+        'docker & ci/cd pipelines',
+        'docker & ci/cd automation',
+        'ui/ux design systems',
+        'machine learning fundamentals',
+        'technical team leadership',
+        'python & django framework',
+        'postgresql & database optimization',
+        'rest & graphql apis',
+        'tailwind css & ui design systems',
+        'typescript & static analysis',
+        'react.js & frontend architecture',
+        'javascript (es6+)',
+        'typescript & type safety',
+        'html5 & css3 responsive design',
+        'tailwind css & component systems',
+        'restful api integration'
+      ]);
+
+      const combined = [...savedSkills, ...resumeSkills];
+      const seen = new Set();
+      const skills = combined.filter(s => {
+        if (!s || !s.name) return false;
+        const nameLower = s.name.toLowerCase().trim();
+        if (DUMMY_SKILL_NAMES.has(nameLower)) return false;
+        if (seen.has(nameLower)) return false;
+        seen.add(nameLower);
+        return true;
+      });
 
       if (skills && skills.length > 0) {
         const dynamicList = [];
@@ -708,9 +740,8 @@ const SkillAssessment = () => {
         setAssessmentsList(dynamicList);
         setSelectedDomain(dynamicList[0]);
       } else {
-        // Default benchmarks available for new users
-        setAssessmentsList(DEFAULT_FALLBACK_ASSESSMENTS);
-        setSelectedDomain(DEFAULT_FALLBACK_ASSESSMENTS[0]);
+        setAssessmentsList([]);
+        setSelectedDomain(null);
       }
     } catch (e) {
       console.log('Error initializing dynamic assessments:', e);
