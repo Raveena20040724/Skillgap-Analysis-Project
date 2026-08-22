@@ -17,6 +17,23 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return;
     }
+
+    const savedUser = localStorage.getItem('user');
+
+    if (token.startsWith('mock_')) {
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          const savedRole = localStorage.getItem('user_role') || parsed.role || (parsed.username === 'admin' ? 'admin' : parsed.username?.includes('hr') ? 'hr' : 'employee');
+          setUser({ ...parsed, role: savedRole });
+        } catch {
+          setUser(null);
+        }
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await authService.getCurrentUser();
       const userData = response.data?.data || response.data;
@@ -29,8 +46,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user_role', role);
       }
     } catch (error) {
-      console.error('Session restore failed:', error);
-      const savedUser = localStorage.getItem('user');
+      console.log('Session fallback to isolated state:', error?.message || error);
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);

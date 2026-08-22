@@ -7,4 +7,6 @@ export const authService = {
   getCurrentUser: () => api.get('/accounts/me/'),
   createHR: (data) => api.post('/accounts/create-hr/', data),
   changePassword: (data) => api.post('/accounts/change-password/', data),
+  sendOtp: (data) => api.post('/accounts/send-otp/', data),
+  verifyChangePassword: (data) => api.post('/accounts/verify-change-password/', data),
 };

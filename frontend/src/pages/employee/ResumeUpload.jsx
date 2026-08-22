@@ -45,22 +45,31 @@ const ResumeUpload = () => {
 
   useEffect(() => {
     fetchResume();
+
+    const syncSkillsState = () => {
+      const activeSkills = getUserData('skills', []) || [];
+      setExtractedSkills(activeSkills);
+    };
+
+    window.addEventListener('skillsUpdated', syncSkillsState);
+    window.addEventListener('userDataChanged', syncSkillsState);
+    return () => {
+      window.removeEventListener('skillsUpdated', syncSkillsState);
+      window.removeEventListener('userDataChanged', syncSkillsState);
+    };
   }, []);
 
   const fetchResume = async () => {
     try {
+      const activeSkills = getUserData('skills', []) || [];
+      setExtractedSkills(activeSkills);
+
       const response = await resumeService.getResume();
       const resData = response.data || {};
 
       if (resData.exists === false) {
         const localResume = getUserData('resume_info', null);
-        if (localResume) {
-          setUploadedResume(localResume);
-          setExtractedSkills(getUserData('resume_skills', []));
-        } else {
-          setUploadedResume(null);
-          setExtractedSkills([]);
-        }
+        setUploadedResume(localResume);
         setLoading(false);
         return;
       }
@@ -75,11 +84,7 @@ const ResumeUpload = () => {
           downloadUrl: data.downloadUrl || data.url || '#'
         };
         setUploadedResume(resumeInfo);
-
-        const currentLocal = getUserData('resume_info', null);
-        if (!currentLocal || currentLocal.fileName !== resumeInfo.fileName) {
-          setUserData('resume_info', resumeInfo);
-        }
+        setUserData('resume_info', resumeInfo);
 
         if (Array.isArray(data.parsed_skills_json) && data.parsed_skills_json.length > 0) {
           const parsed = data.parsed_skills_json.map((s, idx) => ({
@@ -92,33 +97,22 @@ const ResumeUpload = () => {
             verified: true,
             source: 'Resume'
           }));
-          setExtractedSkills(parsed);
 
-          const currentSkills = getUserData('resume_skills', []);
+          const currentSkills = getUserData('skills', []);
           if (!currentSkills || currentSkills.length === 0) {
-            setUserData('resume_skills', parsed);
+            setUserData('skills', parsed);
+            setExtractedSkills(parsed);
+            window.dispatchEvent(new Event('skillsUpdated'));
           }
         }
       } else {
         const localResume = getUserData('resume_info', null);
-        if (localResume) {
-          setUploadedResume(localResume);
-          setExtractedSkills(getUserData('resume_skills', []));
-        } else {
-          setUploadedResume(null);
-          setExtractedSkills([]);
-        }
+        setUploadedResume(localResume);
       }
     } catch (err) {
       console.log('Resume load note:', err?.message || err);
       const localResume = getUserData('resume_info', null);
-      if (localResume) {
-        setUploadedResume(localResume);
-        setExtractedSkills(getUserData('resume_skills', []));
-      } else {
-        setUploadedResume(null);
-        setExtractedSkills([]);
-      }
+      setUploadedResume(localResume);
     } finally {
       setLoading(false);
     }
@@ -127,8 +121,6 @@ const ResumeUpload = () => {
   const syncExtractedSkillsToInventory = (skillsToSync) => {
     try {
       const existingSkills = getUserData('skills', []) || [];
-
-      // Merge skills avoiding duplicates by name
       const existingNames = new Set(existingSkills.map(s => (s.name || '').toLowerCase().trim()));
       const merged = [...existingSkills];
 
@@ -140,10 +132,9 @@ const ResumeUpload = () => {
       });
 
       setUserData('skills', merged);
-      setUserData('resume_skills', skillsToSync);
-      setExtractedSkills(skillsToSync);
+      removeUserData('resume_skills');
+      setExtractedSkills(merged);
 
-      // Trigger global events
       window.dispatchEvent(new Event('skillsUpdated'));
     } catch (e) {
       console.error('Error syncing skills:', e);
@@ -163,65 +154,129 @@ const ResumeUpload = () => {
     return '';
   };
 
-  const extractSkillsFromResume = (fileName, textContent = '') => {
-    // Intelligent skill parsing dictionary matching ONLY skills explicitly present in text
-    const SKILL_TAXONOMY = [
-      { name: 'React.js', category: 'Programming', keywords: ['react', 'reactjs', 'react.js', 'hooks', 'redux', 'nextjs', 'next.js'] },
-      { name: 'JavaScript', category: 'Programming', keywords: ['javascript', 'js', 'es6', 'ecmascript'] },
-      { name: 'TypeScript', category: 'Programming', keywords: ['typescript', 'ts'] },
-      { name: 'HTML5 & CSS3', category: 'UI/UX', keywords: ['html', 'css', 'html5', 'css3', 'styling', 'flexbox', 'grid'] },
-      { name: 'Tailwind CSS', category: 'UI/UX', keywords: ['tailwind', 'tailwindcss', 'utility css'] },
-      { name: 'Node.js', category: 'Programming', keywords: ['node', 'nodejs', 'node.js', 'express', 'nest'] },
-      { name: 'Python', category: 'Programming', keywords: ['python', 'django', 'fastapi', 'flask', 'pandas'] },
-      { name: 'Java', category: 'Programming', keywords: ['java', 'spring', 'springboot'] },
-      { name: 'C++', category: 'Programming', keywords: ['c++', 'cpp'] },
-      { name: 'SQL & Databases', category: 'Database', keywords: ['sql', 'mysql', 'postgres', 'postgresql', 'sqlite', 'database'] },
-      { name: 'MongoDB', category: 'Database', keywords: ['mongo', 'mongodb', 'nosql', 'document db'] },
-      { name: 'UI/UX & Figma', category: 'UI/UX', keywords: ['figma', 'ui/ux', 'wireframe', 'design system', 'prototype'] },
-      { name: 'REST APIs', category: 'Programming', keywords: ['rest', 'api', 'endpoints', 'json', 'http', 'axios'] },
-      { name: 'Git & GitHub', category: 'Programming', keywords: ['git', 'github', 'version control', 'repository'] },
-      { name: 'Machine Learning', category: 'AI', keywords: ['machine learning', 'ml', 'ai', 'pytorch', 'tensorflow', 'scikit', 'deep learning'] },
-      { name: 'Docker', category: 'DevOps', keywords: ['docker', 'dockerfile', 'containerization'] },
-      { name: 'CI/CD Pipelines', category: 'DevOps', keywords: ['ci/cd', 'github actions', 'jenkins', 'gitlab ci'] },
-      { name: 'AWS Cloud', category: 'Cloud', keywords: ['aws', 'amazon web services', 's3', 'ec2', 'lambda'] },
-    ];
+const extractRawTextFromFile = async (fileObj) => {
+  try {
+    const arrayBuffer = await fileObj.arrayBuffer();
+    const fileName = (fileObj.name || '').toLowerCase();
+    const isPdf = fileObj.type === 'application/pdf' || fileName.endsWith('.pdf');
+    const isDocx = fileName.endsWith('.docx') || fileObj.type.includes('wordprocessingml');
 
-    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    const matchesKeyword = (text, keyword) => {
-      if (keyword.length <= 4) {
-        // Strict word boundary check for short terms (ai, ts, js, ml, css, git, rest, aws)
-        const regex = new RegExp(`(?:^|[^a-zA-Z0-9+#])${escapeRegExp(keyword)}(?:$|[^a-zA-Z0-9+#])`, 'i');
-        return regex.test(text);
+    if (isPdf) {
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let pdfText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageStr = textContent.items.map(item => item.str).join(' ');
+          pdfText += pageStr + '\n';
+        }
+        if (pdfText.trim()) return pdfText;
+      } catch (pdfErr) {
+        console.warn('pdfjs-dist extract note:', pdfErr);
       }
-      return text.toLowerCase().includes(keyword.toLowerCase());
-    };
+    }
 
-    const combinedText = `${fileName} ${textContent}`;
-    const extracted = [];
-    const seen = new Set();
-
-    SKILL_TAXONOMY.forEach((item, index) => {
-      const match = item.keywords.some(kw => matchesKeyword(combinedText, kw));
-      if (match && !seen.has(item.name)) {
-        seen.add(item.name);
-        const proficiency = 75 + ((index * 5) % 20); // 75% to 94%
-        const years = 2 + (index % 3);
-        extracted.push({
-          id: `res-${Date.now()}-${index}`,
-          name: item.name,
-          category: item.category,
-          level: proficiency >= 85 ? 'Advanced' : 'Intermediate',
-          yearsOfExperience: years,
-          proficiencyPercentage: proficiency,
-          verified: true,
-          source: 'Resume'
-        });
+    if (isDocx) {
+      try {
+        const { value } = await mammoth.extractRawText({ arrayBuffer });
+        if (value && value.trim()) return value;
+      } catch (docxErr) {
+        console.warn('mammoth extract note:', docxErr);
       }
+    }
+
+    // Binary string fallback text cleanup
+    const textDecoder = new TextDecoder('iso-8859-1');
+    const rawStr = textDecoder.decode(arrayBuffer);
+    return rawStr.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
+  } catch (err) {
+    console.warn('Raw text extraction error:', err);
+    return fileObj.name || '';
+  }
+};
+
+const extractSkillsFromResume = (fileName, textContent = '') => {
+  const SKILL_TAXONOMY = [
+    { name: 'React.js', category: 'Programming', keywords: ['react', 'reactjs', 'react.js', 'hooks', 'redux', 'nextjs', 'next.js'] },
+    { name: 'JavaScript', category: 'Programming', keywords: ['javascript', 'js', 'es6', 'ecmascript'] },
+    { name: 'TypeScript', category: 'Programming', keywords: ['typescript', 'ts'] },
+    { name: 'HTML5 & CSS3', category: 'UI/UX', keywords: ['html', 'css', 'html5', 'css3', 'styling', 'flexbox', 'grid'] },
+    { name: 'Tailwind CSS', category: 'UI/UX', keywords: ['tailwind', 'tailwindcss', 'utility css'] },
+    { name: 'Node.js', category: 'Programming', keywords: ['node', 'nodejs', 'node.js', 'express', 'nest'] },
+    { name: 'Python', category: 'Programming', keywords: ['python', 'django', 'fastapi', 'flask', 'pandas'] },
+    { name: 'Java', category: 'Programming', keywords: ['java', 'spring', 'springboot'] },
+    { name: 'C++', category: 'Programming', keywords: ['c++', 'cpp'] },
+    { name: 'SQL & Databases', category: 'Database', keywords: ['sql', 'mysql', 'postgres', 'postgresql', 'sqlite', 'database'] },
+    { name: 'MongoDB', category: 'Database', keywords: ['mongo', 'mongodb', 'nosql', 'document db'] },
+    { name: 'UI/UX & Figma', category: 'UI/UX', keywords: ['figma', 'ui/ux', 'wireframe', 'design system', 'prototype'] },
+    { name: 'REST APIs', category: 'Programming', keywords: ['rest', 'api', 'endpoints', 'json', 'http', 'axios'] },
+    { name: 'Git & GitHub', category: 'Programming', keywords: ['git', 'github', 'version control', 'repository'] },
+    { name: 'Machine Learning', category: 'AI', keywords: ['machine learning', 'ml', 'ai', 'pytorch', 'tensorflow', 'scikit', 'deep learning'] },
+    { name: 'Docker', category: 'DevOps', keywords: ['docker', 'dockerfile', 'containerization'] },
+    { name: 'CI/CD Pipelines', category: 'DevOps', keywords: ['ci/cd', 'github actions', 'jenkins', 'gitlab ci'] },
+    { name: 'AWS Cloud', category: 'Cloud', keywords: ['aws', 'amazon web services', 's3', 'ec2', 'lambda'] },
+  ];
+
+  const fullText = `${fileName} ${textContent}`;
+
+  // Section splitting logic
+  const sections = {
+    projects: '',
+    experience: '',
+    general: fullText
+  };
+
+  const projectMatch = fullText.match(/(?:PROJECTS|PORTFOLIO|FEATURED WORK)[\s\S]*?(?=(?:EXPERIENCE|EMPLOYMENT|EDUCATION|SKILLS|CERTIFICATIONS|$))/i);
+  if (projectMatch) sections.projects = projectMatch[0];
+
+  const expMatch = fullText.match(/(?:EXPERIENCE|WORK HISTORY|EMPLOYMENT)[\s\S]*?(?=(?:PROJECTS|EDUCATION|SKILLS|CERTIFICATIONS|$))/i);
+  if (expMatch) sections.experience = expMatch[0];
+
+  const projectText = (sections.projects + ' ' + sections.experience + ' ' + fullText).trim();
+  const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const countKeywordMentions = (text, keyword) => {
+    if (keyword.length <= 4) {
+      const regex = new RegExp(`(?:^|[^a-zA-Z0-9+#])${escapeRegExp(keyword)}(?:$|[^a-zA-Z0-9+#])`, 'gi');
+      return (text.match(regex) || []).length;
+    }
+    const regex = new RegExp(escapeRegExp(keyword), 'gi');
+    return (text.match(regex) || []).length;
+  };
+
+  const extracted = [];
+  const seen = new Set();
+
+  SKILL_TAXONOMY.forEach((item, index) => {
+    let totalMentions = 0;
+    item.keywords.forEach(kw => {
+      totalMentions += countKeywordMentions(projectText, kw);
     });
 
-    return extracted;
-  };
+    if (totalMentions > 0 && !seen.has(item.name)) {
+      seen.add(item.name);
+      const proficiency = Math.min(95, 60 + totalMentions * 10);
+      const level = proficiency >= 80 ? 'Advanced' : proficiency >= 65 ? 'Intermediate' : 'Beginner';
+      const years = Math.min(6, 1 + totalMentions);
+
+      extracted.push({
+        id: `res-${Date.now()}-${index}`,
+        name: item.name,
+        category: item.category,
+        level: level,
+        yearsOfExperience: years,
+        proficiencyPercentage: proficiency,
+        projectMentions: totalMentions,
+        verified: true,
+        source: 'Resume'
+      });
+    }
+  });
+
+  return extracted;
+};
 
   const processFile = async (file) => {
     const validationError = validateFile(file);
@@ -324,7 +379,7 @@ const ResumeUpload = () => {
       };
 
       try {
-        const rawText = await extractTextFromFile(file);
+        const rawText = await extractRawTextFromFile(file);
         const parsedSkills = extractSkillsFromResume(file.name, rawText);
         const parsedProfileParts = parseProfileFromResume(rawText, file.name);
 
@@ -418,7 +473,11 @@ const ResumeUpload = () => {
     removeUserData('resume_info');
     removeUserData('resume_file_data');
     removeUserData('resume_skills');
-    showGlobalToast('Resume document and synced skills removed.', 'delete');
+    removeUserData('skills');
+    removeUserData('assessment_results');
+    window.dispatchEvent(new Event('skillsUpdated'));
+    window.dispatchEvent(new Event('userDataChanged'));
+    showGlobalToast('Resume document, parsed skills, and assessments cleared.', 'delete');
     setError('');
     setIsDeleteConfirmOpen(false);
   };

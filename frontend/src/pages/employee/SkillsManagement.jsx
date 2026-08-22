@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes';
 import { 
   Zap, 
   Plus, 
@@ -14,7 +16,8 @@ import {
   Sparkles,
   Check,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CloudUpload
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
@@ -70,6 +73,8 @@ const filterOutDummySkills = (list) => {
 };
 
 const SkillsManagement = () => {
+  const navigate = useNavigate();
+  const hasResume = !!getUserData('resume_info', null);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,25 +112,10 @@ const SkillsManagement = () => {
 
   const fetchSkills = async () => {
     try {
-      // Load skills strictly from parsed resume and user-added competencies
-      const rawResumeSkills = getUserData('resume_skills', []) || [];
-      const resumeSkills = filterOutDummySkills(rawResumeSkills);
-
-      const rawCustomSkills = getUserData('skills', []) || [];
-      const customSkills = filterOutDummySkills(rawCustomSkills);
-
-      const seenNames = new Set();
-      const combinedSkills = [];
-
-      [...resumeSkills, ...customSkills].forEach(s => {
-        if (s && s.name && !seenNames.has(s.name.toLowerCase().trim())) {
-          seenNames.add(s.name.toLowerCase().trim());
-          combinedSkills.push(s);
-        }
-      });
-
-      setSkills(combinedSkills);
-      setUserData('skills', combinedSkills);
+      // Single source of truth for active skills
+      const rawSkills = getUserData('skills', []) || [];
+      const cleanSkills = filterOutDummySkills(rawSkills);
+      setSkills(cleanSkills);
     } catch (error) {
       console.log('Skills load note:', error);
       setSkills([]);
@@ -340,7 +330,23 @@ const SkillsManagement = () => {
         </div>
       )}
 
-      {/* Analytics Overview Cards */}
+      {!hasResume ? (
+        <Card className="p-12 text-center flex flex-col items-center justify-center space-y-4 max-w-xl mx-auto border border-dashed border-teal-500/40 bg-teal-500/5 shadow-md my-8">
+          <div className="w-16 h-16 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <CloudUpload className="w-8 h-8 animate-bounce" />
+          </div>
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">No Resume Uploaded Yet</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
+            Please upload your resume to extract, parse, and verify your skills and competencies. Skill management is locked until a resume is uploaded.
+          </p>
+          <Button onClick={() => navigate(ROUTES.RESUME_UPLOAD)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-3 shadow-lg shadow-teal-500/25">
+            <CloudUpload className="w-4 h-4" />
+            Upload Resume Now
+          </Button>
+        </Card>
+      ) : (
+        <>
+          {/* Analytics Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
@@ -759,8 +765,10 @@ const SkillsManagement = () => {
           setSkillToDelete(null);
         }}
       />
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 };
 
 export default SkillsManagement;

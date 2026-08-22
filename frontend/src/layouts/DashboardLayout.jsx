@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
-import { getUserData, formatRelativeTime } from '../utils/userStorage';
+import { getUserData, formatRelativeTime, deduplicateNotifications } from '../utils/userStorage';
 import { useActiveTimeTracker } from '../hooks/useActiveTimeTracker';
 import {
   SunFill,
@@ -460,13 +460,13 @@ const DashboardLayout = () => {
         if (!isAdmin && !isHr) {
           const userAlerts = getUserData('alerts_list', null);
           if (userAlerts !== null) {
-            setNotifications(userAlerts);
+            setNotifications(deduplicateNotifications(userAlerts));
             return;
           }
         }
         const saved = localStorage.getItem(notifStorageKey);
         if (saved) {
-          setNotifications(JSON.parse(saved));
+          setNotifications(deduplicateNotifications(JSON.parse(saved)));
         } else {
           setNotifications(getInitialNotifications());
         }

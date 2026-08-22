@@ -16,68 +16,82 @@ import Button from '../../components/common/Button';
 import { ROUTES } from '../../constants/routes';
 import { getUserData, getActiveUser } from '../../utils/userStorage';
 
-const BASE_STAGES = [
-  {
-    id: 1,
-    stageLevel: 'BEGINNER STAGE',
-    stageLevelBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30',
-    duration: '4 Weeks',
-    title: 'Foundation & Core Fundamentals',
-    courses: [
-      'Modern TypeScript & JavaScript Fundamentals',
-      'Frontend Architecture Essentials'
-    ],
-    projects: [
-      'Responsive Component Library'
-    ],
-    credentials: 'Core Engineering Competency Certificate'
-  },
-  {
-    id: 2,
-    stageLevel: 'INTERMEDIATE STAGE',
-    stageLevelBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    duration: '6 Weeks',
-    title: 'State Architecture & Performance',
-    courses: [
-      'State Management & Modern APIs',
-      'Web Vitals & Performance Optimization'
-    ],
-    projects: [
-      'High-Throughput Analytics Dashboard'
-    ],
-    credentials: 'Senior Developer Benchmark Certificate'
-  },
-  {
-    id: 3,
-    stageLevel: 'ADVANCED STAGE',
-    stageLevelBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    duration: '8 Weeks',
-    title: 'Micro-Frontends & Cloud Scaling',
-    courses: [
-      'Cloud Architecture & Micro-Services',
-      'Enterprise Design System Engineering'
-    ],
-    projects: [
-      'Enterprise Multi-App Design System v3'
-    ],
-    credentials: 'System Architect Certification'
-  },
-  {
-    id: 4,
-    stageLevel: 'EXPERT STAGE',
-    stageLevelBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
-    duration: '6 Weeks',
-    title: 'AI Integration & Advanced Telemetry',
-    courses: [
-      'Client-Side AI & Vector Embeddings',
-      'AI Automation Pipelines'
-    ],
-    projects: [
-      'In-Browser AI Assistant Extension'
-    ],
-    credentials: 'AI Application Specialist'
-  }
-];
+const buildLearningPathFromSkills = (userSkills = []) => {
+  const DUMMY_SKILL_NAMES = new Set([
+    'react.js & frontend', 'python & django', 'postgresql & sql',
+    'aws cloud infrastructure', 'docker & ci/cd pipelines',
+    'docker & ci/cd automation', 'ui/ux design systems',
+    'machine learning fundamentals', 'technical team leadership',
+    'python & django framework', 'postgresql & database optimization',
+    'rest & graphql apis', 'tailwind css & ui design systems',
+    'typescript & static analysis', 'react.js & frontend architecture'
+  ]);
+
+  const cleanSkills = userSkills.filter(s => s && s.name && !DUMMY_SKILL_NAMES.has(s.name.toLowerCase().trim()));
+
+  const weakSkills = cleanSkills.filter(s => (s.proficiencyPercentage || 0) < 70);
+  const interSkills = cleanSkills.filter(s => (s.proficiencyPercentage || 0) >= 70 && (s.proficiencyPercentage || 0) < 80);
+  const advSkills = cleanSkills.filter(s => (s.proficiencyPercentage || 0) >= 80);
+
+  const getStageCourses = (skillList, defaultNames) => {
+    if (!skillList || skillList.length === 0) return defaultNames;
+    return skillList.map(s => `${s.name} - Professional Mastery & Project Blueprint`);
+  };
+
+  const getStageProjects = (skillList, defaultProj) => {
+    if (!skillList || skillList.length === 0) return defaultProj;
+    const firstSkill = skillList[0].name;
+    return [`Enterprise Application Project utilizing ${firstSkill}`];
+  };
+
+  return [
+    {
+      id: 1,
+      stageLevel: 'BEGINNER STAGE',
+      stageLevelBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30',
+      duration: '4 Weeks',
+      title: weakSkills.length > 0 ? `Target Gap Remediation: ${weakSkills.map(s => s.name).slice(0, 2).join(' & ')}` : 'Foundational Core Competencies',
+      courses: getStageCourses(weakSkills, ['Modern JavaScript & Frontend Fundamentals', 'Core Data & API Architecture']),
+      projects: getStageProjects(weakSkills, ['Responsive Component System']),
+      credentials: 'Foundational Engineering Competency Certificate'
+    },
+    {
+      id: 2,
+      stageLevel: 'INTERMEDIATE STAGE',
+      stageLevelBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+      duration: '6 Weeks',
+      title: interSkills.length > 0 ? `Proficiency Enhancement: ${interSkills.map(s => s.name).slice(0, 2).join(' & ')}` : 'State Architecture & Performance',
+      courses: getStageCourses(interSkills, ['State Management & Modern APIs', 'Performance & Scaling Best Practices']),
+      projects: getStageProjects(interSkills, ['High-Throughput Web Application']),
+      credentials: 'Mid-Level Specialist Benchmark Certificate'
+    },
+    {
+      id: 3,
+      stageLevel: 'ADVANCED STAGE',
+      stageLevelBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      duration: '8 Weeks',
+      title: advSkills.length > 0 ? `Advanced Mastery: ${advSkills.map(s => s.name).slice(0, 2).join(' & ')}` : 'Enterprise System Architecture',
+      courses: getStageCourses(advSkills, ['Enterprise System Design & Micro-Frontends', 'Cloud Deployment & DevOps Pipelines']),
+      projects: getStageProjects(advSkills, ['Scalable Multi-Service Cloud Platform']),
+      credentials: 'Principal System Architect Certification'
+    },
+    {
+      id: 4,
+      stageLevel: 'EXPERT STAGE',
+      stageLevelBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+      duration: '6 Weeks',
+      title: 'AI Automation & Telemetry Specialization',
+      courses: [
+        'Client-Side AI & Vector Embeddings',
+        'Automated Skill Telemetry Pipelines'
+      ],
+      projects: [
+        'Autonomous AI Developer Assistant'
+      ],
+      credentials: 'AI Technical Lead Certification'
+    }
+  ];
+};
 
 const LearningPath = () => {
   const navigate = useNavigate();
@@ -94,12 +108,13 @@ const LearningPath = () => {
     const enrolledCount = enrolledCourses.length;
     const testCount = assessments.length;
 
-    // Dynamically calculate stage status based on user actions
     let completedStagesCount = 0;
     if (skillCount >= 6 || testCount >= 2) completedStagesCount = 2;
     else if (skillCount >= 2 || enrolledCount >= 1 || testCount >= 1) completedStagesCount = 1;
 
-    const dynamicStages = BASE_STAGES.map((stg, idx) => {
+    const baseStages = buildLearningPathFromSkills(userSkills);
+
+    const dynamicStages = baseStages.map((stg, idx) => {
       let status = 'upcoming';
       let statusLabel = 'Upcoming';
       let statusBg = 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/30';

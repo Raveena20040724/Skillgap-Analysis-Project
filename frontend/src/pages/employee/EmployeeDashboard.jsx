@@ -21,6 +21,7 @@ import {
   CloudUpload,
   PatchCheck
 } from 'react-bootstrap-icons';
+import { Sparkles } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Card from '../../components/common/Card';
 import { getUserData, getActiveUser } from '../../utils/userStorage';
@@ -91,24 +92,47 @@ const EmployeeDashboard = () => {
           return true;
         });
 
-        if (skills && skills.length > 0) {
+        if (skills && skills.length > 0 && selectedYear === '2026') {
           setHasSkills(true);
-          const completed = skills.filter(s => (s.proficiencyPercentage || 0) >= 80).length;
-          const inProgress = skills.filter(s => (s.proficiencyPercentage || 0) >= 70 && (s.proficiencyPercentage || 0) < 80).length;
-          const gaps = skills.filter(s => (s.proficiencyPercentage || 0) < 70).length;
+          const assessments = getUserData('assessment_results', []) || [];
+
+          // Mastered skills ONLY if candidate has passed a formal assessment test (>= 80%)
+          const masteredSkillsCount = skills.filter(s => {
+            const sName = (s.name || '').toLowerCase().trim();
+            return assessments.some(a => 
+              ((a.skillName || a.title || '').toLowerCase().includes(sName) || sName.includes((a.skillName || a.title || '').toLowerCase())) &&
+              (a.score || 0) >= 80
+            );
+          }).length;
+
+          // In progress skills (assessed 60-79% OR declared proficiency >= 70% waiting for test)
+          const inProgressSkillsCount = skills.filter(s => {
+            const sName = (s.name || '').toLowerCase().trim();
+            const test = assessments.find(a => 
+              (a.skillName || a.title || '').toLowerCase().includes(sName) || sName.includes((a.skillName || a.title || '').toLowerCase())
+            );
+            if (test) {
+              return (test.score || 0) >= 60 && (test.score || 0) < 80;
+            }
+            return (s.proficiencyPercentage || 0) >= 70;
+          }).length - masteredSkillsCount;
+
+          const cleanInProgressCount = Math.max(0, inProgressSkillsCount);
+          const skillGapsCount = Math.max(0, skills.length - (masteredSkillsCount + cleanInProgressCount));
+
           const totalProf = skills.reduce((acc, s) => acc + (s.proficiencyPercentage || 0), 0);
           const avgRating = Math.round(totalProf / skills.length);
 
           setMetrics({
-            completedSkills: completed,
-            inProgressSkills: inProgress,
-            skillGaps: gaps,
+            completedSkills: masteredSkillsCount,
+            inProgressSkills: cleanInProgressCount,
+            skillGaps: skillGapsCount,
             overallRating: avgRating,
           });
 
           const total = Math.max(1, skills.length);
-          const masteredPct = Math.round((completed / total) * 100);
-          const ongoingPct = Math.round((inProgress / total) * 100);
+          const masteredPct = Math.round((masteredSkillsCount / total) * 100);
+          const ongoingPct = Math.round((cleanInProgressCount / total) * 100);
           const gapsPct = Math.max(0, 100 - masteredPct - ongoingPct);
 
           setDonutData([
@@ -118,7 +142,6 @@ const EmployeeDashboard = () => {
           ]);
 
           // Calculate real technical domain competency & assessment benchmarks
-          const assessments = getUserData('assessment_results', []) || [];
           const DOMAINS = [
             { key: 'Programming', label: 'Programming' },
             { key: 'UI/UX', label: 'UI/UX Design' },
@@ -133,7 +156,7 @@ const EmployeeDashboard = () => {
               (s.name || '').toLowerCase().includes(dObj.key.toLowerCase())
             );
             const domainAssessments = assessments.filter(a =>
-              (a.skillName || '').toLowerCase().includes(dObj.key.toLowerCase())
+              (a.skillName || a.category || '').toLowerCase().includes(dObj.key.toLowerCase())
             );
 
             const avgProf = domainSkills.length > 0
@@ -154,8 +177,8 @@ const EmployeeDashboard = () => {
 
           setQuarterlyData(domainCalculated);
         } else {
-          // Zero state for new user
-          setHasSkills(false);
+          // Zero state for selected past year or new user without skills
+          setHasSkills(selectedYear === '2026' && skills.length > 0);
           setMetrics({
             completedSkills: 0,
             inProgressSkills: 0,
@@ -187,7 +210,7 @@ const EmployeeDashboard = () => {
       window.removeEventListener('skillsUpdated', loadRealMetrics);
       window.removeEventListener('userDataChanged', loadRealMetrics);
     };
-  }, []);
+  }, [selectedYear]);
 
   const statCards = [
     {
@@ -327,6 +350,13 @@ const EmployeeDashboard = () => {
             <ChevronDown className="absolute right-2.5 top-2.5 pointer-events-none text-slate-400" size={14} />
           </div>
         </div>
+
+        {selectedYear !== '2026' && (
+          <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold animate-fade-in shadow-sm">
+            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>No historical records found for {selectedYear}. Account registration & resume telemetry commenced in 2026. Showing 0% records for {selectedYear}.</span>
+          </div>
+        )}
 
         {/* Charts Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
