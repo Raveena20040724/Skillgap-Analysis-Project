@@ -23,7 +23,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { showGlobalToast } from '../../components/common/ToastContainer';
-import { getUserData, setUserData, getActiveUser, formatRelativeTime } from '../../utils/userStorage';
+import { getUserData, setUserData, getActiveUser, formatRelativeTime, deduplicateNotifications } from '../../utils/userStorage';
 
 const CATEGORIES = ['All', 'Unread', 'Skill Growth', 'Resume Processing', 'Skill Assessment', 'Courses & Path'];
 
@@ -32,8 +32,8 @@ const NotificationsPage = () => {
   const activeUser = getActiveUser();
 
   const getInitialUserAlerts = () => {
-    const saved = getUserData('alerts_list', null);
-    if (saved !== null) return saved;
+    const raw = getUserData('alerts_list', null);
+    if (raw !== null) return deduplicateNotifications(raw);
 
     // Fallback single welcome alert if no alerts exist
     return [
@@ -63,7 +63,8 @@ const NotificationsPage = () => {
 
   // Automatically mark all unread notifications as read when opening the Notifications page
   useEffect(() => {
-    const current = getUserData('alerts_list', null);
+    const raw = getUserData('alerts_list', null);
+    const current = deduplicateNotifications(raw);
     if (current && Array.isArray(current) && current.length > 0) {
       const hasUnread = current.some(n => !n.read);
       if (hasUnread) {
@@ -81,7 +82,7 @@ const NotificationsPage = () => {
     }
 
     const handleExternalUpdate = () => {
-      const updated = getUserData('alerts_list', null);
+      const updated = deduplicateNotifications(getUserData('alerts_list', null));
       if (updated && Array.isArray(updated)) {
         setNotifications(updated);
       }

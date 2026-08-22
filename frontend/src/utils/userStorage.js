@@ -116,11 +116,40 @@ export const initNewUserEnvironment = (username, details = {}) => {
   localStorage.setItem(`emp_${identifier}_alerts_list`, JSON.stringify([welcomeNotification]));
 };
 
-// Push a new notification for active user
+// Helper to deduplicate notifications array
+export const deduplicateNotifications = (list) => {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  return list.filter(item => {
+    if (!item) return false;
+    const key = item.id || `${item.title}_${item.message}_${item.date}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+// Push a new notification for active user (Strictly deduplicated)
 export const addActiveUserNotification = (notification) => {
   try {
-    const currentAlerts = getUserData('alerts_list', []);
+    const rawAlerts = getUserData('alerts_list', []) || [];
+    const currentAlerts = deduplicateNotifications(rawAlerts);
     const nowTs = Date.now();
+
+    // Check if duplicate notification exists (same ID or same title+message within 15s)
+    const isDuplicate = currentAlerts.some(n => {
+      if (notification.id && n.id === notification.id) return true;
+      if (n.title === notification.title && n.message === notification.message) {
+        const nTs = n.timestamp || (n.createdAt ? new Date(n.createdAt).getTime() : 0);
+        if (Math.abs(nowTs - nTs) < 15000) return true;
+      }
+      return false;
+    });
+
+    if (isDuplicate) {
+      return null;
+    }
+
     const newAlert = {
       id: notification.id || `notif_${nowTs}`,
       title: notification.title || 'System Update',
@@ -137,7 +166,8 @@ export const addActiveUserNotification = (notification) => {
       link: notification.link || '/employee/dashboard',
       ...notification
     };
-    const updated = [newAlert, ...(Array.isArray(currentAlerts) ? currentAlerts : [])];
+
+    const updated = deduplicateNotifications([newAlert, ...currentAlerts]);
     setUserData('alerts_list', updated);
     window.dispatchEvent(new Event('notificationsUpdated'));
     return newAlert;

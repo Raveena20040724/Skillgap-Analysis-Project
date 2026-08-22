@@ -234,12 +234,38 @@ const CourseRecommendations = () => {
     };
   }, []);
 
+  const userSkills = getUserData('skills', []) || [];
+  const resumeSkills = getUserData('resume_skills', []) || [];
+  const DUMMY_SKILL_NAMES = new Set([
+    'react.js & frontend', 'python & django', 'postgresql & sql',
+    'aws cloud infrastructure', 'docker & ci/cd pipelines',
+    'docker & ci/cd automation', 'ui/ux design systems',
+    'machine learning fundamentals', 'technical team leadership',
+    'python & django framework', 'postgresql & database optimization',
+    'rest & graphql apis', 'tailwind css & ui design systems',
+    'typescript & static analysis', 'react.js & frontend architecture'
+  ]);
+
+  const cleanUserSkills = [...userSkills, ...resumeSkills].filter(s => s && s.name && !DUMMY_SKILL_NAMES.has(s.name.toLowerCase().trim()));
+  const weakSkillNames = new Set(cleanUserSkills.filter(s => (s.proficiencyPercentage || 0) < 75).map(s => s.name.toLowerCase()));
+
+  const isGapCourse = (course) => {
+    return course.skills.some(sk => {
+      const skLower = sk.toLowerCase();
+      return Array.from(weakSkillNames).some(w => skLower.includes(w) || w.includes(skLower));
+    });
+  };
+
   const filteredCourses = COURSES_CATALOG.filter((course) => {
     const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
     const matchesSearch = 
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
+  }).sort((a, b) => {
+    const aGap = isGapCourse(a) ? 1 : 0;
+    const bGap = isGapCourse(b) ? 1 : 0;
+    return bGap - aGap;
   });
 
   const handleEnroll = (courseId) => {
@@ -347,6 +373,12 @@ const CourseRecommendations = () => {
                   <span className="absolute top-3.5 left-3.5 px-3 py-1 bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-black rounded-xl border border-white/20">
                     {course.provider}
                   </span>
+                  {isGapCourse(course) && (
+                    <span className="absolute top-3.5 right-3.5 px-2.5 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-extrabold rounded-xl border border-amber-300/40 flex items-center gap-1 shadow-md animate-fade-in">
+                      <Sparkles className="w-3 h-3 fill-current text-amber-200" />
+                      Recommended for your gap
+                    </span>
+                  )}
                 </div>
 
                 {/* Card Content Body */}

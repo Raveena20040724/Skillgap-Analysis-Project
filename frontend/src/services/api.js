@@ -35,11 +35,13 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
 
-      if (refreshToken) {
+      if (refreshToken && !refreshToken.startsWith('mock_')) {
         try {
-          const response = await axios.post(`${BASE_URL}/accounts/login/refresh/`, {
-            refresh: refreshToken,
-          });
+          const response = await axios.post(
+            `${BASE_URL}/accounts/login/refresh/`,
+            { refresh: refreshToken },
+            { timeout: 5000 }
+          );
           const newAccessToken = response.data?.access || response.data?.data?.access;
           if (newAccessToken) {
             localStorage.setItem('accessToken', newAccessToken);
@@ -52,8 +54,7 @@ api.interceptors.response.use(
           localStorage.removeItem('user');
         }
       } else {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
+        return Promise.reject(error);
       }
     }
 

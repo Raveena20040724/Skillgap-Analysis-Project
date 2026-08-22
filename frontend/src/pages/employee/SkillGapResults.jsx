@@ -56,34 +56,8 @@ const SkillGapResults = () => {
   const fetchSkillGaps = async () => {
     try {
       const activeUser = getActiveUser();
-      const customSkills = filterOutDummySkills(getUserData('skills', []) || []);
-      const resumeSkills = filterOutDummySkills(getUserData('resume_skills', []) || []);
+      const combinedSkills = filterOutDummySkills(getUserData('skills', []) || []);
       let resumeInfo = getUserData('resume_info', null);
-
-      // Check server API for uploaded resume if local storage doesn't have resumeInfo yet
-      if (!resumeInfo) {
-        try {
-          const res = await resumeService.getResume();
-          if (res.data && (res.data.fileName || res.data.filename || res.data.url)) {
-            resumeInfo = {
-              fileName: res.data.fileName || res.data.filename || 'Uploaded_CV.pdf',
-              downloadUrl: res.data.url || res.data.downloadUrl || '#'
-            };
-          }
-        } catch (e) {
-          console.log('No server resume:', e);
-        }
-      }
-
-      // Deduplicate and combine candidate skills
-      const allMap = new Map();
-      [...resumeSkills, ...customSkills].forEach(sk => {
-        if (sk && sk.name && !allMap.has(sk.name.toLowerCase().trim())) {
-          allMap.set(sk.name.toLowerCase().trim(), sk);
-        }
-      });
-
-      let combinedSkills = Array.from(allMap.values());
 
       if (combinedSkills.length > 0) {
         const mapped = combinedSkills.map(sk => ({

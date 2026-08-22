@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Award,
   BookOpen,
-  Target
+  Target,
+  CloudUpload
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -552,6 +553,7 @@ const DEFAULT_FALLBACK_ASSESSMENTS = [
 const SkillAssessment = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const hasResume = !!getUserData('resume_info', null);
 
   // Dynamically derive assessments based on user's actual skills ONLY
   const [assessmentsList, setAssessmentsList] = useState([]);
@@ -570,7 +572,6 @@ const SkillAssessment = () => {
   useEffect(() => {
     try {
       const savedSkills = getUserData('skills', []) || [];
-      const resumeSkills = getUserData('resume_skills', []) || [];
       const DUMMY_SKILL_NAMES = new Set([
         'react.js & frontend',
         'python & django',
@@ -594,9 +595,8 @@ const SkillAssessment = () => {
         'restful api integration'
       ]);
 
-      const combined = [...savedSkills, ...resumeSkills];
       const seen = new Set();
-      const skills = combined.filter(s => {
+      const skills = savedSkills.filter(s => {
         if (!s || !s.name) return false;
         const nameLower = s.name.toLowerCase().trim();
         if (DUMMY_SKILL_NAMES.has(nameLower)) return false;
@@ -1219,7 +1219,23 @@ const SkillAssessment = () => {
         />
       </div>
 
-      {/* Mandatory Assessment Policy Alert */}
+      {!hasResume ? (
+        <Card className="p-12 text-center flex flex-col items-center justify-center space-y-4 max-w-xl mx-auto border border-dashed border-teal-500/40 bg-teal-500/5 shadow-md my-8">
+          <div className="w-16 h-16 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 animate-bounce" />
+          </div>
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">No Resume Uploaded Yet</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
+            Please upload your resume first to unlock AI-powered skill assessments and diagnostic tests tailored to your parsed profile.
+          </p>
+          <Button onClick={() => navigate(ROUTES.RESUME_UPLOAD)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-3 shadow-lg shadow-teal-500/25">
+            <CloudUpload className="w-4 h-4" />
+            Upload Resume to Unlock Assessments
+          </Button>
+        </Card>
+      ) : (
+        <>
+          {/* Mandatory Assessment Policy Alert */}
       <Card className="p-5 border-l-4 border-teal-500 bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/60 shadow-sm">
         <div className="flex items-start gap-3.5">
           <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5">
@@ -1321,8 +1337,10 @@ const SkillAssessment = () => {
           })}
         </div>
       </div>
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 };
 
 export default SkillAssessment;
