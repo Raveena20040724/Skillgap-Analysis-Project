@@ -85,7 +85,7 @@ const HrReports = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-          <PieIcon className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
+          <PieIcon className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
           HR Analytics & Skill Readiness Reports
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -102,7 +102,7 @@ const HrReports = () => {
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-black bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/30 uppercase">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 uppercase">
                   {report.type}
                 </span>
                 <span className="text-xs font-bold text-slate-400">Generated: {report.dateGenerated}</span>
@@ -114,13 +114,13 @@ const HrReports = () => {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => handleExportPDF(report.title)}
-                className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-md shadow-teal-600/30 cursor-pointer transition-colors"
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-md shadow-purple-600/30 cursor-pointer transition-colors"
               >
                 <Download className="w-4 h-4" /> Download Report
               </button>
               <button
                 onClick={() => handleExportExcel(report.title)}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-600/30 cursor-pointer transition-colors"
+                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-md shadow-violet-600/30 cursor-pointer transition-colors"
               >
                 <Download className="w-4 h-4" /> Export CSV
               </button>

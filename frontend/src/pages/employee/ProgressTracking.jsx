@@ -37,7 +37,7 @@ const CustomBarTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-2.5 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-center">
         <p className="text-slate-500 font-semibold text-[11px]">{label}</p>
-        <p className="text-purple-600 dark:text-purple-400 font-extrabold text-sm mt-0.5">
+        <p className="text-teal-600 dark:text-teal-400 font-extrabold text-sm mt-0.5">
           hours : {payload[0].value}
         </p>
       </div>
@@ -52,7 +52,7 @@ const CustomLineTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-slate-900 text-white p-2.5 rounded-xl shadow-xl border border-slate-700 text-xs font-bold text-center">
         <p className="text-slate-400 font-semibold text-[11px]">{label}</p>
-        <p className="text-purple-400 font-extrabold text-sm mt-0.5">
+        <p className="text-teal-400 font-extrabold text-sm mt-0.5">
           Score : {payload[0].value}%
         </p>
       </div>
@@ -108,59 +108,87 @@ const ProgressTracking = () => {
         avgScore: avgScore
       });
 
-      if (avgScore > 0) {
-        const base = Math.max(10, Math.round(avgScore * 0.65));
-        setSkillGrowthData([
-          { month: 'Jan', score: base },
-          { month: 'Feb', score: Math.round(base + (avgScore - base) * 0.2) },
-          { month: 'Mar', score: Math.round(base + (avgScore - base) * 0.4) },
-          { month: 'Apr', score: Math.round(base + (avgScore - base) * 0.6) },
-          { month: 'May', score: Math.round(base + (avgScore - base) * 0.8) },
-          { month: 'Jun', score: Math.round(avgScore) },
-          { month: 'Jul', score: Math.round(avgScore) },
-        ]);
-      } else {
-        setSkillGrowthData([
-          { month: 'Jan', score: 0 },
-          { month: 'Feb', score: 0 },
-          { month: 'Mar', score: 0 },
-          { month: 'Apr', score: 0 },
-          { month: 'May', score: 0 },
-          { month: 'Jun', score: 0 },
-          { month: 'Jul', score: 0 },
-        ]);
-      }
+      // 3. Real-time calculation of Skill Growth Evolution (Jan - Jul) based strictly on real user records
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+      
+      const realMonthlyGrowth = months.map((monthName, mIdx) => {
+        // Filter real assessment results recorded on or before this month
+        const validAssessments = assessmentResults.filter(a => {
+          if (!a.date && !a.timestamp) return false;
+          const aDate = new Date(a.date || a.timestamp);
+          return aDate.getMonth() <= mIdx;
+        });
 
-      if (totalHours > 0) {
-        setWeeklyHoursData([
-          { day: 'Mon', hours: Number(Math.min(4, Math.max(1, Number(dailyAverage) * 1.1)).toFixed(1)) },
-          { day: 'Tue', hours: Number(Math.min(4, Math.max(1.5, Number(dailyAverage) * 1.3)).toFixed(1)) },
-          { day: 'Wed', hours: 0 },
-          { day: 'Thu', hours: Number(Math.min(4, Math.max(1, Number(dailyAverage) * 1.4)).toFixed(1)) },
-          { day: 'Fri', hours: Number(Math.min(4, Math.max(0.5, Number(dailyAverage) * 0.9)).toFixed(1)) },
-          { day: 'Sat', hours: Number(Math.min(4, Math.max(0.5, Number(dailyAverage) * 0.6)).toFixed(1)) },
-          { day: 'Sun', hours: 0.5 },
-        ]);
-      } else {
-        setWeeklyHoursData([
-          { day: 'Mon', hours: 0 },
-          { day: 'Tue', hours: 0 },
-          { day: 'Wed', hours: 0 },
-          { day: 'Thu', hours: 0 },
-          { day: 'Fri', hours: 0 },
-          { day: 'Sat', hours: 0 },
-          { day: 'Sun', hours: 0 },
-        ]);
-      }
+        // Filter real skills added on or before this month
+        const validSkills = skills.filter(s => {
+          if (!s.createdAt && !s.date) return false;
+          const sDate = new Date(s.createdAt || s.date);
+          return sDate.getMonth() <= mIdx;
+        });
+
+        // If no user activities/assessments/skills occurred on or before this month, score is 0
+        if (validAssessments.length === 0 && validSkills.length === 0) {
+          // If this is the current active month and user has avgScore from current skills/assessments, display avgScore
+          const currentMonthIdx = new Date().getMonth();
+          if (mIdx === currentMonthIdx || (currentMonthIdx > 6 && mIdx === 6)) {
+            return { month: monthName, score: Math.round(avgScore) };
+          }
+          return { month: monthName, score: 0 };
+        }
+
+        let totalScore = 0;
+        let count = 0;
+
+        if (validAssessments.length > 0) {
+          totalScore += validAssessments.reduce((acc, curr) => acc + (curr.score || 0), 0);
+          count += validAssessments.length;
+        }
+
+        if (validSkills.length > 0) {
+          totalScore += validSkills.reduce((acc, curr) => acc + (curr.proficiencyPercentage || 0), 0);
+          count += validSkills.length;
+        }
+
+        const computedScore = count > 0 ? Math.round(totalScore / count) : 0;
+        return { month: monthName, score: computedScore };
+      });
+
+      setSkillGrowthData(realMonthlyGrowth);
+
+      // 4. Calculate real active tab screen-time learning hours for Mon - Sun
+      const activeSecondsMap = getUserData('active_weekly_seconds', {}) || {};
+      const daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      const realWeeklyHours = daysList.map((day) => {
+        const sec = activeSecondsMap[day] || 0;
+        const hoursDecimal = Number((sec / 3600).toFixed(2));
+        return { day, hours: hoursDecimal };
+      });
+
+      const totalActiveSeconds = Object.values(activeSecondsMap).reduce((a, b) => a + (Number(b) || 0), 0);
+      const activeLearningHours = Number((totalActiveSeconds / 3600).toFixed(1));
+
+      setStats({
+        learningHours: activeLearningHours > 0 ? activeLearningHours : (totalHours > 0 ? totalHours : 0),
+        completedCourses: enrolled.length > 1 ? enrolled.length - 1 : (enrolled.length === 1 ? 1 : 0),
+        certificatesEarned: certificatesCount,
+        avgScore: avgScore
+      });
+
+      setWeeklyHoursData(realWeeklyHours);
     };
 
     computeRealStats();
     window.addEventListener('coursesUpdated', computeRealStats);
     window.addEventListener('skillsUpdated', computeRealStats);
+    window.addEventListener('assessmentsUpdated', computeRealStats);
+    window.addEventListener('activeTimeUpdated', computeRealStats);
     window.addEventListener('userDataChanged', computeRealStats);
     return () => {
       window.removeEventListener('coursesUpdated', computeRealStats);
       window.removeEventListener('skillsUpdated', computeRealStats);
+      window.removeEventListener('assessmentsUpdated', computeRealStats);
+      window.removeEventListener('activeTimeUpdated', computeRealStats);
       window.removeEventListener('userDataChanged', computeRealStats);
     };
   }, []);
@@ -170,7 +198,7 @@ const ProgressTracking = () => {
       {/* Page Header */}
       <div className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-          <BarChart2 className="w-8 h-8 text-purple-600 dark:text-purple-400 stroke-[2.2]" />
+          <BarChart2 className="w-8 h-8 text-teal-600 dark:text-teal-400 stroke-[2.2]" />
           Employee Learning Progress & Growth Tracking
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -182,8 +210,8 @@ const ProgressTracking = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Card 1: Total Learning Hours */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -197,8 +225,8 @@ const ProgressTracking = () => {
 
         {/* Card 2: Completed Courses */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-            <BookOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -212,8 +240,8 @@ const ProgressTracking = () => {
 
         {/* Card 3: Certificates Earned */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-            <Award className="w-5 h-5 text-indigo-500" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Award className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -227,8 +255,8 @@ const ProgressTracking = () => {
 
         {/* Card 4: Avg Assessment Score */}
         <div className="p-4 sm:p-5 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-lg flex items-center gap-3.5 transition-colors overflow-hidden">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-            <CheckSquare className="w-5 h-5 text-amber-500" />
+          <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <CheckSquare className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="space-y-0.5 min-w-0 flex-1">
             <p className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider truncate">
@@ -247,7 +275,7 @@ const ProgressTracking = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
+              <TrendingUp className="w-5 h-5 text-teal-500" />
               Skill Growth Evolution (Line Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -294,7 +322,7 @@ const ProgressTracking = () => {
         <div className="p-6 md:p-8 bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl shadow-xl space-y-6">
           <div className="space-y-1">
             <h2 className="text-base md:text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-500" />
+              <Calendar className="w-5 h-5 text-teal-500" />
               Weekly Learning Hours Log (Bar Chart)
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">

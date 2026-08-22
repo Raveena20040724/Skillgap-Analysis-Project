@@ -1,15 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from 'recharts';
 import { ArrowRight, Target, Sparkles, CheckCircle2, AlertTriangle, CloudUpload, Award } from 'lucide-react';
 import Card from '../../components/common/Card';
 import Loader from '../../components/common/Loader';
 import PageHeader from '../../components/common/PageHeader';
 import { skillGapService } from '../../services/skillGapService';
 import { ROUTES } from '../../constants/routes';
-import { getUserData } from '../../utils/userStorage';
+import { resumeService } from '../../services/resumeService';
+import { getUserData, setUserData, getActiveUser } from '../../utils/userStorage';
+
+const DUMMY_SKILL_NAMES = new Set([
+  'react.js & frontend',
+  'python & django',
+  'postgresql & sql',
+  'aws cloud infrastructure',
+  'docker & ci/cd pipelines',
+  'docker & ci/cd automation',
+  'ui/ux design systems',
+  'machine learning fundamentals',
+  'technical team leadership',
+  'python & django framework',
+  'postgresql & database optimization',
+  'rest & graphql apis',
+  'tailwind css & ui design systems',
+  'typescript & static analysis',
+  'react.js & frontend architecture',
+  'javascript (es6+)',
+  'typescript & type safety',
+  'html5 & css3 responsive design',
+  'tailwind css & component systems',
+  'restful api integration'
+]);
+
+const filterOutDummySkills = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.filter(s => {
+    if (!s || !s.name) return false;
+    return !DUMMY_SKILL_NAMES.has(s.name.toLowerCase().trim());
+  });
+};
 
 const SkillGapResults = () => {
   const navigate = useNavigate();
@@ -19,17 +48,45 @@ const SkillGapResults = () => {
   useEffect(() => {
     fetchSkillGaps();
     window.addEventListener('skillsUpdated', fetchSkillGaps);
-    return () => window.removeEventListener('skillsUpdated', fetchSkillGaps);
+    return () => {
+      window.removeEventListener('skillsUpdated', fetchSkillGaps);
+    };
   }, []);
 
   const fetchSkillGaps = async () => {
     try {
       const activeUser = getActiveUser();
-      const isDemoAlex = activeUser?.username === 'alex_morgan';
-      const customSkills = getUserData('skills', null);
+      const customSkills = filterOutDummySkills(getUserData('skills', []) || []);
+      const resumeSkills = filterOutDummySkills(getUserData('resume_skills', []) || []);
+      let resumeInfo = getUserData('resume_info', null);
 
-      if (customSkills && Array.isArray(customSkills) && customSkills.length > 0) {
-        const mapped = customSkills.map(sk => ({
+      // Check server API for uploaded resume if local storage doesn't have resumeInfo yet
+      if (!resumeInfo) {
+        try {
+          const res = await resumeService.getResume();
+          if (res.data && (res.data.fileName || res.data.filename || res.data.url)) {
+            resumeInfo = {
+              fileName: res.data.fileName || res.data.filename || 'Uploaded_CV.pdf',
+              downloadUrl: res.data.url || res.data.downloadUrl || '#'
+            };
+          }
+        } catch (e) {
+          console.log('No server resume:', e);
+        }
+      }
+
+      // Deduplicate and combine candidate skills
+      const allMap = new Map();
+      [...resumeSkills, ...customSkills].forEach(sk => {
+        if (sk && sk.name && !allMap.has(sk.name.toLowerCase().trim())) {
+          allMap.set(sk.name.toLowerCase().trim(), sk);
+        }
+      });
+
+      let combinedSkills = Array.from(allMap.values());
+
+      if (combinedSkills.length > 0) {
+        const mapped = combinedSkills.map(sk => ({
           skill: sk.name,
           currentLevel: sk.proficiencyPercentage || 70,
           requiredLevel: (sk.proficiencyPercentage || 70) >= 80 ? 95 : 85,
@@ -39,20 +96,7 @@ const SkillGapResults = () => {
         return;
       }
 
-      // If user has 0 skills and is not demo alex, strictly show clean empty state
-      if (!isDemoAlex) {
-        setGapData([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback for demo alex_morgan
-      const response = await skillGapService.getSkillGapResults();
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        setGapData(response.data);
-      } else {
-        setGapData([]);
-      }
+      setGapData([]);
     } catch (error) {
       console.log('Skill gap results load note:', error);
       setGapData([]);
@@ -85,14 +129,14 @@ const SkillGapResults = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <PageHeader 
-        title="Skill Gap Analysis Results" 
+      <PageHeader
+        title="Skill Gap Analysis Results"
         subtitle="Compare your active skill ratings against target role benchmarks and resolve competency deficits."
       />
 
       {gapsWithDiff.length === 0 ? (
-        <Card className="p-12 text-center border-2 border-dashed border-purple-200 dark:border-purple-800/60 rounded-3xl bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-inner">
+        <Card className="p-12 text-center border-2 border-dashed border-teal-200 dark:border-teal-800/60 rounded-3xl bg-slate-50/50 dark:bg-slate-900/40 space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto shadow-inner">
             <Target className="w-8 h-8" />
           </div>
           <div className="space-y-2 max-w-md mx-auto">
@@ -106,14 +150,14 @@ const SkillGapResults = () => {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={() => navigate(ROUTES.RESUME_UPLOAD)}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer"
             >
               <CloudUpload className="w-4 h-4" />
               Upload Resume
             </button>
             <button
               onClick={() => navigate(ROUTES.SKILLS)}
-              className="px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-700 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
             >
               <Award className="w-4 h-4" />
               Add Skills Manually
@@ -152,14 +196,14 @@ const SkillGapResults = () => {
             )}
 
             {strongestSkill && (
-              <Card className="border-l-4 border-purple-500 p-6 flex flex-col justify-between space-y-4">
+              <Card className="border-l-4 border-teal-500 p-6 flex flex-col justify-between space-y-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Strongest Role Competency
                   </p>
                   <p className="text-xl font-black mt-2 text-slate-900 dark:text-white">{strongestSkill.skill}</p>
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">
-                    Rating: <span className="font-extrabold text-purple-600 dark:text-purple-400">{strongestSkill.currentLevel}%</span> (Target Benchmark: {strongestSkill.requiredLevel}%)
+                    Rating: <span className="font-extrabold text-teal-600 dark:text-teal-400">{strongestSkill.currentLevel}%</span> (Target Benchmark: {strongestSkill.requiredLevel}%)
                   </p>
                 </div>
 
@@ -173,22 +217,6 @@ const SkillGapResults = () => {
               </Card>
             )}
           </div>
-
-          {/* Bar chart comparing current vs required */}
-          <Card className="p-6">
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4">Current vs Required Skill Competency Levels</h2>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={gapsWithDiff} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
-                <XAxis dataKey="skill" angle={-15} textAnchor="end" interval={0} height={60} stroke="#94a3b8" fontSize={11} />
-                <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={11} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
-                <Legend />
-                <Bar dataKey="currentLevel" fill="#8b5cf6" name="Current Proficiency (%)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="requiredLevel" fill="#06b6d4" name="Required Target Level (%)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
 
           {/* Detailed table */}
           <Card className="p-6">
@@ -213,20 +241,20 @@ const SkillGapResults = () => {
                       <td className="py-3.5 px-3 font-bold text-slate-900 dark:text-white">{item.skill}</td>
                       <td className="py-3.5 px-3 text-slate-600 dark:text-slate-300 font-semibold">{item.currentLevel}%</td>
                       <td className="py-3.5 px-3 text-slate-600 dark:text-slate-300 font-semibold">{item.requiredLevel}%</td>
-                      <td className={`py-3.5 px-3 font-black ${item.gap >= 20 ? 'text-rose-600 dark:text-rose-400' : item.gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-purple-600 dark:text-purple-400'}`}>
+                      <td className={`py-3.5 px-3 font-black ${item.gap >= 20 ? 'text-rose-600 dark:text-rose-400' : item.gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-teal-600 dark:text-teal-400'}`}>
                         {item.gap > 0 ? `-${item.gap}% Deficit` : 'Benchmark Met'}
                       </td>
                       <td className="py-3.5 px-3 text-right">
                         {item.gap > 0 ? (
                           <button
                             onClick={() => handleTakeAssessmentForGap(item.skill)}
-                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer shadow-sm shadow-purple-500/20"
+                            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer shadow-sm shadow-teal-500/20"
                           >
                             <span>Take Assessment</span>
                             <ArrowRight className="w-3 h-3" />
                           </button>
                         ) : (
-                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 inline-flex items-center gap-1">
+                          <span className="text-xs font-bold text-teal-600 dark:text-teal-400 inline-flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                           </span>
                         )}

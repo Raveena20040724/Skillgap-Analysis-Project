@@ -3,10 +3,11 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
-import { getUserData } from '../utils/userStorage';
-import { 
-  SunFill, 
-  MoonFill, 
+import { getUserData, formatRelativeTime } from '../utils/userStorage';
+import { useActiveTimeTracker } from '../hooks/useActiveTimeTracker';
+import {
+  SunFill,
+  MoonFill,
   BoxArrowRight,
   Speedometer2,
   LightningFill,
@@ -26,18 +27,19 @@ import {
   PeopleFill,
   BuildingFill
 } from 'react-bootstrap-icons';
-import { 
-  BrainCircuit, 
-  LayoutGrid, 
-  Users, 
-  ShieldCheck, 
-  Building2, 
-  PieChart, 
+import {
+  BrainCircuit,
+  LayoutGrid,
+  Users,
+  ShieldCheck,
+  Building2,
+  PieChart,
   Sliders,
   User
 } from 'lucide-react';
 
 const DashboardLayout = () => {
+  useActiveTimeTracker();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -58,35 +60,35 @@ const DashboardLayout = () => {
   const isAdmin = location.pathname.startsWith('/admin');
   const isHr = location.pathname.startsWith('/hr');
 
-  const workspaceName = isAdmin 
-    ? 'Admin Workspace' 
-    : isHr 
-    ? 'HR Workspace' 
-    : 'Employee Workspace';
+  const workspaceName = isAdmin
+    ? 'Admin Workspace'
+    : isHr
+      ? 'HR Workspace'
+      : 'Employee Workspace';
 
-  const portalLabel = isAdmin 
-    ? 'Admin Portal' 
-    : isHr 
-    ? 'Hr Portal' 
-    : 'Employee Portal';
+  const portalLabel = isAdmin
+    ? 'Admin Portal'
+    : isHr
+      ? 'Hr Portal'
+      : 'Employee Portal';
 
-  const notificationsPath = isAdmin 
-    ? ROUTES.ADMIN_NOTIFICATIONS 
-    : isHr 
-    ? ROUTES.HR_NOTIFICATIONS 
-    : ROUTES.NOTIFICATIONS;
+  const notificationsPath = isAdmin
+    ? ROUTES.ADMIN_NOTIFICATIONS
+    : isHr
+      ? ROUTES.HR_NOTIFICATIONS
+      : ROUTES.NOTIFICATIONS;
 
-  const settingsPath = isAdmin 
-    ? ROUTES.ADMIN_SETTINGS 
-    : isHr 
-    ? ROUTES.HR_SETTINGS 
-    : ROUTES.SETTINGS;
+  const settingsPath = isAdmin
+    ? ROUTES.ADMIN_SETTINGS
+    : isHr
+      ? ROUTES.HR_SETTINGS
+      : ROUTES.SETTINGS;
 
-  const profilePath = isAdmin 
-    ? ROUTES.ADMIN_PROFILE 
-    : isHr 
-    ? ROUTES.HR_DIRECTORY 
-    : ROUTES.EMPLOYEE_PROFILE;
+  const profilePath = isAdmin
+    ? ROUTES.ADMIN_PROFILE
+    : isHr
+      ? ROUTES.HR_PROFILE
+      : ROUTES.EMPLOYEE_PROFILE;
 
   // Search items database strictly isolated for current portal (Live data dynamically loaded from system state)
   const getSearchDatabase = () => {
@@ -159,6 +161,7 @@ const DashboardLayout = () => {
       // 1. HR Pages ONLY
       const hrPages = [
         { label: 'HR Dashboard', category: 'HR Page', path: ROUTES.HR_DASHBOARD, desc: 'Workforce analytics & skill readiness' },
+        { label: 'HR Profile', category: 'HR Page', path: ROUTES.HR_PROFILE, desc: 'HR Manager account identity, photo & details' },
         { label: 'Workforce & Employee Directory', category: 'HR Page', path: ROUTES.HR_DIRECTORY, desc: 'Browse talent, profiles & competencies' },
         { label: 'Skill Gap Reports', category: 'HR Page', path: ROUTES.HR_REPORTS, desc: 'Department benchmark reports' },
         { label: 'HR Notification Hub', category: 'HR Page', path: ROUTES.HR_NOTIFICATIONS, desc: 'HR telemetry alerts' },
@@ -287,11 +290,11 @@ const DashboardLayout = () => {
 
   const searchDatabase = getSearchDatabase();
   const searchResults = globalSearch.trim()
-    ? searchDatabase.filter(item => 
-        item.label.toLowerCase().includes(globalSearch.toLowerCase()) ||
-        item.desc.toLowerCase().includes(globalSearch.toLowerCase()) ||
-        item.category.toLowerCase().includes(globalSearch.toLowerCase())
-      )
+    ? searchDatabase.filter(item =>
+      item.label.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      item.desc.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      item.category.toLowerCase().includes(globalSearch.toLowerCase())
+    )
     : [];
 
   const handleSelectSearchResult = (path) => {
@@ -327,6 +330,7 @@ const DashboardLayout = () => {
     if (isHr) {
       return [
         { label: 'HR Dashboard', path: ROUTES.HR_DASHBOARD, icon: LayoutGrid, isLucide: true },
+        { label: 'HR Profile', path: ROUTES.HR_PROFILE, icon: User, isLucide: true },
         { label: 'Employee Directory', path: ROUTES.HR_DIRECTORY, icon: Users, isLucide: true },
         { label: 'Skill Reports', path: ROUTES.HR_REPORTS, icon: PieChart, isLucide: true },
         { label: 'Notifications', path: ROUTES.HR_NOTIFICATIONS, icon: BellFill },
@@ -428,11 +432,11 @@ const DashboardLayout = () => {
     ];
   };
 
-  const notifStorageKey = isAdmin 
-    ? 'admin_alerts_list' 
-    : isHr 
-    ? 'hr_alerts_list' 
-    : 'employee_alerts_list';
+  const notifStorageKey = isAdmin
+    ? 'admin_alerts_list'
+    : isHr
+      ? 'hr_alerts_list'
+      : 'employee_alerts_list';
 
   const [notifications, setNotifications] = useState(() => {
     try {
@@ -480,6 +484,13 @@ const DashboardLayout = () => {
     };
   }, [location.pathname, notifStorageKey, isAdmin, isHr]);
 
+  // Real-time live ticker to update relative notification timestamps dynamically
+  const [, setNotifTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setNotifTick(t => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -520,8 +531,7 @@ const DashboardLayout = () => {
   const handleToggleNotifBell = () => {
     const nextOpen = !notifOpen;
     setNotifOpen(nextOpen);
-    if (nextOpen && unreadCount > 0) {
-      // Touching/opening notification bell marks all unread as read
+    if (unreadCount > 0) {
       markAllAsRead();
     }
   };
@@ -548,30 +558,27 @@ const DashboardLayout = () => {
         {/* Brand Header with Exact SkillBridge.AI Logo */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800/60 shrink-0">
           <div className="flex items-center gap-2.5 group">
-            <div className={`w-10 h-10 rounded-xl p-0.5 shadow-md group-hover:scale-105 transition-transform ${
-              isHr 
-                ? 'bg-gradient-to-tr from-teal-700 via-teal-600 to-emerald-500 shadow-teal-500/20' 
-                : isAdmin 
-                ? 'bg-gradient-to-tr from-indigo-700 via-indigo-600 to-purple-500 shadow-indigo-500/20' 
-                : 'bg-gradient-to-tr from-purple-700 via-purple-600 to-violet-500 shadow-purple-500/20'
-            }`}>
+            <div className={`w-10 h-10 rounded-xl p-0.5 shadow-md group-hover:scale-105 transition-transform ${isHr
+                ? 'bg-gradient-to-tr from-purple-700 via-purple-600 to-violet-500 shadow-purple-500/20'
+                : isAdmin
+                  ? 'bg-gradient-to-tr from-indigo-700 via-indigo-600 to-purple-500 shadow-indigo-500/20'
+                  : 'bg-gradient-to-tr from-teal-700 via-teal-600 to-emerald-500 shadow-teal-500/20'
+              }`}>
               <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                <BrainCircuit className={`w-5 h-5 ${isHr ? 'text-teal-400' : isAdmin ? 'text-indigo-400' : 'text-purple-400'}`} />
+                <BrainCircuit className={`w-5 h-5 ${isHr ? 'text-purple-400' : isAdmin ? 'text-indigo-400' : 'text-teal-400'}`} />
               </div>
             </div>
             <div>
-              <span className={`text-xl font-extrabold bg-clip-text text-transparent tracking-tight block leading-tight ${
-                isHr
-                  ? 'bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-400'
+              <span className={`text-xl font-extrabold bg-clip-text text-transparent tracking-tight block leading-tight ${isHr
+                  ? 'bg-gradient-to-r from-purple-600 via-violet-600 to-purple-400'
                   : isAdmin
-                  ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500'
-                  : 'bg-gradient-to-r from-purple-600 via-violet-600 to-purple-400'
-              }`}>
-                SkillBridge<span className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500 dark:text-purple-400'}>.AI</span>
+                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500'
+                    : 'bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-400'
+                }`}>
+                SkillBridge<span className={isHr ? 'text-purple-500 dark:text-purple-400' : isAdmin ? 'text-indigo-500' : 'text-teal-500'}>.AI</span>
               </span>
-              <span className={`block text-[10px] font-bold tracking-wider uppercase leading-snug ${
-                isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
-              }`}>
+              <span className={`block text-[10px] font-bold tracking-wider uppercase leading-snug ${isHr ? 'text-purple-600 dark:text-purple-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-teal-600 dark:text-teal-400'
+                }`}>
                 {workspaceName}
               </span>
             </div>
@@ -587,19 +594,18 @@ const DashboardLayout = () => {
               <Link
                 key={index}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 group ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 group ${isActive
                     ? isHr
-                      ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                       : isAdmin
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                      : 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                        : 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
                     : isHr
-                    ? 'text-slate-600 dark:text-slate-400 hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400'
-                    : isAdmin
-                    ? 'text-slate-600 dark:text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400'
-                }`}
+                      ? 'text-slate-600 dark:text-slate-400 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400'
+                      : isAdmin
+                        ? 'text-slate-600 dark:text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400'
+                  }`}
               >
                 {item.isLucide ? (
                   <Icon className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400'}`} />
@@ -630,9 +636,8 @@ const DashboardLayout = () => {
                 setSearchOpen(true);
               }}
               onKeyDown={handleSearchKeyDown}
-              className={`w-full pl-10 pr-8 py-2 text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 ${
-                isHr ? 'focus:ring-teal-500/40' : isAdmin ? 'focus:ring-indigo-500/40' : 'focus:ring-purple-500/40'
-              }`}
+              className={`w-full pl-10 pr-8 py-2 text-xs font-medium bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 ${isHr ? 'focus:ring-purple-500/40' : isAdmin ? 'focus:ring-indigo-500/40' : 'focus:ring-teal-500/40'
+                }`}
             />
             {globalSearch && (
               <button
@@ -669,21 +674,19 @@ const DashboardLayout = () => {
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-2">
                             <span>{item.label}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              isHr
-                                ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300'
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${isHr
+                                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
                                 : isAdmin
-                                ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                                : 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                            }`}>
+                                  ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                                  : 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300'
+                              }`}>
                               {item.category}
                             </span>
                           </p>
                           <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.desc}</p>
                         </div>
-                        <span className={`text-[10px] font-bold shrink-0 ${
-                          isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
-                        }`}>Open →</span>
+                        <span className={`text-[10px] font-bold shrink-0 ${isHr ? 'text-purple-600 dark:text-purple-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-teal-600 dark:text-teal-400'
+                          }`}>Open →</span>
                       </div>
                     ))}
                   </div>
@@ -700,7 +703,7 @@ const DashboardLayout = () => {
               className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors cursor-pointer"
               title="Toggle Theme"
             >
-              {isDark ? <SunFill size={16} /> : <MoonFill size={16} className="text-purple-600" />}
+              {isDark ? <SunFill size={16} /> : <MoonFill size={16} className={isHr ? "text-purple-600" : isAdmin ? "text-indigo-600" : "text-teal-600"} />}
             </button>
 
             {/* Notification Bell Button & Blinking Badge */}
@@ -733,9 +736,8 @@ const DashboardLayout = () => {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className={`text-[11px] font-bold hover:underline cursor-pointer ${
-                          isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
-                        }`}
+                        className={`text-[11px] font-bold hover:underline cursor-pointer ${isHr ? 'text-purple-600 dark:text-purple-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-teal-600 dark:text-teal-400'
+                          }`}
                       >
                         Mark all read
                       </button>
@@ -747,18 +749,17 @@ const DashboardLayout = () => {
                       <div
                         key={n.id}
                         onClick={() => handleReadNotif(n.id)}
-                        className={`p-3 text-xs transition-colors cursor-pointer ${
-                          !n.read 
-                            ? 'bg-purple-50/60 dark:bg-slate-700/40 hover:bg-purple-100/60 dark:hover:bg-slate-700/70' 
+                        className={`p-3 text-xs transition-colors cursor-pointer ${!n.read
+                            ? 'bg-teal-50/60 dark:bg-slate-700/40 hover:bg-teal-100/60 dark:hover:bg-slate-700/70'
                             : 'hover:bg-slate-50 dark:hover:bg-slate-700/30 opacity-75'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="font-bold text-slate-900 dark:text-white leading-snug">{n.title}</p>
                           {!n.read && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>}
                         </div>
                         <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-normal">{n.message}</p>
-                        <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">{n.time}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">{formatRelativeTime(n)}</span>
                       </div>
                     ))}
                   </div>
@@ -770,9 +771,8 @@ const DashboardLayout = () => {
                         setNotifOpen(false);
                         navigate(notificationsPath);
                       }}
-                      className={`w-full py-1.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
-                        isHr ? 'text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-700/60' : isAdmin ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700/60' : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/60'
-                      }`}
+                      className={`w-full py-1.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${isHr ? 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700/60' : isAdmin ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700/60' : 'text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-700/60'
+                        }`}
                     >
                       View All Notifications →
                     </button>
@@ -783,29 +783,26 @@ const DashboardLayout = () => {
 
             {/* Profile Avatar Dropdown */}
             <div className="relative" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className={`flex items-center gap-2.5 p-1 rounded-full hover:ring-4 transition-all duration-200 cursor-pointer focus:outline-none ${
-                  isHr ? 'hover:ring-teal-500/20' : isAdmin ? 'hover:ring-indigo-500/20' : 'hover:ring-purple-500/20'
-                }`}
+                className={`flex items-center gap-2.5 p-1 rounded-full hover:ring-4 transition-all duration-200 cursor-pointer focus:outline-none ${isHr ? 'hover:ring-purple-500/20' : isAdmin ? 'hover:ring-indigo-500/20' : 'hover:ring-teal-500/20'
+                  }`}
               >
-                <div className={`w-10 h-10 rounded-full p-0.5 shadow-md ${
-                  isHr 
-                    ? 'bg-gradient-to-r from-teal-500 to-emerald-400 shadow-teal-500/20' 
-                    : isAdmin 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-indigo-500/20' 
-                    : 'bg-gradient-to-r from-purple-500 to-violet-400 shadow-purple-500/20'
-                }`}>
+                <div className={`w-10 h-10 rounded-full p-0.5 shadow-md ${isHr
+                    ? 'bg-gradient-to-r from-purple-500 to-violet-400 shadow-purple-500/20'
+                    : isAdmin
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-indigo-500/20'
+                      : 'bg-gradient-to-r from-teal-500 to-emerald-400 shadow-teal-500/20'
+                  }`}>
                   {user?.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt="Profile" 
-                      className="w-full h-full rounded-full object-cover" 
+                    <img
+                      src={user.avatar}
+                      alt="Profile"
+                      className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className={`w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-sm font-black ${
-                      isHr ? 'text-teal-600 dark:text-teal-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'
-                    }`}>
+                    <div className={`w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-sm font-black ${isHr ? 'text-purple-600 dark:text-purple-400' : isAdmin ? 'text-indigo-600 dark:text-indigo-400' : 'text-teal-600 dark:text-teal-400'
+                      }`}>
                       {initialLetter}
                     </div>
                   )}
@@ -837,11 +834,10 @@ const DashboardLayout = () => {
                         setDropdownOpen(false);
                         navigate(profilePath);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${
-                        isHr ? 'hover:text-teal-600 dark:hover:text-teal-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-purple-600 dark:hover:text-purple-400'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${isHr ? 'hover:text-purple-600 dark:hover:text-purple-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-teal-600 dark:hover:text-teal-400'
+                        }`}
                     >
-                      <PersonFill size={15} className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500'} />
+                      <PersonFill size={15} className={isHr ? 'text-purple-500' : isAdmin ? 'text-indigo-500' : 'text-teal-500'} />
                       Profile
                     </button>
 
@@ -850,11 +846,10 @@ const DashboardLayout = () => {
                         setDropdownOpen(false);
                         navigate(settingsPath);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${
-                        isHr ? 'hover:text-teal-600 dark:hover:text-teal-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-purple-600 dark:hover:text-purple-400'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer text-left ${isHr ? 'hover:text-purple-600 dark:hover:text-purple-400' : isAdmin ? 'hover:text-indigo-600 dark:hover:text-indigo-400' : 'hover:text-teal-600 dark:hover:text-teal-400'
+                        }`}
                     >
-                      <GearFill size={15} className={isHr ? 'text-teal-500' : isAdmin ? 'text-indigo-500' : 'text-purple-500'} />
+                      <GearFill size={15} className={isHr ? 'text-purple-500' : isAdmin ? 'text-indigo-500' : 'text-teal-500'} />
                       Settings
                     </button>
 

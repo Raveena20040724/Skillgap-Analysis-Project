@@ -24,6 +24,7 @@ export const ROUTES = {
 
   // HR
   HR_DASHBOARD: '/hr/dashboard',
+  HR_PROFILE: '/hr/profile',
   HR_DIRECTORY: '/hr/directory',
   HR_REPORTS: '/hr/reports',
   HR_NOTIFICATIONS: '/hr/notifications',

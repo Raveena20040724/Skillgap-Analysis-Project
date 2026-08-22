@@ -105,9 +105,9 @@ const EmployeeRegister = () => {
         department: formData.department,
         phone: formData.phone.trim(),
       };
-      
+
       const res = await authService.register(payload);
-      
+
       // Store in registered_employees_list for persistent reference
       const existingList = JSON.parse(localStorage.getItem('registered_employees_list') || '[]');
       const userPayload = {
@@ -125,7 +125,7 @@ const EmployeeRegister = () => {
         location: '',
         experienceYears: 0
       };
-      
+
       const filtered = existingList.filter(u => u.username.toLowerCase() !== trimmedUsername.toLowerCase());
       localStorage.setItem('registered_employees_list', JSON.stringify([...filtered, userPayload]));
 
@@ -137,7 +137,7 @@ const EmployeeRegister = () => {
       return;
     } catch (err) {
       console.warn('Backend registration API call note:', err);
-      
+
       if (err.response?.data?.errors) {
         const data = err.response.data;
         const errObj = {};
@@ -162,7 +162,7 @@ const EmployeeRegister = () => {
       const existingList = JSON.parse(localStorage.getItem('registered_employees_list') || '[]');
       const alreadyExists = existingList.some(
         u => u.username.toLowerCase() === trimmedUsername.toLowerCase() ||
-             u.email.toLowerCase() === trimmedEmail.toLowerCase()
+          u.email.toLowerCase() === trimmedEmail.toLowerCase()
       );
 
       if (alreadyExists) {
@@ -198,17 +198,17 @@ const EmployeeRegister = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-purple-700 via-purple-800 to-violet-900 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-900 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
       {/* Decorative ambient background spheres */}
       <div className="w-[600px] h-[600px] rounded-full bg-white/10 absolute -top-40 -right-40 pointer-events-none blur-2xl"></div>
-      <div className="w-[500px] h-[500px] rounded-full bg-purple-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
+      <div className="w-[500px] h-[500px] rounded-full bg-teal-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
 
       {/* Top Header Logo */}
       <header className="relative z-10 max-w-7xl w-full mx-auto">
         <div className="flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="SkillGap Logo" 
+          <img
+            src="/logo.png"
+            alt="SkillGap Logo"
             className="w-12 h-12 rounded-full object-cover shadow-xl shadow-black/20 border border-white/40"
           />
           <span className="text-2xl font-black tracking-tight text-white">SkillGap</span>
@@ -238,14 +238,14 @@ const EmployeeRegister = () => {
           </h1>
 
           {/* Hero Subtitle */}
-          <p className="text-base md:text-lg text-purple-100/90 font-medium max-w-lg leading-relaxed">
+          <p className="text-base md:text-lg text-teal-100/90 font-medium max-w-lg leading-relaxed">
             Create an account to analyze professional skills, access personalized course recommendations, and chart your career path.
           </p>
         </div>
 
         {/* Right Column: Floating Auth Card */}
         <div className="lg:col-span-6 w-full">
-          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-purple-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
+          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-teal-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Create an account</h2>
               <p className="text-xs font-semibold text-slate-400 mt-1">Start your career growth journey today</p>
@@ -268,7 +268,7 @@ const EmployeeRegister = () => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="e.g. varsha_dev"
-                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
+                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
                 />
                 {errors.username && <p className="text-[11px] font-bold text-rose-600 mt-1 ml-1">{errors.username}</p>}
               </div>
@@ -283,7 +283,7 @@ const EmployeeRegister = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="example.email@gmail.com"
-                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
+                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
                 />
                 {errors.email && <p className="text-[11px] font-bold text-rose-600 mt-1 ml-1">{errors.email}</p>}
               </div>
@@ -297,7 +297,7 @@ const EmployeeRegister = () => {
                     name="department"
                     value={formData.department}
                     onChange={handleChange}
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-3 py-2.5 text-xs font-semibold transition-all outline-none cursor-pointer"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-3 py-2.5 text-xs font-semibold transition-all outline-none cursor-pointer"
                   >
                     <option value="">Select Department</option>
                     {DEPARTMENTS_LIST.map((dept) => (
@@ -319,7 +319,7 @@ const EmployeeRegister = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="9876543210"
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none"
                   />
                   {errors.phone && <p className="text-[11px] font-bold text-rose-600 mt-1 ml-1">{errors.phone}</p>}
                 </div>
@@ -336,12 +336,12 @@ const EmployeeRegister = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter at least 6+ characters"
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl pl-4 pr-12 py-2.5 text-sm font-medium transition-all outline-none"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl pl-4 pr-12 py-2.5 text-sm font-medium transition-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
+                    className="absolute right-4 text-slate-400 hover:text-teal-600 focus:outline-none cursor-pointer"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -359,12 +359,12 @@ const EmployeeRegister = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat your password"
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl pl-4 pr-12 py-2.5 text-sm font-medium transition-all outline-none"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl pl-4 pr-12 py-2.5 text-sm font-medium transition-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
+                    className="absolute right-4 text-slate-400 hover:text-teal-600 focus:outline-none cursor-pointer"
                     title={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -377,7 +377,7 @@ const EmployeeRegister = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-purple-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
+                  className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-teal-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
                 >
                   {loading ? 'Creating Account...' : 'Register'}
                 </button>
@@ -386,7 +386,7 @@ const EmployeeRegister = () => {
 
             <p className="text-xs text-center mt-5 text-slate-500 font-semibold">
               Been here before?{' '}
-              <Link to={ROUTES.EMPLOYEE_LOGIN} className="text-purple-600 font-bold hover:underline">
+              <Link to={ROUTES.EMPLOYEE_LOGIN} className="text-teal-600 font-bold hover:underline">
                 Log in
               </Link>
             </p>

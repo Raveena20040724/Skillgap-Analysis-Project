@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../constants/routes';
-import { Users, Lock, Mail, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Users, Lock, Mail, ShieldCheck, Eye, EyeOff, BrainCircuit } from 'lucide-react';
 
 const HrLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -149,23 +149,23 @@ const HrLogin = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-purple-950 via-slate-900 to-slate-950 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
       {/* Decorative ambient background spheres */}
-      <div className="w-[600px] h-[600px] rounded-full bg-teal-500/10 absolute -top-40 -right-40 pointer-events-none blur-3xl"></div>
-      <div className="w-[500px] h-[500px] rounded-full bg-emerald-500/10 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
+      <div className="w-[600px] h-[600px] rounded-full bg-purple-500/10 absolute -top-40 -right-40 pointer-events-none blur-3xl"></div>
+      <div className="w-[500px] h-[500px] rounded-full bg-violet-500/10 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
 
       {/* Top Header Logo */}
       <header className="relative z-10 max-w-7xl w-full mx-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt="SkillBridge Logo" 
-              className="w-12 h-12 rounded-2xl object-cover shadow-xl shadow-black/40 border border-white/20"
-            />
+            <div className="w-10 h-10 rounded-xl p-0.5 shadow-md bg-gradient-to-tr from-purple-700 via-purple-600 to-violet-500 shadow-purple-500/20">
+              <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                <BrainCircuit className="w-5 h-5 text-purple-400" />
+              </div>
+            </div>
             <div>
-              <span className="text-2xl font-black tracking-tight text-white block leading-tight">SkillBridge.AI</span>
-              <span className="text-[10px] font-bold text-teal-400 tracking-wider uppercase block">Workforce HR Portal</span>
+              <span className="text-2xl font-black tracking-tight text-white block leading-tight">SkillBridge<span className="text-purple-400">.AI</span></span>
+              <span className="text-[10px] font-bold text-purple-300 tracking-wider uppercase block">Workforce HR Portal</span>
             </div>
           </div>
 
@@ -182,8 +182,8 @@ const HrLogin = () => {
       <main className="relative z-10 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto py-8">
         {/* Left Hero Content */}
         <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left pr-0 lg:pr-8 space-y-6">
-          <div className="p-3 bg-teal-500/20 border border-teal-500/30 text-teal-300 rounded-2xl inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase">
-            <ShieldCheck className="w-4 h-4 text-teal-400" />
+          <div className="p-3 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-2xl inline-flex items-center gap-2 text-xs font-black tracking-wider uppercase">
+            <ShieldCheck className="w-4 h-4 text-purple-400" />
             <span>Authorized HR Manager Portal</span>
           </div>
 
@@ -191,16 +191,16 @@ const HrLogin = () => {
             Empower Talent & Audit Workforce Skill Readiness
           </h1>
 
-          <p className="text-base md:text-lg text-teal-100/90 font-medium max-w-lg leading-relaxed">
+          <p className="text-base md:text-lg text-purple-100/90 font-medium max-w-lg leading-relaxed">
             Sign in to review organization skill metrics, assign learning path assessments, and inspect department readiness reports.
           </p>
         </div>
 
         {/* Right Auth Card */}
         <div className="lg:col-span-5 w-full">
-          <div className="bg-white dark:bg-[#161f33] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-teal-950/50 text-slate-900 border border-slate-200/90 dark:border-slate-800 max-w-md w-full mx-auto lg:ml-auto relative">
+          <div className="bg-white dark:bg-[#161f33] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-purple-950/50 text-slate-900 border border-slate-200/90 dark:border-slate-800 max-w-md w-full mx-auto lg:ml-auto relative">
             <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 mx-auto mb-3 border border-teal-500/20">
+              <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 mx-auto mb-3 border border-purple-500/20">
                 <Users className="w-7 h-7" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">HR Manager Sign In</h2>
@@ -231,7 +231,7 @@ const HrLogin = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="sarah.jenkins@company.com"
-                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
               </div>
@@ -247,12 +247,12 @@ const HrLogin = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-12 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                    className="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-2xl pl-11 pr-12 py-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-teal-600 focus:outline-none cursor-pointer"
+                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -264,7 +264,7 @@ const HrLogin = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-black py-3.5 px-6 rounded-2xl shadow-lg shadow-teal-600/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-xs uppercase tracking-wider"
+                  className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-black py-3.5 px-6 rounded-2xl shadow-lg shadow-purple-600/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-xs uppercase tracking-wider"
                 >
                   {loading ? 'Authenticating HR...' : 'Sign In to HR Dashboard'}
                 </button>

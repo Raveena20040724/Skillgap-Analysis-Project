@@ -57,19 +57,16 @@ export const AuthProvider = ({ children }) => {
     if (refresh) localStorage.setItem('refreshToken', refresh);
     const savedRole = localStorage.getItem('user_role');
     const role = userData?.role || savedRole || (userData?.is_superuser || userData?.username === 'admin' ? 'admin' : userData?.is_staff || userData?.username?.includes('hr') ? 'hr' : 'employee');
-    const enrichedUser = { ...userData, role };
+    const enrichedUser = { ...userData, role, avatar: userData?.avatar || '' };
     localStorage.setItem('user', JSON.stringify(enrichedUser));
     localStorage.setItem('user_role', role);
-    const storedAvatar = localStorage.getItem('userAvatar');
-    setUser(storedAvatar ? { ...enrichedUser, avatar: storedAvatar } : enrichedUser);
+    setUser(enrichedUser);
   };
 
   const updateUser = (updatedData) => {
     setUser((prev) => {
       const newUser = { ...prev, ...updatedData };
-      if (updatedData.avatar) {
-        localStorage.setItem('userAvatar', updatedData.avatar);
-      }
+      localStorage.setItem('user', JSON.stringify(newUser));
       return newUser;
     });
   };
@@ -77,6 +74,9 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('userAvatar');
     setUser(null);
   };
 

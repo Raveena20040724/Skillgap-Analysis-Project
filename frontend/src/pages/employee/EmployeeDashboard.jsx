@@ -39,7 +39,7 @@ const EmployeeDashboard = () => {
   });
 
   const [donutData, setDonutData] = useState([
-    { name: 'Mastered Skills', value: 0, color: '#8b5cf6' },
+    { name: 'Mastered Skills', value: 0, color: '#0d9488' },
     { name: 'In Progress', value: 0, color: '#06b6d4' },
     { name: 'Skill Gaps', value: 0, color: '#f43f5e' },
   ]);
@@ -54,9 +54,42 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     const loadRealMetrics = () => {
       try {
-        const savedSkills = getUserData('skills', null);
-        const resumeSkills = getUserData('resume_skills', null);
-        const skills = savedSkills || resumeSkills || [];
+        const savedSkills = getUserData('skills', []) || [];
+        const resumeSkills = getUserData('resume_skills', []) || [];
+
+        const DUMMY_SKILL_NAMES = new Set([
+          'react.js & frontend',
+          'python & django',
+          'postgresql & sql',
+          'aws cloud infrastructure',
+          'docker & ci/cd pipelines',
+          'docker & ci/cd automation',
+          'ui/ux design systems',
+          'machine learning fundamentals',
+          'technical team leadership',
+          'python & django framework',
+          'postgresql & database optimization',
+          'rest & graphql apis',
+          'tailwind css & ui design systems',
+          'typescript & static analysis',
+          'react.js & frontend architecture',
+          'javascript (es6+)',
+          'typescript & type safety',
+          'html5 & css3 responsive design',
+          'tailwind css & component systems',
+          'restful api integration'
+        ]);
+
+        const rawSkills = [...savedSkills, ...resumeSkills];
+        const seen = new Set();
+        const skills = rawSkills.filter(s => {
+          if (!s || !s.name) return false;
+          const nameLower = s.name.toLowerCase().trim();
+          if (DUMMY_SKILL_NAMES.has(nameLower)) return false;
+          if (seen.has(nameLower)) return false;
+          seen.add(nameLower);
+          return true;
+        });
 
         if (skills && skills.length > 0) {
           setHasSkills(true);
@@ -79,17 +112,47 @@ const EmployeeDashboard = () => {
           const gapsPct = Math.max(0, 100 - masteredPct - ongoingPct);
 
           setDonutData([
-            { name: 'Mastered Skills', value: masteredPct, color: '#8b5cf6' },
+            { name: 'Mastered Skills', value: masteredPct, color: '#0d9488' },
             { name: 'In Progress', value: ongoingPct, color: '#06b6d4' },
             { name: 'Skill Gaps', value: gapsPct, color: '#f43f5e' },
           ]);
 
-          setQuarterlyData([
-            { quarter: 'Q1', completed: Math.max(10, avgRating - 25), ongoing: 20, skillGap: Math.max(10, gaps * 10) },
-            { quarter: 'Q2', completed: Math.max(20, avgRating - 15), ongoing: 25, skillGap: Math.max(10, gaps * 8) },
-            { quarter: 'Q3', completed: Math.max(30, avgRating - 5), ongoing: 30, skillGap: Math.max(5, gaps * 5) },
-            { quarter: 'Q4', completed: avgRating, ongoing: 15, skillGap: Math.max(5, gaps * 3) },
-          ]);
+          // Calculate real technical domain competency & assessment benchmarks
+          const assessments = getUserData('assessment_results', []) || [];
+          const DOMAINS = [
+            { key: 'Programming', label: 'Programming' },
+            { key: 'UI/UX', label: 'UI/UX Design' },
+            { key: 'Database', label: 'Database' },
+            { key: 'Cloud', label: 'Cloud' },
+            { key: 'AI', label: 'AI & Data' },
+          ];
+
+          const domainCalculated = DOMAINS.map(dObj => {
+            const domainSkills = skills.filter(s =>
+              (s.category || '').toLowerCase().includes(dObj.key.toLowerCase()) ||
+              (s.name || '').toLowerCase().includes(dObj.key.toLowerCase())
+            );
+            const domainAssessments = assessments.filter(a =>
+              (a.skillName || '').toLowerCase().includes(dObj.key.toLowerCase())
+            );
+
+            const avgProf = domainSkills.length > 0
+              ? Math.round(domainSkills.reduce((acc, curr) => acc + (curr.proficiencyPercentage || 0), 0) / domainSkills.length)
+              : 0;
+
+            const avgScore = domainAssessments.length > 0
+              ? Math.round(domainAssessments.reduce((acc, curr) => acc + (curr.score || 0), 0) / domainAssessments.length)
+              : 0;
+
+            return {
+              domain: dObj.label,
+              proficiency: avgProf,
+              assessmentScore: avgScore,
+              targetGoal: (avgProf > 0 || avgScore > 0) ? 85 : 0
+            };
+          });
+
+          setQuarterlyData(domainCalculated);
         } else {
           // Zero state for new user
           setHasSkills(false);
@@ -100,15 +163,16 @@ const EmployeeDashboard = () => {
             overallRating: 0,
           });
           setDonutData([
-            { name: 'Mastered Skills', value: 0, color: '#8b5cf6' },
+            { name: 'Mastered Skills', value: 0, color: '#0d9488' },
             { name: 'In Progress', value: 0, color: '#06b6d4' },
             { name: 'Skill Gaps', value: 0, color: '#f43f5e' },
           ]);
           setQuarterlyData([
-            { quarter: 'Q1', completed: 0, ongoing: 0, skillGap: 0 },
-            { quarter: 'Q2', completed: 0, ongoing: 0, skillGap: 0 },
-            { quarter: 'Q3', completed: 0, ongoing: 0, skillGap: 0 },
-            { quarter: 'Q4', completed: 0, ongoing: 0, skillGap: 0 },
+            { domain: 'Programming', proficiency: 0, assessmentScore: 0, targetGoal: 0 },
+            { domain: 'UI/UX Design', proficiency: 0, assessmentScore: 0, targetGoal: 0 },
+            { domain: 'Database', proficiency: 0, assessmentScore: 0, targetGoal: 0 },
+            { domain: 'Cloud', proficiency: 0, assessmentScore: 0, targetGoal: 0 },
+            { domain: 'AI & Data', proficiency: 0, assessmentScore: 0, targetGoal: 0 },
           ]);
         }
       } catch (err) {
@@ -131,11 +195,11 @@ const EmployeeDashboard = () => {
       title: 'Completed Skills',
       value: String(metrics.completedSkills),
       subtext: 'High mastery competencies',
-      bg: 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/60 shadow-sm',
-      iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
-      titleColor: 'text-purple-950 dark:text-purple-200 font-extrabold',
+      bg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/60 shadow-sm',
+      iconBg: 'bg-teal-600 text-white shadow-md shadow-teal-500/20',
+      titleColor: 'text-teal-950 dark:text-teal-200 font-extrabold',
       valueColor: 'text-slate-950 dark:text-white font-black',
-      subtextColor: 'text-purple-700 dark:text-purple-300 font-bold',
+      subtextColor: 'text-teal-700 dark:text-teal-300 font-bold',
       icon: Check2Circle,
     },
     {
@@ -168,7 +232,7 @@ const EmployeeDashboard = () => {
       value: `${metrics.overallRating}%`,
       subtext: 'Average benchmark score',
       bg: 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 shadow-sm',
-      iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
+      iconBg: 'bg-teal-600 text-white shadow-md shadow-teal-500/20',
       titleColor: 'text-slate-950 dark:text-slate-200 font-extrabold',
       valueColor: 'text-slate-950 dark:text-white font-black',
       subtextColor: 'text-slate-600 dark:text-slate-400 font-bold',
@@ -186,11 +250,11 @@ const EmployeeDashboard = () => {
 
       {/* Onboarding Welcome Prompt for Clean / Zero State */}
       {!hasSkills && (
-        <Card className="p-6 bg-gradient-to-r from-purple-500/10 via-violet-500/10 to-indigo-500/10 border-2 border-dashed border-purple-300 dark:border-purple-800/60 rounded-3xl">
+        <Card className="p-6 bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-indigo-500/10 border-2 border-dashed border-teal-300 dark:border-teal-800/60 rounded-3xl">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <PatchCheck className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <PatchCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                 Welcome to your SkillGap Profile, {activeUser?.name || activeUser?.username || 'Employee'}!
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
@@ -200,14 +264,14 @@ const EmployeeDashboard = () => {
             <div className="flex items-center gap-2.5 shrink-0">
               <button
                 onClick={() => navigate(ROUTES.RESUME_UPLOAD)}
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer"
               >
                 <CloudUpload className="w-4 h-4" />
                 Upload Resume
               </button>
               <button
                 onClick={() => navigate(ROUTES.SKILL_ASSESSMENT)}
-                className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-700 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer"
               >
                 <PatchCheck className="w-4 h-4" />
                 Take Assessment
@@ -254,7 +318,7 @@ const EmployeeDashboard = () => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+              className="appearance-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
             >
               <option value="2026">2026</option>
               <option value="2025">2025</option>
@@ -266,21 +330,32 @@ const EmployeeDashboard = () => {
 
         {/* Charts Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column (8/12): Grouped Multi-Bar Chart */}
+          {/* Left Column (8/12): Domain Competency & Assessment Benchmarks Bar Chart */}
           <Card className="lg:col-span-8 p-6 flex flex-col justify-between">
-            {/* Custom Bar Legend Header */}
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#8b5cf6]"></span>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Completed</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                  Technical Domain Competency & Assessment Benchmarks
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Real-time comparison of current proficiency %, test scores %, and role target goals
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#06b6d4]"></span>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">On-going</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#f43f5e]"></span>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Skill Gap</span>
+
+              {/* Custom Bar Legend Header */}
+              <div className="flex flex-wrap items-center gap-4 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#0d9488]"></span>
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Proficiency (%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#06b6d4]"></span>
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Assessment (%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#6366f1]"></span>
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Target (85%)</span>
+                </div>
               </div>
             </div>
 
@@ -288,14 +363,14 @@ const EmployeeDashboard = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={quarterlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} vertical={false} />
-                <XAxis dataKey="quarter" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <XAxis dataKey="domain" stroke="#94a3b8" fontSize={12} tickLine={false} />
                 <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={12} tickLine={false} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} 
                 />
-                <Bar dataKey="completed" fill="#8b5cf6" name="Completed" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="ongoing" fill="#06b6d4" name="On-going" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="skillGap" fill="#f43f5e" name="Skill Gap" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="proficiency" fill="#0d9488" name="Current Proficiency (%)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="assessmentScore" fill="#06b6d4" name="Assessment Score (%)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="targetGoal" fill="#6366f1" name="Target Benchmark Goal (%)" radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </Card>

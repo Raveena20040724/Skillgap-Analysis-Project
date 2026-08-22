@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../constants/routes';
-import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, BrainCircuit } from 'lucide-react';
 
 const roleRedirects = {
   employee: ROUTES.EMPLOYEE_DASHBOARD,
@@ -13,9 +13,9 @@ const roleRedirects = {
 
 const EmployeeLogin = () => {
   const location = useLocation();
-  const [formData, setFormData] = useState({ 
-    username: location.state?.username || '', 
-    password: '' 
+  const [formData, setFormData] = useState({
+    username: location.state?.username || '',
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -82,11 +82,8 @@ const EmployeeLogin = () => {
       const user = authData?.user;
 
       if (user && access) {
-        setSuccessMsg(`Welcome back, ${user.name || user.username}! Login successful. Redirecting...`);
-        setTimeout(() => {
-          login(user, access, refresh);
-          navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
-        }, 500);
+        login(user, access, refresh);
+        navigate(roleRedirects[user.role] || ROUTES.EMPLOYEE_DASHBOARD);
         return;
       }
     } catch (err) {
@@ -100,7 +97,7 @@ const EmployeeLogin = () => {
       ...JSON.parse(localStorage.getItem('custom_hr_users') || '[]')
     ];
 
-    const matchedEmp = registeredEmployees.find(u => 
+    const matchedEmp = registeredEmployees.find(u =>
       (u.username && u.username.toLowerCase() === lowerUser) ||
       (u.email && u.email.toLowerCase() === lowerUser)
     );
@@ -109,7 +106,7 @@ const EmployeeLogin = () => {
     const isDemoHr = (lowerUser === 'sarah_hr' || lowerUser === 'sarah.jenkins@company.com' || lowerUser === 'hr');
     const isDemoAdmin = (lowerUser === 'admin' || lowerUser === 'admin@company.com');
 
-    const matchedHr = localHrs.find(h => 
+    const matchedHr = localHrs.find(h =>
       (h.email && h.email.toLowerCase() === lowerUser) ||
       (h.name && h.name.toLowerCase() === lowerUser) ||
       (h.username && h.username.toLowerCase() === lowerUser)
@@ -137,11 +134,8 @@ const EmployeeLogin = () => {
         avatar: matchedEmp.avatar || ''
       };
       const mockToken = `mock_employee_token_` + Date.now();
-      setSuccessMsg(`Welcome back, ${empUserObj.username}! Login successful. Redirecting...`);
-      setTimeout(() => {
-        login(empUserObj, mockToken, mockToken);
-        navigate(ROUTES.EMPLOYEE_DASHBOARD);
-      }, 500);
+      login(empUserObj, mockToken, mockToken);
+      navigate(ROUTES.EMPLOYEE_DASHBOARD);
       return;
     }
 
@@ -156,14 +150,11 @@ const EmployeeLogin = () => {
           role: 'employee',
           department: 'Engineering',
           designation: 'Senior Frontend Developer',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+          avatar: ''
         };
         const mockToken = `mock_employee_token_` + Date.now();
-        setSuccessMsg(`Welcome back, Alex Morgan! Login successful. Redirecting...`);
-        setTimeout(() => {
-          login(demoUser, mockToken, mockToken);
-          navigate(ROUTES.EMPLOYEE_DASHBOARD);
-        }, 500);
+        login(demoUser, mockToken, mockToken);
+        navigate(ROUTES.EMPLOYEE_DASHBOARD);
         return;
       } else {
         setError('Incorrect password. Please verify your password and try again.');
@@ -263,20 +254,23 @@ const EmployeeLogin = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-purple-700 via-purple-800 to-violet-900 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-teal-800 via-teal-900 to-emerald-950 text-white relative flex flex-col justify-between p-6 md:p-10 font-sans overflow-x-hidden select-none">
       {/* Decorative ambient background spheres */}
       <div className="w-[600px] h-[600px] rounded-full bg-white/10 absolute -top-40 -right-40 pointer-events-none blur-2xl"></div>
-      <div className="w-[500px] h-[500px] rounded-full bg-purple-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
+      <div className="w-[500px] h-[500px] rounded-full bg-teal-400/20 absolute -bottom-32 -left-32 pointer-events-none blur-3xl"></div>
 
       {/* Top Header Logo */}
       <header className="relative z-10 max-w-7xl w-full mx-auto">
         <div className="flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="SkillGap Logo" 
-            className="w-12 h-12 rounded-full object-cover shadow-xl shadow-black/20 border border-white/40"
-          />
-          <span className="text-2xl font-black tracking-tight text-white">SkillGap</span>
+          <div className="w-10 h-10 rounded-xl p-0.5 shadow-md bg-gradient-to-tr from-teal-700 via-teal-600 to-emerald-500 shadow-teal-500/20">
+            <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+              <BrainCircuit className="w-5 h-5 text-teal-400" />
+            </div>
+          </div>
+          <div>
+            <span className="text-2xl font-black tracking-tight text-white block leading-tight">SkillBridge<span className="text-teal-400">.AI</span></span>
+            <span className="text-[10px] font-bold text-teal-300 tracking-wider uppercase block">Employee Workspace</span>
+          </div>
         </div>
       </header>
 
@@ -303,14 +297,14 @@ const EmployeeLogin = () => {
           </h1>
 
           {/* Hero Subtitle */}
-          <p className="text-base md:text-lg text-purple-100/90 font-medium max-w-lg leading-relaxed">
+          <p className="text-base md:text-lg text-teal-100/90 font-medium max-w-lg leading-relaxed">
             Analyze skill gaps, track learning milestones, and unlock strategic career recommendations designed for your professional success.
           </p>
         </div>
 
         {/* Right Column: Floating Auth Card */}
         <div className="lg:col-span-5 w-full">
-          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-purple-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
+          <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl shadow-teal-950/30 text-slate-900 max-w-md w-full mx-auto lg:ml-auto relative">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Sign in to account</h2>
               <p className="text-xs font-semibold text-slate-400 mt-1">Enter your details to access your portal</p>
@@ -323,8 +317,8 @@ const EmployeeLogin = () => {
             )}
 
             {successMsg && (
-              <div className="p-3.5 mb-6 rounded-2xl bg-purple-50 border border-purple-200 text-purple-700 text-xs font-bold text-center flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+              <div className="p-3.5 mb-6 rounded-2xl bg-teal-50 border border-teal-200 text-teal-700 text-xs font-bold text-center flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -344,7 +338,7 @@ const EmployeeLogin = () => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Enter your username"
-                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all outline-none"
+                  className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all outline-none"
                 />
               </div>
 
@@ -357,12 +351,12 @@ const EmployeeLogin = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm font-medium transition-all outline-none"
+                    className="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-slate-900 placeholder:text-slate-400 border border-transparent focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl pl-4 pr-12 py-3.5 text-sm font-medium transition-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer"
+                    className="absolute right-4 text-slate-400 hover:text-teal-600 focus:outline-none cursor-pointer"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -374,7 +368,7 @@ const EmployeeLogin = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-purple-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
+                  className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg shadow-teal-500/30 transition-all duration-200 cursor-pointer disabled:opacity-70 text-sm"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -383,7 +377,7 @@ const EmployeeLogin = () => {
 
             <p className="text-xs text-center mt-6 text-slate-500 font-semibold">
               Don't have an account?{' '}
-              <Link to={ROUTES.EMPLOYEE_REGISTER} className="text-purple-600 font-bold hover:underline">
+              <Link to={ROUTES.EMPLOYEE_REGISTER} className="text-teal-600 font-bold hover:underline">
                 Create one
               </Link>
             </p>
