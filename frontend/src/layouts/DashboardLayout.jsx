@@ -3,7 +3,8 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ROUTES } from '../constants/routes';
-import { getUserData } from '../utils/userStorage';
+import { getUserData, formatRelativeTime } from '../utils/userStorage';
+import { useActiveTimeTracker } from '../hooks/useActiveTimeTracker';
 import {
   SunFill,
   MoonFill,
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 
 const DashboardLayout = () => {
+  useActiveTimeTracker();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -482,6 +484,13 @@ const DashboardLayout = () => {
     };
   }, [location.pathname, notifStorageKey, isAdmin, isHr]);
 
+  // Real-time live ticker to update relative notification timestamps dynamically
+  const [, setNotifTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setNotifTick(t => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -522,8 +531,7 @@ const DashboardLayout = () => {
   const handleToggleNotifBell = () => {
     const nextOpen = !notifOpen;
     setNotifOpen(nextOpen);
-    if (nextOpen && unreadCount > 0) {
-      // Touching/opening notification bell marks all unread as read
+    if (unreadCount > 0) {
       markAllAsRead();
     }
   };
@@ -751,7 +759,7 @@ const DashboardLayout = () => {
                           {!n.read && <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>}
                         </div>
                         <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-normal">{n.message}</p>
-                        <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">{n.time}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">{formatRelativeTime(n)}</span>
                       </div>
                     ))}
                   </div>

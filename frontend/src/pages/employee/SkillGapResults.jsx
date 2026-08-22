@@ -1,15 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from 'recharts';
 import { ArrowRight, Target, Sparkles, CheckCircle2, AlertTriangle, CloudUpload, Award } from 'lucide-react';
 import Card from '../../components/common/Card';
 import Loader from '../../components/common/Loader';
 import PageHeader from '../../components/common/PageHeader';
 import { skillGapService } from '../../services/skillGapService';
 import { ROUTES } from '../../constants/routes';
-import { getUserData } from '../../utils/userStorage';
+import { resumeService } from '../../services/resumeService';
+import { getUserData, setUserData, getActiveUser } from '../../utils/userStorage';
+
+const DUMMY_SKILL_NAMES = new Set([
+  'react.js & frontend',
+  'python & django',
+  'postgresql & sql',
+  'aws cloud infrastructure',
+  'docker & ci/cd pipelines',
+  'docker & ci/cd automation',
+  'ui/ux design systems',
+  'machine learning fundamentals',
+  'technical team leadership',
+  'python & django framework',
+  'postgresql & database optimization',
+  'rest & graphql apis',
+  'tailwind css & ui design systems',
+  'typescript & static analysis',
+  'react.js & frontend architecture',
+  'javascript (es6+)',
+  'typescript & type safety',
+  'html5 & css3 responsive design',
+  'tailwind css & component systems',
+  'restful api integration'
+]);
+
+const filterOutDummySkills = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.filter(s => {
+    if (!s || !s.name) return false;
+    return !DUMMY_SKILL_NAMES.has(s.name.toLowerCase().trim());
+  });
+};
 
 const SkillGapResults = () => {
   const navigate = useNavigate();
@@ -19,17 +48,45 @@ const SkillGapResults = () => {
   useEffect(() => {
     fetchSkillGaps();
     window.addEventListener('skillsUpdated', fetchSkillGaps);
-    return () => window.removeEventListener('skillsUpdated', fetchSkillGaps);
+    return () => {
+      window.removeEventListener('skillsUpdated', fetchSkillGaps);
+    };
   }, []);
 
   const fetchSkillGaps = async () => {
     try {
       const activeUser = getActiveUser();
-      const isDemoAlex = activeUser?.username === 'alex_morgan';
-      const customSkills = getUserData('skills', null);
+      const customSkills = filterOutDummySkills(getUserData('skills', []) || []);
+      const resumeSkills = filterOutDummySkills(getUserData('resume_skills', []) || []);
+      let resumeInfo = getUserData('resume_info', null);
 
-      if (customSkills && Array.isArray(customSkills) && customSkills.length > 0) {
-        const mapped = customSkills.map(sk => ({
+      // Check server API for uploaded resume if local storage doesn't have resumeInfo yet
+      if (!resumeInfo) {
+        try {
+          const res = await resumeService.getResume();
+          if (res.data && (res.data.fileName || res.data.filename || res.data.url)) {
+            resumeInfo = {
+              fileName: res.data.fileName || res.data.filename || 'Uploaded_CV.pdf',
+              downloadUrl: res.data.url || res.data.downloadUrl || '#'
+            };
+          }
+        } catch (e) {
+          console.log('No server resume:', e);
+        }
+      }
+
+      // Deduplicate and combine candidate skills
+      const allMap = new Map();
+      [...resumeSkills, ...customSkills].forEach(sk => {
+        if (sk && sk.name && !allMap.has(sk.name.toLowerCase().trim())) {
+          allMap.set(sk.name.toLowerCase().trim(), sk);
+        }
+      });
+
+      let combinedSkills = Array.from(allMap.values());
+
+      if (combinedSkills.length > 0) {
+        const mapped = combinedSkills.map(sk => ({
           skill: sk.name,
           currentLevel: sk.proficiencyPercentage || 70,
           requiredLevel: (sk.proficiencyPercentage || 70) >= 80 ? 95 : 85,
@@ -39,20 +96,7 @@ const SkillGapResults = () => {
         return;
       }
 
-      // If user has 0 skills and is not demo alex, strictly show clean empty state
-      if (!isDemoAlex) {
-        setGapData([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback for demo alex_morgan
-      const response = await skillGapService.getSkillGapResults();
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        setGapData(response.data);
-      } else {
-        setGapData([]);
-      }
+      setGapData([]);
     } catch (error) {
       console.log('Skill gap results load note:', error);
       setGapData([]);
@@ -173,22 +217,6 @@ const SkillGapResults = () => {
               </Card>
             )}
           </div>
-
-          {/* Bar chart comparing current vs required */}
-          <Card className="p-6">
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-4">Current vs Required Skill Competency Levels</h2>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={gapsWithDiff} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
-                <XAxis dataKey="skill" angle={-15} textAnchor="end" interval={0} height={60} stroke="#94a3b8" fontSize={11} />
-                <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={11} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
-                <Legend />
-                <Bar dataKey="currentLevel" fill="#8b5cf6" name="Current Proficiency (%)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="requiredLevel" fill="#06b6d4" name="Required Target Level (%)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
 
           {/* Detailed table */}
           <Card className="p-6">

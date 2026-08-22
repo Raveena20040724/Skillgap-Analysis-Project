@@ -244,7 +244,13 @@ const EmployeeDirectory = () => {
           <div key={emp.id} className="bg-white dark:bg-[#161f33] border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3.5">
-                <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-purple-500/40 shadow-md" />
+                {emp.avatar ? (
+                  <img src={emp.avatar} alt={emp.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-purple-500/40 shadow-md" />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-purple-600/10 text-purple-600 dark:text-purple-400 font-extrabold text-lg flex items-center justify-center border-2 border-purple-500/30 shrink-0">
+                    {(emp.name || 'E').charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                     {emp.name}

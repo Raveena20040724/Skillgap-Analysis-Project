@@ -23,7 +23,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { showGlobalToast } from '../../components/common/ToastContainer';
-import { getUserData, setUserData, getActiveUser } from '../../utils/userStorage';
+import { getUserData, setUserData, getActiveUser, formatRelativeTime } from '../../utils/userStorage';
 
 const CATEGORIES = ['All', 'Unread', 'Skill Growth', 'Resume Processing', 'Skill Assessment', 'Courses & Path'];
 
@@ -53,6 +53,7 @@ const NotificationsPage = () => {
   };
 
   const [notifications, setNotifications] = useState(getInitialUserAlerts);
+  const [, setTick] = useState(0);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -87,7 +88,18 @@ const NotificationsPage = () => {
     };
 
     window.addEventListener('userDataChanged', handleExternalUpdate);
-    return () => window.removeEventListener('userDataChanged', handleExternalUpdate);
+    window.addEventListener('notificationsUpdated', handleExternalUpdate);
+
+    // Live 10-second interval ticker for continuous real-time relative time re-evaluation
+    const timer = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('userDataChanged', handleExternalUpdate);
+      window.removeEventListener('notificationsUpdated', handleExternalUpdate);
+      clearInterval(timer);
+    };
   }, []);
 
   const showBanner = (msg) => {
@@ -221,6 +233,36 @@ const NotificationsPage = () => {
         </div>
       )}
 
+      {/* Real-Time AI Telemetry Analysis Live Stream */}
+      <Card className="p-4 border border-teal-500/30 dark:border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent rounded-2xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                  Real-Time AI Telemetry Stream
+                </span>
+                <span className="px-2 py-0.5 text-[9px] font-extrabold rounded bg-teal-500/20 text-teal-700 dark:text-teal-300">
+                  LIVE ANALYZING
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5">
+                Continuously evaluating skill gap deltas, assessment scores, and career milestone velocity.
+              </p>
+            </div>
+          </div>
+          <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
+            {notifications.length > 0
+              ? `Last event: ${formatRelativeTime(notifications[0])}`
+              : 'Monitoring event stream'}
+          </div>
+        </div>
+      </Card>
+
       {/* Filter Tabs Toolbar */}
       <Card className="p-4 border border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none]">
@@ -301,7 +343,7 @@ const NotificationsPage = () => {
                         </span>
                       )}
                       <span className="text-[11px] font-semibold text-slate-400">
-                        {item.time}
+                        {formatRelativeTime(item)}
                       </span>
                     </div>
 

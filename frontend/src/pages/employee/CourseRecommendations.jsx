@@ -32,22 +32,126 @@ const CATEGORIES = [
   'Cybersecurity'
 ];
 
+const UDEMY_URL = 'https://www.udemy.com/?gclid=CjwKCAjw7p_UBhBlEiwAhpIs77M-YDvU05Q6qNvDe8sE9jRe1s1A8bAZXggL_yJbtsb_h19A3RND3hoCrrYQAvD_BwE&im_ref=yhsyrYRaKxyZRObQFnSqXTw0Ukr09R20ZQeTWg0&sharedid=&irpid=7412479&utm_medium=affiliate&utm_source=impact&utm_audience=mx&utm_tactic=%22Content%22%2C%22India%22&utm_content=3948105&utm_campaign=7412479&irgwc=1&afsrc=1&im_rewards=';
+const W3SCHOOLS_URL = 'https://www.w3schools.com/';
+const FREECODECAMP_URL = 'https://www.freecodecamp.org/';
+const COURSERA_URL = 'https://www.coursera.org/courseraplus?utm_medium=sem&utm_source=gg&utm_campaign=b2c_india_x_coursera_ftcof_courseraplus_cx_dr_bau_gg_sem_bd-ph_in_all_m_hyb_23-09_x&campaignid=20590309416&adgroupid=155702724644&device=c&keyword=courser&matchtype=e&network=g&devicemodel=&creativeid=675426312949&assetgroupid=&targetid=kwd-744600291&extensionid=&placement=&gad_source=1&gad_campaignid=20590309416&gbraid=0AAAAADdKX6YaikJgm_nanV2M-19O5-F_4&gclid=CjwKCAjw7p_UBhBlEiwAhpIs788kV3yBqBQOaMg_nU-6Ma08eMRghCg41Szcggxox27FiUJlJvnFTxoCk7AQAvD_BwE';
+
 const COURSES_CATALOG = [
   {
     id: 1,
     title: 'AWS Certified Solutions Architect & Cloud Engineering',
     category: 'Cloud',
     categoryTag: 'CLOUD',
-    provider: 'Coursera',
+    provider: 'Udemy',
     level: 'Intermediate',
     rating: 4.9,
     duration: '24 Hours',
     image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
     skills: ['AWS Cloud', 'S3', 'EC2', 'Lambda', 'System Architecture'],
-    description: 'Master enterprise cloud infrastructure deployment, serverless architectures, and high-availability setups on AWS.'
+    url: UDEMY_URL,
+    description: 'Master enterprise cloud infrastructure deployment, serverless architectures, and high-availability setups on Udemy.'
   },
   {
     id: 2,
+    title: 'W3Schools Web Development, HTML5, CSS3 & JavaScript Certification',
+    category: 'Programming',
+    categoryTag: 'PROGRAMMING',
+    provider: 'W3Schools',
+    level: 'Beginner',
+    rating: 4.95,
+    duration: '15 Hours',
+    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
+    skills: ['HTML5', 'CSS3', 'JavaScript', 'DOM Manipulation'],
+    url: W3SCHOOLS_URL,
+    description: 'Learn foundational web development, interactive JavaScript, and modern CSS layout techniques with interactive W3Schools tutorials.'
+  },
+  {
+    id: 3,
+    title: 'freeCodeCamp Scientific Computing & Python Algorithms',
+    category: 'Programming',
+    categoryTag: 'PROGRAMMING',
+    provider: 'freeCodeCamp',
+    level: 'Intermediate',
+    rating: 4.92,
+    duration: '30 Hours',
+    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+    skills: ['Python', 'Data Structures', 'Algorithms', 'OOP'],
+    url: FREECODECAMP_URL,
+    description: 'Earn a freeCodeCamp certification in Python programming, computational algorithms, and computer science fundamentals.'
+  },
+  {
+    id: 4,
+    title: 'Coursera Plus Google Data Analytics Professional Certificate',
+    category: 'Data Science',
+    categoryTag: 'DATA SCIENCE',
+    provider: 'Coursera',
+    level: 'Intermediate',
+    rating: 4.88,
+    duration: '40 Hours',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
+    skills: ['Data Analytics', 'R Programming', 'SQL', 'Tableau', 'BigQuery'],
+    url: COURSERA_URL,
+    description: 'Gain job-ready data analysis skills, clean real-world datasets, and build executive data visual dashboards on Coursera.'
+  },
+  {
+    id: 5,
+    title: 'Building AI Web Apps with Gemini & React Masterclass',
+    category: 'AI',
+    categoryTag: 'AI',
+    provider: 'Udemy',
+    level: 'Advanced',
+    rating: 4.95,
+    duration: '12 Hours',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    skills: ['AI', 'Gemini API', 'React', 'Vector Databases'],
+    url: UDEMY_URL,
+    description: 'Integrate Google Gemini models, RAG architectures, and vector search embeddings into production React web apps.'
+  },
+  {
+    id: 6,
+    title: 'W3Schools Python & SQL Relational Database Reference',
+    category: 'Data Science',
+    categoryTag: 'DATA SCIENCE',
+    provider: 'W3Schools',
+    level: 'Beginner',
+    rating: 4.82,
+    duration: '10 Hours',
+    image: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop&q=80',
+    skills: ['SQL', 'PostgreSQL', 'Python', 'Database Queries'],
+    url: W3SCHOOLS_URL,
+    description: 'Master relational database querying, joins, index optimization, and Python DB drivers with W3Schools interactive live exercises.'
+  },
+  {
+    id: 7,
+    title: 'freeCodeCamp Responsive Web Design & UI Architecture',
+    category: 'UI/UX',
+    categoryTag: 'UI/UX',
+    provider: 'freeCodeCamp',
+    level: 'Beginner',
+    rating: 4.9,
+    duration: '20 Hours',
+    image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
+    skills: ['CSS Grid', 'Flexbox', 'Accessibility (a11y)', 'Responsive Design'],
+    url: FREECODECAMP_URL,
+    description: 'Build responsive, accessible, mobile-first web user interfaces using CSS Flexbox, Grid, and media query design patterns.'
+  },
+  {
+    id: 8,
+    title: 'Coursera Machine Learning Specialization by Stanford & DeepLearning.AI',
+    category: 'AI',
+    categoryTag: 'AI',
+    provider: 'Coursera',
+    level: 'Advanced',
+    rating: 4.97,
+    duration: '35 Hours',
+    image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=600&auto=format&fit=crop&q=80',
+    skills: ['Machine Learning', 'Supervised Learning', 'Neural Networks', 'TensorFlow'],
+    url: COURSERA_URL,
+    description: 'Break into AI with Andrew Ng’s world-renowned Coursera specialization covering linear regression, neural networks, and decision trees.'
+  },
+  {
+    id: 9,
     title: 'Docker & Kubernetes: Enterprise DevOps Blueprint',
     category: 'DevOps',
     categoryTag: 'DEVOPS',
@@ -57,59 +161,50 @@ const COURSES_CATALOG = [
     duration: '18 Hours',
     image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80',
     skills: ['Docker', 'Kubernetes', 'CI/CD', 'YAML Configuration'],
-    description: 'Learn container orchestration, microservice deployments, auto-scaling, and CI/CD automation pipelines.'
+    url: UDEMY_URL,
+    description: 'Learn container orchestration, microservice deployments, auto-scaling, and CI/CD automation pipelines on Udemy.'
   },
   {
-    id: 3,
-    title: 'Building AI Web Apps with Gemini & React',
-    category: 'AI',
-    categoryTag: 'AI',
-    provider: 'LinkedIn Learning',
-    level: 'Advanced',
-    rating: 4.95,
-    duration: '12 Hours',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    skills: ['AI', 'Gemini API', 'React', 'Vector Databases'],
-    description: 'Integrate Google Gemini models, RAG architectures, and vector search embeddings into production React web apps.'
+    id: 10,
+    title: 'freeCodeCamp Information Security & Ethical Hacking',
+    category: 'Cybersecurity',
+    categoryTag: 'CYBERSECURITY',
+    provider: 'freeCodeCamp',
+    level: 'Intermediate',
+    rating: 4.89,
+    duration: '25 Hours',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80',
+    skills: ['Ethical Hacking', 'Penetration Testing', 'Information Security', 'Python Security'],
+    url: FREECODECAMP_URL,
+    description: 'Explore vulnerability analysis, penetration testing methodologies, and secure web application defense strategies with freeCodeCamp.'
   },
   {
-    id: 4,
-    title: 'Modern TypeScript & Micro-Frontend Architecture',
-    category: 'Programming',
-    categoryTag: 'PROGRAMMING',
+    id: 11,
+    title: 'Coursera Google Cloud Architect Professional Certificate',
+    category: 'Cloud',
+    categoryTag: 'CLOUD',
     provider: 'Coursera',
     level: 'Advanced',
-    rating: 4.9,
-    duration: '20 Hours',
-    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
-    skills: ['TypeScript', 'React 19', 'Module Federation', 'Design Systems'],
-    description: 'Architect scalable micro-frontends, implement complex TypeScript generics, and build enterprise design tokens.'
+    rating: 4.91,
+    duration: '32 Hours',
+    image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80',
+    skills: ['GCP', 'Cloud Architecture', 'IAM Security', 'Kubernetes Engine'],
+    url: COURSERA_URL,
+    description: 'Prepare for Google Cloud Certification, design resilient infrastructure, and configure VPC networks on Coursera.'
   },
   {
-    id: 5,
-    title: 'BigData Telemetry & Predictive Analytics',
-    category: 'Data Science',
-    categoryTag: 'DATA SCIENCE',
-    provider: 'edX',
-    level: 'Intermediate',
-    rating: 4.85,
-    duration: '16 Hours',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80',
-    skills: ['BigQuery', 'Python', 'SQL', 'Data Pipelines'],
-    description: 'Build automated data pipelines, process real-time telemetry streams, and run SQL ML models on GCP.'
-  },
-  {
-    id: 6,
-    title: 'Enterprise Design Systems & Accessibility (a11y)',
-    category: 'UI/UX',
-    categoryTag: 'UI/UX',
-    provider: 'Udemy',
+    id: 12,
+    title: 'W3Schools Cybersecurity & Network Security Tutorial',
+    category: 'Cybersecurity',
+    categoryTag: 'CYBERSECURITY',
+    provider: 'W3Schools',
     level: 'Beginner',
-    rating: 4.75,
-    duration: '14 Hours',
-    image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
-    skills: ['Figma', 'a11y', 'Design Tokens', 'Tailwind CSS'],
-    description: 'Design accessible, WCAG-compliant design component libraries used by Fortune 500 engineering teams.'
+    rating: 4.79,
+    duration: '12 Hours',
+    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
+    skills: ['Cybersecurity', 'Firewalls', 'SSL/TLS Encryption', 'Network Protocols'],
+    url: W3SCHOOLS_URL,
+    description: 'Understand core network security concepts, encryption standards, authentication protocols, and cyber attack mitigation via W3Schools.'
   }
 ];
 
@@ -149,27 +244,32 @@ const CourseRecommendations = () => {
 
   const handleEnroll = (courseId) => {
     const courseObj = COURSES_CATALOG.find(c => c.id === courseId);
-    if (enrolledCourses.includes(courseId)) {
-      showGlobalToast(`You are already enrolled in "${courseObj?.title || 'this course'}". Modules are active.`, 'info');
-      return;
+    if (!enrolledCourses.includes(courseId)) {
+      const updated = [...enrolledCourses, courseId];
+      setEnrolledCourses(updated);
+      setUserData('enrolled_courses', updated);
+
+      // Dispatch notification
+      addActiveUserNotification({
+        title: '🎓 Enrolled in New Course',
+        message: `Enrolled in "${courseObj?.title || 'Course'}". Complete modules to build competencies in ${courseObj?.skills?.slice(0, 2).join(', ')}.`,
+        category: 'Courses & Path',
+        type: 'course',
+        severity: 'info',
+        actionLabel: 'View Course',
+        link: '/employee/courses'
+      });
+
+      showGlobalToast(`Successfully enrolled in "${courseObj?.title || 'course'}"! Launching official training site...`, 'success');
+      window.dispatchEvent(new Event('coursesUpdated'));
+    } else {
+      showGlobalToast(`Launching official training website for "${courseObj?.title || 'course'}"...`, 'info');
     }
-    const updated = [...enrolledCourses, courseId];
-    setEnrolledCourses(updated);
-    setUserData('enrolled_courses', updated);
 
-    // Dispatch notification
-    addActiveUserNotification({
-      title: '🎓 Enrolled in New Course',
-      message: `Enrolled in "${courseObj?.title || 'Course'}". Complete modules to build competencies in ${courseObj?.skills?.slice(0, 2).join(', ')}.`,
-      category: 'Courses & Path',
-      type: 'course',
-      severity: 'info',
-      actionLabel: 'View Course',
-      link: '/employee/courses'
-    });
-
-    showGlobalToast(`Successfully enrolled in "${courseObj?.title || 'course'}"! Course modules unlocked.`, 'success');
-    window.dispatchEvent(new Event('coursesUpdated'));
+    // Redirect to official external training website
+    if (courseObj?.url) {
+      window.open(courseObj.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
@@ -181,7 +281,7 @@ const CourseRecommendations = () => {
           Training & Course Catalog
         </h1>
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Curated training courses from Coursera, Udemy, and internal LMS integrated with real-time AI skill gap telemetry.
+          Curated training courses from Udemy, W3Schools, freeCodeCamp, and Coursera integrated with real-time AI skill gap telemetry.
         </p>
       </div>
 
@@ -247,10 +347,6 @@ const CourseRecommendations = () => {
                   <span className="absolute top-3.5 left-3.5 px-3 py-1 bg-slate-900/90 backdrop-blur-md text-white text-[11px] font-black rounded-xl border border-white/20">
                     {course.provider}
                   </span>
-
-                  <span className="absolute top-3.5 right-3.5 px-3 py-1 bg-teal-600 text-white text-[11px] font-black rounded-xl shadow-md">
-                    {course.level}
-                  </span>
                 </div>
 
                 {/* Card Content Body */}
@@ -312,7 +408,8 @@ const CourseRecommendations = () => {
                   {isEnrolled ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Enrolled & Active</span>
+                      <span>Go to Course Website</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </>
                   ) : (
                     <>

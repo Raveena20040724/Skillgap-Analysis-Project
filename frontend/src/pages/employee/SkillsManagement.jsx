@@ -38,80 +38,36 @@ const DEFAULT_CATEGORIES = [
   'Soft Skills'
 ];
 
-const INITIAL_SKILLS = [
-  {
-    id: '1',
-    name: 'React.js & Frontend',
-    category: 'Programming',
-    level: 'Advanced',
-    yearsOfExperience: 4,
-    proficiencyPercentage: 88,
-    verified: true,
-  },
-  {
-    id: '2',
-    name: 'Python & Django',
-    category: 'Programming',
-    level: 'Advanced',
-    yearsOfExperience: 3,
-    proficiencyPercentage: 82,
-    verified: true,
-  },
-  {
-    id: '3',
-    name: 'PostgreSQL & SQL',
-    category: 'Database',
-    level: 'Intermediate',
-    yearsOfExperience: 2,
-    proficiencyPercentage: 75,
-    verified: true,
-  },
-  {
-    id: '4',
-    name: 'AWS Cloud Infrastructure',
-    category: 'Cloud',
-    level: 'Intermediate',
-    yearsOfExperience: 2,
-    proficiencyPercentage: 68,
-    verified: true,
-  },
-  {
-    id: '5',
-    name: 'Docker & CI/CD Pipelines',
-    category: 'DevOps',
-    level: 'Intermediate',
-    yearsOfExperience: 1,
-    proficiencyPercentage: 62,
-    verified: true,
-  },
-  {
-    id: '6',
-    name: 'UI/UX Design Systems',
-    category: 'UI/UX',
-    level: 'Advanced',
-    yearsOfExperience: 3,
-    proficiencyPercentage: 85,
-    verified: true,
-  },
-  {
-    id: '7',
-    name: 'Machine Learning Fundamentals',
-    category: 'AI',
-    level: 'Beginner',
-    yearsOfExperience: 1,
-    proficiencyPercentage: 45,
-    verified: false,
-  },
-  {
-    id: '8',
-    name: 'Technical Team Leadership',
-    category: 'Leadership',
-    level: 'Intermediate',
-    yearsOfExperience: 2,
-    proficiencyPercentage: 70,
-    verified: true,
-  },
-];
+const DUMMY_SKILL_NAMES = new Set([
+  'react.js & frontend',
+  'python & django',
+  'postgresql & sql',
+  'aws cloud infrastructure',
+  'docker & ci/cd pipelines',
+  'docker & ci/cd automation',
+  'ui/ux design systems',
+  'machine learning fundamentals',
+  'technical team leadership',
+  'python & django framework',
+  'postgresql & database optimization',
+  'rest & graphql apis',
+  'tailwind css & ui design systems',
+  'typescript & static analysis',
+  'react.js & frontend architecture',
+  'javascript (es6+)',
+  'typescript & type safety',
+  'html5 & css3 responsive design',
+  'tailwind css & component systems',
+  'restful api integration'
+]);
+
+const filterOutDummySkills = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.filter(s => {
+    if (!s || !s.name) return false;
+    return !DUMMY_SKILL_NAMES.has(s.name.toLowerCase().trim());
+  });
+};
 
 const SkillsManagement = () => {
   const [skills, setSkills] = useState([]);
@@ -151,53 +107,28 @@ const SkillsManagement = () => {
 
   const fetchSkills = async () => {
     try {
-      // 1. Check if user has uploaded resume skills in isolated storage
-      const resumeSkills = getUserData('resume_skills', []) || [];
-      let baseSkills = getUserData('skills', null);
+      // Load skills strictly from parsed resume and user-added competencies
+      const rawResumeSkills = getUserData('resume_skills', []) || [];
+      const resumeSkills = filterOutDummySkills(rawResumeSkills);
 
-      if (resumeSkills && resumeSkills.length > 0) {
-        if (!baseSkills || baseSkills.length === 0) {
-          baseSkills = resumeSkills;
-        } else {
-          // Keep active skills, ensuring no duplicates
-          const seenNames = new Set();
-          const cleanSkills = [];
-          baseSkills.forEach(s => {
-            if (s && s.name && !seenNames.has(s.name.toLowerCase().trim())) {
-              seenNames.add(s.name.toLowerCase().trim());
-              cleanSkills.push(s);
-            }
-          });
-          baseSkills = cleanSkills;
-        }
-      } else if (baseSkills === null) {
-        // If not initialized, try backend API
-        try {
-          const response = await skillsService.getSkills();
-          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-            baseSkills = response.data.map((sk, index) => ({
-              id: sk.id || `server-${index}`,
-              name: sk.name || sk.skill_name || 'Unnamed Skill',
-              category: sk.category || 'Programming',
-              level: sk.level || sk.proficiency || 'Intermediate',
-              yearsOfExperience: sk.yearsOfExperience || sk.experience_years || 2,
-              proficiencyPercentage: sk.proficiencyPercentage || sk.score || 70,
-              verified: sk.verified ?? true,
-            }));
-          } else {
-            baseSkills = [];
-          }
-        } catch {
-          baseSkills = [];
-        }
-      }
+      const rawCustomSkills = getUserData('skills', []) || [];
+      const customSkills = filterOutDummySkills(rawCustomSkills);
 
-      setSkills(baseSkills || []);
-      setUserData('skills', baseSkills || []);
+      const seenNames = new Set();
+      const combinedSkills = [];
+
+      [...resumeSkills, ...customSkills].forEach(s => {
+        if (s && s.name && !seenNames.has(s.name.toLowerCase().trim())) {
+          seenNames.add(s.name.toLowerCase().trim());
+          combinedSkills.push(s);
+        }
+      });
+
+      setSkills(combinedSkills);
+      setUserData('skills', combinedSkills);
     } catch (error) {
       console.log('Skills load note:', error);
-      const savedLocal = getUserData('skills', []);
-      setSkills(savedLocal || []);
+      setSkills([]);
     } finally {
       setLoading(false);
     }

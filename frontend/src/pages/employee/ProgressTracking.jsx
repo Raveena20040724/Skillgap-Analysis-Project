@@ -108,59 +108,87 @@ const ProgressTracking = () => {
         avgScore: avgScore
       });
 
-      if (avgScore > 0) {
-        const base = Math.max(10, Math.round(avgScore * 0.65));
-        setSkillGrowthData([
-          { month: 'Jan', score: base },
-          { month: 'Feb', score: Math.round(base + (avgScore - base) * 0.2) },
-          { month: 'Mar', score: Math.round(base + (avgScore - base) * 0.4) },
-          { month: 'Apr', score: Math.round(base + (avgScore - base) * 0.6) },
-          { month: 'May', score: Math.round(base + (avgScore - base) * 0.8) },
-          { month: 'Jun', score: Math.round(avgScore) },
-          { month: 'Jul', score: Math.round(avgScore) },
-        ]);
-      } else {
-        setSkillGrowthData([
-          { month: 'Jan', score: 0 },
-          { month: 'Feb', score: 0 },
-          { month: 'Mar', score: 0 },
-          { month: 'Apr', score: 0 },
-          { month: 'May', score: 0 },
-          { month: 'Jun', score: 0 },
-          { month: 'Jul', score: 0 },
-        ]);
-      }
+      // 3. Real-time calculation of Skill Growth Evolution (Jan - Jul) based strictly on real user records
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+      
+      const realMonthlyGrowth = months.map((monthName, mIdx) => {
+        // Filter real assessment results recorded on or before this month
+        const validAssessments = assessmentResults.filter(a => {
+          if (!a.date && !a.timestamp) return false;
+          const aDate = new Date(a.date || a.timestamp);
+          return aDate.getMonth() <= mIdx;
+        });
 
-      if (totalHours > 0) {
-        setWeeklyHoursData([
-          { day: 'Mon', hours: Number(Math.min(4, Math.max(1, Number(dailyAverage) * 1.1)).toFixed(1)) },
-          { day: 'Tue', hours: Number(Math.min(4, Math.max(1.5, Number(dailyAverage) * 1.3)).toFixed(1)) },
-          { day: 'Wed', hours: 0 },
-          { day: 'Thu', hours: Number(Math.min(4, Math.max(1, Number(dailyAverage) * 1.4)).toFixed(1)) },
-          { day: 'Fri', hours: Number(Math.min(4, Math.max(0.5, Number(dailyAverage) * 0.9)).toFixed(1)) },
-          { day: 'Sat', hours: Number(Math.min(4, Math.max(0.5, Number(dailyAverage) * 0.6)).toFixed(1)) },
-          { day: 'Sun', hours: 0.5 },
-        ]);
-      } else {
-        setWeeklyHoursData([
-          { day: 'Mon', hours: 0 },
-          { day: 'Tue', hours: 0 },
-          { day: 'Wed', hours: 0 },
-          { day: 'Thu', hours: 0 },
-          { day: 'Fri', hours: 0 },
-          { day: 'Sat', hours: 0 },
-          { day: 'Sun', hours: 0 },
-        ]);
-      }
+        // Filter real skills added on or before this month
+        const validSkills = skills.filter(s => {
+          if (!s.createdAt && !s.date) return false;
+          const sDate = new Date(s.createdAt || s.date);
+          return sDate.getMonth() <= mIdx;
+        });
+
+        // If no user activities/assessments/skills occurred on or before this month, score is 0
+        if (validAssessments.length === 0 && validSkills.length === 0) {
+          // If this is the current active month and user has avgScore from current skills/assessments, display avgScore
+          const currentMonthIdx = new Date().getMonth();
+          if (mIdx === currentMonthIdx || (currentMonthIdx > 6 && mIdx === 6)) {
+            return { month: monthName, score: Math.round(avgScore) };
+          }
+          return { month: monthName, score: 0 };
+        }
+
+        let totalScore = 0;
+        let count = 0;
+
+        if (validAssessments.length > 0) {
+          totalScore += validAssessments.reduce((acc, curr) => acc + (curr.score || 0), 0);
+          count += validAssessments.length;
+        }
+
+        if (validSkills.length > 0) {
+          totalScore += validSkills.reduce((acc, curr) => acc + (curr.proficiencyPercentage || 0), 0);
+          count += validSkills.length;
+        }
+
+        const computedScore = count > 0 ? Math.round(totalScore / count) : 0;
+        return { month: monthName, score: computedScore };
+      });
+
+      setSkillGrowthData(realMonthlyGrowth);
+
+      // 4. Calculate real active tab screen-time learning hours for Mon - Sun
+      const activeSecondsMap = getUserData('active_weekly_seconds', {}) || {};
+      const daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      const realWeeklyHours = daysList.map((day) => {
+        const sec = activeSecondsMap[day] || 0;
+        const hoursDecimal = Number((sec / 3600).toFixed(2));
+        return { day, hours: hoursDecimal };
+      });
+
+      const totalActiveSeconds = Object.values(activeSecondsMap).reduce((a, b) => a + (Number(b) || 0), 0);
+      const activeLearningHours = Number((totalActiveSeconds / 3600).toFixed(1));
+
+      setStats({
+        learningHours: activeLearningHours > 0 ? activeLearningHours : (totalHours > 0 ? totalHours : 0),
+        completedCourses: enrolled.length > 1 ? enrolled.length - 1 : (enrolled.length === 1 ? 1 : 0),
+        certificatesEarned: certificatesCount,
+        avgScore: avgScore
+      });
+
+      setWeeklyHoursData(realWeeklyHours);
     };
 
     computeRealStats();
     window.addEventListener('coursesUpdated', computeRealStats);
     window.addEventListener('skillsUpdated', computeRealStats);
+    window.addEventListener('assessmentsUpdated', computeRealStats);
+    window.addEventListener('activeTimeUpdated', computeRealStats);
     window.addEventListener('userDataChanged', computeRealStats);
     return () => {
       window.removeEventListener('coursesUpdated', computeRealStats);
       window.removeEventListener('skillsUpdated', computeRealStats);
+      window.removeEventListener('assessmentsUpdated', computeRealStats);
+      window.removeEventListener('activeTimeUpdated', computeRealStats);
       window.removeEventListener('userDataChanged', computeRealStats);
     };
   }, []);
